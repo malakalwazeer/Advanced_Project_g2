@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagementAPI.Models;
 
-[Keyless]
-[Table("CoursePrerequisite")]
 public partial class CoursePrerequisite
 {
-    [Column("courseID")]
+    //
     public int CourseId { get; set; }
 
-    [Column("CoursePrerequisiteID")]
     public int CoursePrerequisiteId { get; set; }
+
+    public virtual Course Course { get; set; } = null!;
+
+    public virtual Course PrerequisiteCourse { get; set; } = null!;
 }
