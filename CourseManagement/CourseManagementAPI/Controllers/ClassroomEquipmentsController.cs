@@ -1,5 +1,6 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<ClassroomEquipment>>> GetClassroomEquipments()
         {
             return await _context.ClassroomEquipments.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<ClassroomEquipment>> GetClassroomEquipment(int id)
         {
             var classroomEquipment = await _context.ClassroomEquipments.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<ClassroomEquipment>> CreateClassroomEquipment(ClassroomEquipment classroomEquipment)
         {
             _context.ClassroomEquipments.Add(classroomEquipment);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<ClassroomEquipment>> UpdateClassroomEquipment(int id, ClassroomEquipment updatedClassroomEquipment)
         {
             if (id != updatedClassroomEquipment.ClassroomId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteClassroom(int id)
         {
             var classroom = await _context.Classrooms.FindAsync(id);

@@ -1,5 +1,6 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<TraineeStatus>>> GetTraineeStatuses()
         {
             return await _context.TraineeStatuses.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<TraineeStatus>> GetTraineeStatus(int id)
         {
             var traineeStatus = await _context.TraineeStatuses.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<TraineeStatus>> CreateTraineeStatus(TraineeStatus traineeStatus)
         {
             _context.TraineeStatuses.Add(traineeStatus);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<TraineeStatus>> UpdateTraineeStatus(int id, TraineeStatus updatedTraineeStatus)
         {
             if (id != updatedTraineeStatus.TraineeStatusId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteTraineeStatus(int id)
         {
             var traineeStatus = await _context.TraineeStatuses.FindAsync(id);

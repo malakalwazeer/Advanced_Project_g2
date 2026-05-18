@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using CourseManagementAPI.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace CourseManagementAPI.Data;
 
-public partial class CourseManagementDbContext : DbContext
+public partial class CourseManagementDbContext : IdentityDbContext<ApplicationUser>
 {
     public CourseManagementDbContext()
     {
@@ -41,6 +42,8 @@ public partial class CourseManagementDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Assessment>(entity =>
         {
             entity.ToTable("Assessment");

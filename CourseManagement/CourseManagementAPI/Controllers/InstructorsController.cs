@@ -1,5 +1,6 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<Instructor>>> GetInstructors()
         {
             return await _context.Instructors.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<Instructor>> GetInstructor(int id)
         {
             var instructor = await _context.Instructors.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Instructor>> CreateInstructor(Instructor instructor)
         {
             _context.Instructors.Add(instructor);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<Instructor>> UpdateInstructor(int id, Instructor updatedInstructor)
         {
             if (id != updatedInstructor.InstructorId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteInstructor(int id)
         {
             var instructor = await _context.Instructors.FindAsync(id);

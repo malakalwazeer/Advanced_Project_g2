@@ -1,5 +1,6 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<TraineeCertificationProgress>>> GetTraineeCertificationProgresses()
         {
             return await _context.TraineeCertificationProgresses.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<TraineeCertificationProgress>> GetTraineeCertificationProgress(int id)
         {
             var traineeCertificationProgress = await _context.TraineeCertificationProgresses.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<TraineeCertificationProgress>> CreateTraineeCertificationProgress(TraineeCertificationProgress traineeCertificationProgress)
         {
             _context.TraineeCertificationProgresses.Add(traineeCertificationProgress);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<TraineeCertificationProgress>> UpdateTraineeCertificationProgress(int id, TraineeCertificationProgress updatedTraineeCertificationProgress)
         {
             if (id != updatedTraineeCertificationProgress.CertificationId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteTraineeCertificationProgress(int id)
         {
             var traineeCertificationProgress = await _context.TraineeCertificationProgresses.FindAsync(id);

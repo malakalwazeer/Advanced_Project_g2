@@ -1,5 +1,6 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<EnrollmentStatus>>> GetEnrollmentStatuses()
         {
             return await _context.EnrollmentStatuses.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<EnrollmentStatus>> GetEnrollmentStatus(int id)
         {
             var enrollmentStatus = await _context.EnrollmentStatuses.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<EnrollmentStatus>> CreateEnrollment(EnrollmentStatus enrollmentStatus)
         {
             _context.EnrollmentStatuses.Add(enrollmentStatus);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<EnrollmentStatus>> UpdateEnrollmentStatus(int id, EnrollmentStatus updatedEnrollmentStatus)
         {
             if (id != updatedEnrollmentStatus.EnrollmentStatusId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteEnrollmentStatus(int id)
         {
             var enrollmentStatus = await _context.EnrollmentStatuses.FindAsync(id);

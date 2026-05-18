@@ -3,6 +3,7 @@ using CourseManagementAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseManagementAPI.Controllers
 {
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<Assessment>>> GetAssessments()
         {
             return await _context.Assessments.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<Assessment>> GetAssessment(int id)
         {
             var assessment = await _context.Assessments.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Assessment>> CreateAssessment(Assessment assessment)
         {
             _context.Assessments.Add(assessment);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<Assessment>> UpdateAssessment(int id, Assessment updatedAssessment)
         {
             if (id != updatedAssessment.AssessmentId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize (Roles = "Admin")]
         public async Task<IActionResult> DeleteAssessment(int id)
         {
             var assessment = await _context.Assessments.FindAsync(id);

@@ -1,8 +1,9 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagementAPI.Controllers
 {
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<CertificationCourse>>> GetCertificationCourses()
         {
             return await _context.CertificationCourses.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<CertificationCourse>> GetCertificationCourse(int id)
         {
             var CertificationCourses = await _context.CertificationCourses.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<CertificationCourse>> CreateCertificationCourse(CertificationCourse certificationCourse)
         {
             _context.CertificationCourses.Add(certificationCourse);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<CertificationCourse>> UpdateCertificationCourse(int id, CertificationCourse updatedCertificationCourse)
         {
             if (id != updatedCertificationCourse.CertificationId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCertificationCourse(int id)
         {
             var certificationCourse = await _context.CertificationCourses.FindAsync(id);

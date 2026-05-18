@@ -1,5 +1,6 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<CourseReqEquipment>>> GetCourseReqEquipments()
         {
             return await _context.CourseReqEquipments.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<CourseReqEquipment>> GetCourseReqEquipment(int id)
         {
             var courseReqEquipment = await _context.CourseReqEquipments.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<CourseReqEquipment>> CreateCourseReqEquipment(CourseReqEquipment courseReqEquipment)
         {
             _context.CourseReqEquipments.Add(courseReqEquipment);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<CourseReqEquipment>> UpdateCourseReqEquipment(int id, CourseReqEquipment updatedCourseReqEquipment)
         {
             if (id != updatedCourseReqEquipment.CourseId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCourseReqEquipment(int id)
         {
             var courseReqEquipment = await _context.CourseReqEquipments.FindAsync(id);

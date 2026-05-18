@@ -1,5 +1,6 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<PaymentStatus>>> GetPaymentStatuses()
         {
             return await _context.PaymentStatuses.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<PaymentStatus>> GetPaymentStatus(int id)
         {
             var paymentStatus = await _context.PaymentStatuses.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<PaymentStatus>> CreatePaymentStatus(PaymentStatus paymentStatus)
         {
             _context.PaymentStatuses.Add(paymentStatus);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<PaymentStatus>> UpdatePaymentStatus(int id, PaymentStatus updatedPaymentStatus)
         {
             if (id != updatedPaymentStatus.PaymentStatusId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeletePaymentStatus(int id)
         {
             var paymentStatus = await _context.PaymentStatuses.FindAsync(id);

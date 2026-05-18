@@ -1,5 +1,6 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpGet]
+            [AllowAnonymous]
             public async Task<ActionResult<IEnumerable<CourseCategory>>> GetCourseCategories()
             {
                 return await _context.CourseCategories.ToListAsync();
             }
 
             [HttpGet("{id}")]
+            [AllowAnonymous]
             public async Task<ActionResult<CourseCategory>> GetCourseCategory(int id)
             {
                 var CourseCategories = await _context.CourseCategories.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpPost]
+            [Authorize]
             public async Task<ActionResult<CourseCategory>> CreateCourseCategory(CourseCategory courseCategory)
             {
                 _context.CourseCategories.Add(courseCategory);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpPut("{id}")]
+            [Authorize]
             public async Task<ActionResult<CourseCategory>> UpdateCourseCategory(int id, CourseCategory updatedCourseCategory)
             {
                 if (id != updatedCourseCategory.CategoryId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpDelete("{id}")]
+            [Authorize(Roles = "Admin")]
             public async Task<IActionResult> DeleteCourseCategory(int id)
             {
                 var courseCategory = await _context.CourseCategories.FindAsync(id);

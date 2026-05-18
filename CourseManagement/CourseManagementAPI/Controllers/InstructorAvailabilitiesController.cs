@@ -1,5 +1,6 @@
 ﻿using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,14 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<InstructorAvailability>>> GetInstructorAvailabilities()
         {
             return await _context.InstructorAvailabilities.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<InstructorAvailability>> GetInstructorAvailability(int id)
         {
             var instructorAvailability = await _context.InstructorAvailabilities.FindAsync(id);
@@ -35,6 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<InstructorAvailability>> CreateInstructorAvailability(InstructorAvailability instructorAvailability)
         {
             _context.InstructorAvailabilities.Add(instructorAvailability);
@@ -43,6 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<ActionResult<InstructorAvailability>> UpdateInstructorAvailability(int id, InstructorAvailability updatedInstructorAvailability)
         {
             if (id != updatedInstructorAvailability.AvailabilityId) return BadRequest();
@@ -56,6 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteInstructorAvailability(int id)
         {
             var instructorAvailability = await _context.InstructorAvailabilities.FindAsync(id);
