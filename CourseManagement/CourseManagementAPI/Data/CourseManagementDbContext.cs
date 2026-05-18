@@ -43,6 +43,7 @@ public partial class CourseManagementDbContext : IdentityDbContext<ApplicationUs
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Initialize();
 
         modelBuilder.Entity<Assessment>(entity =>
         {
