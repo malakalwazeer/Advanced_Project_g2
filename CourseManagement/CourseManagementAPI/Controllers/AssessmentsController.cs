@@ -1,9 +1,11 @@
 ﻿using CourseManagementAPI.Data;
+using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
-using Microsoft.EntityFrameworkCore;
+using CourseManagementAPI.Services.Validation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagementAPI.Controllers
 {
@@ -12,10 +14,14 @@ namespace CourseManagementAPI.Controllers
     public class AssessmentsController : ControllerBase
     {
         private readonly CourseManagementDbContext _context;
+        private readonly AssessmentValidationService _assessmentValidator;
 
-        public AssessmentsController(CourseManagementDbContext context)
+        public AssessmentsController(
+            CourseManagementDbContext context,
+            AssessmentValidationService assessmentValidator)
         {
             _context = context;
+            _assessmentValidator = assessmentValidator;
         }
 
         [HttpGet]
@@ -38,12 +44,39 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
-        public async Task<ActionResult<Assessment>> CreateAssessment(Assessment assessment)
+        //[Authorize]
+        [AllowAnonymous] //only for testing
+        [ProducesResponseType(typeof(Assessment), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<Assessment>> CreateAssessment(CreateAssessmentDto dto)
         {
+            var validationError = await _assessmentValidator.ValidateCreateAsync(dto);
+
+            if (validationError != null)
+            {
+                return BadRequest(new { message = validationError });
+            }
+
+            var assessment = new Assessment
+            {
+                EnrollmentId = dto.EnrollmentId,
+                InstructorId = dto.InstructorId,
+                Result = dto.Result,
+                Score = dto.Score
+            };
+
             _context.Assessments.Add(assessment);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetAssessment), new { id = assessment.AssessmentId }, assessment);
+
+            return CreatedAtAction(nameof(GetAssessment), new { id = assessment.AssessmentId }, new
+            {
+                assessment.AssessmentId,
+                assessment.EnrollmentId,
+                assessment.InstructorId,
+                assessment.Result,
+                assessment.Score
+            });
         }
 
         [HttpPut("{id}")]

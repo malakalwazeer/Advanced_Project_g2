@@ -1,5 +1,7 @@
 ﻿using CourseManagementAPI.Data;
+using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
+using CourseManagementAPI.Services.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +13,16 @@ namespace CourseManagementAPI.Controllers
     [ApiController]
     public class EnrollmentsController : ControllerBase
     {
+        
         private readonly CourseManagementDbContext _context;
+        private readonly EnrollmentValidationService _enrollmentValidator;
 
-        public EnrollmentsController(CourseManagementDbContext context)
+        public EnrollmentsController(
+            CourseManagementDbContext context,
+            EnrollmentValidationService enrollmentValidator)
         {
             _context = context;
+            _enrollmentValidator = enrollmentValidator;
         }
 
         [HttpGet]
@@ -37,13 +44,42 @@ namespace CourseManagementAPI.Controllers
             return enrollment;
         }
 
+        
+
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<Enrollment>> CreateEnrollment(Enrollment enrollment)
+        //[AllowAnonymous] //only for testing
+        [ProducesResponseType(typeof(Enrollment), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<Enrollment>> CreateEnrollment(CreateEnrollmentDto dto)
         {
+            var validationError = await _enrollmentValidator.ValidateCreateAsync(dto);
+
+            if (validationError != null)
+            {
+                return BadRequest(new { message = validationError });
+            }
+
+            var enrollment = new Enrollment
+            {
+                TraineeId = dto.TraineeId,
+                SessionId = dto.SessionId,
+                EnrollmentDate = DateOnly.FromDateTime(DateTime.Today),
+                EnrollmentStatusId = 1
+            };
+
             _context.Enrollments.Add(enrollment);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetEnrollment), new { id = enrollment.EnrollmentId }, enrollment);
+
+            return CreatedAtAction(nameof(GetEnrollment), new { id = enrollment.EnrollmentId }, new
+            {
+                enrollment.EnrollmentId,
+                enrollment.TraineeId,
+                enrollment.SessionId,
+                enrollment.EnrollmentDate,
+                enrollment.EnrollmentStatusId
+            });
         }
 
         [HttpPut("{id}")]

@@ -9,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CourseManagementAPI.Services.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +101,15 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+//new added services for the custom validation
+
+builder.Services.AddScoped<CertificationLookupService>();//certification lookup validation
+builder.Services.AddScoped<CourseSessionValidationService>();
+builder.Services.AddScoped<EnrollmentValidationService>();
+builder.Services.AddScoped<PaymentValidationService>();
+builder.Services.AddScoped<AssessmentValidationService>();
+builder.Services.AddScoped<CourseValidationService>();
+
 var app = builder.Build();
 
 
