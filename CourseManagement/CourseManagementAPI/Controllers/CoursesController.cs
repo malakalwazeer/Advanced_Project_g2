@@ -1,5 +1,7 @@
 ﻿using CourseManagementAPI.Data;
+using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
+using CourseManagementAPI.Services.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +14,14 @@ namespace CourseManagementAPI.Controllers
     public class CoursesController : ControllerBase
     {
         private readonly CourseManagementDbContext _context;
+        private readonly CourseValidationService _courseValidator;
 
-        public CoursesController(CourseManagementDbContext context)
+        public CoursesController(
+            CourseManagementDbContext context,
+            CourseValidationService courseValidator)
         {
             _context = context;
+            _courseValidator = courseValidator;
         }
 
         [HttpGet]
@@ -39,11 +45,42 @@ namespace CourseManagementAPI.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<Course>> CreateCourse(Course course)
+        //[AllowAnonymous]//only for testing
+        [ProducesResponseType(typeof(Course), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<Course>> CreateCourse(CreateCourseDto dto)
         {
+            var validationError = await _courseValidator.ValidateCreateAsync(dto);
+
+            if (validationError != null)
+            {
+                return BadRequest(new { message = validationError });
+            }
+
+            var course = new Course
+            {
+                CourseCode = dto.CourseCode,
+                CourseName = dto.CourseName,
+                Description = dto.Description,
+                Capacity = dto.Capacity,
+                EnrollmentFee = dto.EnrollmentFee,
+                CategoryId = dto.CategoryId
+            };
+
             _context.Courses.Add(course);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetCourse), new { id = course.CourseId }, course);
+
+            return CreatedAtAction(nameof(GetCourse), new { id = course.CourseId }, new
+            {
+                course.CourseId,
+                course.CourseCode,
+                course.CourseName,
+                course.Description,
+                course.Capacity,
+                course.EnrollmentFee,
+                course.CategoryId
+            });
         }
 
         [HttpPut("{id}")]

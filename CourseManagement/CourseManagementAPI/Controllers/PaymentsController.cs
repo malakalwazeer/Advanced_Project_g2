@@ -1,5 +1,7 @@
 ﻿using CourseManagementAPI.Data;
+using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
+using CourseManagementAPI.Services.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +13,17 @@ namespace CourseManagementAPI.Controllers
     [ApiController]
     public class PaymentsController : ControllerBase
     {
-        private readonly CourseManagementDbContext _context;
+        
 
-        public PaymentsController(CourseManagementDbContext context)
+        private readonly CourseManagementDbContext _context;
+        private readonly PaymentValidationService _paymentValidator;
+
+        public PaymentsController(
+            CourseManagementDbContext context,
+            PaymentValidationService paymentValidator)
         {
             _context = context;
+            _paymentValidator = paymentValidator;
         }
 
         [HttpGet]
@@ -39,11 +47,40 @@ namespace CourseManagementAPI.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<Payment>> CreatePayment(Payment payment)
+       // [AllowAnonymous] //only for testing
+        [ProducesResponseType(typeof(Payment), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<Payment>> CreatePayment(CreatePaymentDto dto)
         {
+            var validationResult = await _paymentValidator.ValidateCreateAsync(dto);
+
+            if (validationResult.ErrorMessage != null)
+            {
+                return BadRequest(new { message = validationResult.ErrorMessage });
+            }
+
+            var payment = new Payment
+            {
+                EnrollmentId = dto.EnrollmentId,
+                AmountPaid = dto.AmountPaid,
+                PaymentDate = dto.PaymentDate,
+                PaymentStatusId = dto.PaymentStatusId,
+                BalanceRemaining = validationResult.BalanceRemaining
+            };
+
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetPayment), new { id = payment.PaymentId }, payment);
+
+            return CreatedAtAction(nameof(GetPayment), new { id = payment.PaymentId }, new
+            {
+                payment.PaymentId,
+                payment.EnrollmentId,
+                payment.AmountPaid,
+                payment.PaymentDate,
+                payment.PaymentStatusId,
+                payment.BalanceRemaining
+            });
         }
 
         [HttpPut("{id}")]
