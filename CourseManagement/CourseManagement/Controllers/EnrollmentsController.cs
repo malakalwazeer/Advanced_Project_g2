@@ -42,6 +42,7 @@ public class EnrollmentsController : Controller
                 .ThenInclude(s => s.Instructor)
             .Include(e => e.EnrollmentStatus)
             .Include(e => e.Assessments)
+                .ThenInclude(a => a.Instructor)
             .Include(e => e.Payments)
                 .ThenInclude(p => p.PaymentStatus)
             .AsNoTracking()
@@ -66,6 +67,12 @@ public class EnrollmentsController : Controller
         [Bind("TraineeId,SessionId,EnrollmentDate,EnrollmentStatusId")]
         Enrollment enrollment)
     {
+        // Trainee, Session, EnrollmentStatus are non-nullable nav properties not in the form.
+        // Remove them so ModelState.IsValid is not blocked by null-reference validation.
+        ModelState.Remove(nameof(Enrollment.Trainee));
+        ModelState.Remove(nameof(Enrollment.Session));
+        ModelState.Remove(nameof(Enrollment.EnrollmentStatus));
+
         if (ModelState.IsValid)
         {
             var validationError = await ValidateEnrollment(enrollment.TraineeId, enrollment.SessionId);
@@ -78,6 +85,7 @@ public class EnrollmentsController : Controller
 
             _context.Add(enrollment);
             await _context.SaveChangesAsync();
+            TempData["Success"] = "Enrollment created successfully.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -106,12 +114,15 @@ public class EnrollmentsController : Controller
     {
         if (id != enrollment.EnrollmentId) return NotFound();
 
+        ModelState.Remove(nameof(Enrollment.Trainee));
+        ModelState.Remove(nameof(Enrollment.Session));
+        ModelState.Remove(nameof(Enrollment.EnrollmentStatus));
+
         if (ModelState.IsValid)
         {
             var existing = await _context.Enrollments.AsNoTracking()
                 .FirstOrDefaultAsync(e => e.EnrollmentId == id);
 
-            // Only re-validate if trainee or session changed
             if (existing != null &&
                 (existing.TraineeId != enrollment.TraineeId || existing.SessionId != enrollment.SessionId))
             {
@@ -130,6 +141,7 @@ public class EnrollmentsController : Controller
             {
                 _context.Update(enrollment);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = "Enrollment updated successfully.";
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -172,20 +184,17 @@ public class EnrollmentsController : Controller
         {
             _context.Enrollments.Remove(enrollment);
             await _context.SaveChangesAsync();
+            TempData["Success"] = "Enrollment deleted.";
         }
         return RedirectToAction(nameof(Index));
     }
 
     // ─── Business Rule Helpers ────────────────────────────────────────────────
 
-    /// <summary>
-    /// Validates duplicate enrollment, session capacity, and prerequisites.
-    /// Returns an error message string, or null if valid.
-    /// </summary>
     private async Task<string?> ValidateEnrollment(
         int traineeId, int sessionId, int? excludeEnrollmentId = null)
     {
-        // 1. Duplicate enrollment
+        // 1. Duplicate check
         var duplicateQuery = _context.Enrollments
             .Where(e => e.TraineeId == traineeId && e.SessionId == sessionId);
 
@@ -195,23 +204,21 @@ public class EnrollmentsController : Controller
         if (await duplicateQuery.AnyAsync())
             return "This trainee is already enrolled in the selected session.";
 
-        // 2. Session capacity check
+        // 2. Capacity check
         var session = await _context.CourseSessions
             .Include(s => s.Enrollments)
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.SessionId == sessionId);
 
-        if (session == null)
-            return "The selected session does not exist.";
+        if (session == null) return "The selected session does not exist.";
 
-        var enrolledCount = session.Enrollments.Count;
-        if (excludeEnrollmentId.HasValue)
-            enrolledCount = session.Enrollments.Count(e => e.EnrollmentId != excludeEnrollmentId.Value);
+        var enrolledCount = session.Enrollments
+            .Count(e => !excludeEnrollmentId.HasValue || e.EnrollmentId != excludeEnrollmentId.Value);
 
         if (enrolledCount >= session.Capacity)
             return "This session has reached its maximum capacity.";
 
-        // 3. Prerequisite validation
+        // 3. Prerequisite check
         var prerequisites = await _context.CoursePrerequisites
             .Where(cp => cp.CourseId == session.CourseId)
             .AsNoTracking()
@@ -219,7 +226,6 @@ public class EnrollmentsController : Controller
 
         foreach (var prereq in prerequisites)
         {
-            // Trainee must have a passing assessment (Result = 1) in the prerequisite course
             var hasPassed = await _context.Assessments
                 .Include(a => a.Enrollment)
                     .ThenInclude(e => e.Session)
@@ -230,12 +236,12 @@ public class EnrollmentsController : Controller
 
             if (!hasPassed)
             {
-                var prereqCourse = await _context.Courses
-                    .AsNoTracking()
+                var prereqCourse = await _context.Courses.AsNoTracking()
                     .FirstOrDefaultAsync(c => c.CourseId == prereq.CoursePrerequisiteId);
 
-                var prereqName = prereqCourse?.CourseName ?? $"Course #{prereq.CoursePrerequisiteId}";
-                return $"Prerequisite not met: trainee must pass \"{prereqName}\" before enrolling in this course.";
+                return $"Prerequisite not met: trainee must pass " +
+                       $"\"{prereqCourse?.CourseName ?? $"Course #{prereq.CoursePrerequisiteId}"}\" " +
+                       $"before enrolling in this course.";
             }
         }
 
@@ -248,13 +254,16 @@ public class EnrollmentsController : Controller
         int? selectedStatusId = null)
     {
         ViewData["TraineeId"] = new SelectList(
-            _context.Trainees.AsNoTracking().Select(t => new { t.TraineeId, t.FullName }),
+            _context.Trainees.AsNoTracking()
+                .OrderBy(t => t.FullName)
+                .Select(t => new { t.TraineeId, t.FullName }),
             "TraineeId", "FullName", selectedTraineeId);
 
         ViewData["SessionId"] = new SelectList(
             _context.CourseSessions
                 .Include(s => s.Course)
                 .AsNoTracking()
+                .OrderBy(s => s.StartDateTime)
                 .Select(s => new
                 {
                     s.SessionId,

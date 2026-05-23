@@ -28,11 +28,15 @@
 
                     <dt class="col-sm-4">Progress</dt>
                     <dd class="col-sm-8">
+                        @{
+                            var pctStr = Model.ProgressPercentage.ToString("F1",
+                                System.Globalization.CultureInfo.InvariantCulture);
+                        }
                         <div class="progress" style="height:18px;">
                             <div class="progress-bar bg-warning"
                                  role="progressbar"
-                                 style="width:@Model.ProgressPercentage%"
-                                 aria-valuenow="@((double)Model.ProgressPercentage)"
+                                 style="width:@pctStr%"
+                                 aria-valuenow="@pctStr"
                                  aria-valuemin="0" aria-valuemax="100">
                                 @Model.ProgressPercentage%
                             </div>
@@ -44,10 +48,10 @@
                 </dl>
             </div>
             <div class="card-footer d-flex gap-2">
-                <form asp-action="Delete" method="post">
-                    <input type="hidden" name="traineeId" value="@Model.TraineeId" />
+                @* asp-action on the form tag automatically injects the anti-forgery token — no manual @Html.AntiForgeryToken() needed *@
+                <form asp-action="Delete" asp-controller="TraineeCertificationProgress" method="post">
+                    <input type="hidden" name="traineeId"       value="@Model.TraineeId" />
                     <input type="hidden" name="certificationId" value="@Model.CertificationId" />
-                    @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-danger">Yes, Delete</button>
                 </form>
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>

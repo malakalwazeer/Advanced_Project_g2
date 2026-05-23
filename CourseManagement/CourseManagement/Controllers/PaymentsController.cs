@@ -65,22 +65,27 @@ public class PaymentsController : Controller
         [Bind("EnrollmentId,AmountPaid,PaymentDate")]
         Payment payment)
     {
+        // Enrollment and PaymentStatus are non-nullable nav properties not posted from the form.
+        ModelState.Remove(nameof(Payment.Enrollment));
+        ModelState.Remove(nameof(Payment.PaymentStatus));
+
         if (ModelState.IsValid)
         {
-            var calculationResult = await CalculatePaymentStatus(payment.EnrollmentId, payment.AmountPaid);
+            var result = await CalculatePaymentStatus(payment.EnrollmentId, payment.AmountPaid);
 
-            if (calculationResult.Error != null)
+            if (result.Error != null)
             {
-                ModelState.AddModelError(string.Empty, calculationResult.Error);
+                ModelState.AddModelError(string.Empty, result.Error);
                 LoadDropdowns(payment.EnrollmentId);
                 return View(payment);
             }
 
-            payment.BalanceRemaining = calculationResult.BalanceRemaining;
-            payment.PaymentStatusId = calculationResult.PaymentStatusId;
+            payment.BalanceRemaining = result.BalanceRemaining;
+            payment.PaymentStatusId = result.PaymentStatusId;
 
             _context.Add(payment);
             await _context.SaveChangesAsync();
+            TempData["Success"] = "Payment recorded successfully.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -109,26 +114,29 @@ public class PaymentsController : Controller
     {
         if (id != payment.PaymentId) return NotFound();
 
+        ModelState.Remove(nameof(Payment.Enrollment));
+        ModelState.Remove(nameof(Payment.PaymentStatus));
+
         if (ModelState.IsValid)
         {
-            // Recalculate balance excluding this payment's previous amount
-            var calculationResult = await CalculatePaymentStatus(
+            var result = await CalculatePaymentStatus(
                 payment.EnrollmentId, payment.AmountPaid, excludePaymentId: id);
 
-            if (calculationResult.Error != null)
+            if (result.Error != null)
             {
-                ModelState.AddModelError(string.Empty, calculationResult.Error);
+                ModelState.AddModelError(string.Empty, result.Error);
                 LoadDropdowns(payment.EnrollmentId);
                 return View(payment);
             }
 
-            payment.BalanceRemaining = calculationResult.BalanceRemaining;
-            payment.PaymentStatusId = calculationResult.PaymentStatusId;
+            payment.BalanceRemaining = result.BalanceRemaining;
+            payment.PaymentStatusId = result.PaymentStatusId;
 
             try
             {
                 _context.Update(payment);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = "Payment updated successfully.";
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -173,6 +181,7 @@ public class PaymentsController : Controller
         {
             _context.Payments.Remove(payment);
             await _context.SaveChangesAsync();
+            TempData["Success"] = "Payment deleted.";
         }
         return RedirectToAction(nameof(Index));
     }
@@ -184,10 +193,6 @@ public class PaymentsController : Controller
         int PaymentStatusId,
         string? Error);
 
-    /// <summary>
-    /// Calculates remaining balance and determines payment status
-    /// (Pending / Partial / Paid) based on the enrollment's course fee.
-    /// </summary>
     private async Task<PaymentCalculationResult> CalculatePaymentStatus(
         int enrollmentId, decimal newAmountPaid, int? excludePaymentId = null)
     {
@@ -202,35 +207,24 @@ public class PaymentsController : Controller
 
         var courseFee = enrollment.Session.Course.EnrollmentFee;
 
-        // Sum all previous payments for this enrollment, excluding the one being edited
-        var previousPaymentsQuery = _context.Payments
-            .Where(p => p.EnrollmentId == enrollmentId);
-
+        var prevQuery = _context.Payments.Where(p => p.EnrollmentId == enrollmentId);
         if (excludePaymentId.HasValue)
-            previousPaymentsQuery = previousPaymentsQuery.Where(p => p.PaymentId != excludePaymentId.Value);
+            prevQuery = prevQuery.Where(p => p.PaymentId != excludePaymentId.Value);
 
-        var previousTotal = await previousPaymentsQuery.SumAsync(p => (decimal?)p.AmountPaid) ?? 0m;
-
+        var previousTotal = await prevQuery.SumAsync(p => (decimal?)p.AmountPaid) ?? 0m;
         var totalPaid = previousTotal + newAmountPaid;
-        var balance = courseFee - totalPaid;
-        if (balance < 0) balance = 0;
+        var balance = totalPaid >= courseFee ? 0m : courseFee - totalPaid;
 
-        // Resolve payment status by name
-        string statusName;
-        if (totalPaid <= 0)
-            statusName = "Pending";
-        else if (totalPaid >= courseFee)
-            statusName = "Paid";
-        else
-            statusName = "Partial";
+        var statusName = totalPaid <= 0 ? "Pending"
+                       : totalPaid >= courseFee ? "Paid"
+                       : "Partial";
 
-        var status = await _context.PaymentStatuses
-            .AsNoTracking()
+        var status = await _context.PaymentStatuses.AsNoTracking()
             .FirstOrDefaultAsync(s => s.StatusName == statusName);
 
         if (status == null)
             return new PaymentCalculationResult(0, 0,
-                $"Payment status '{statusName}' not found in database.");
+                $"Payment status '{statusName}' not found. Ensure the database has been seeded.");
 
         return new PaymentCalculationResult(balance, status.PaymentStatusId, null);
     }
@@ -243,6 +237,7 @@ public class PaymentsController : Controller
                 .Include(e => e.Session)
                     .ThenInclude(s => s.Course)
                 .AsNoTracking()
+                .OrderBy(e => e.Trainee.FullName)
                 .Select(e => new
                 {
                     e.EnrollmentId,

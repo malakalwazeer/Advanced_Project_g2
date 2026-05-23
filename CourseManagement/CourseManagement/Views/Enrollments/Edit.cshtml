@@ -11,6 +11,23 @@
 
 <div class="row justify-content-center">
     <div class="col-md-6">
+
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+        {
+            <div class="alert alert-warning">
+                <strong>Validation issues:</strong>
+                <ul class="mb-0 mt-1">
+                    @foreach (var kv in ViewData.ModelState.Where(m => m.Value!.Errors.Any()))
+                    {
+                        foreach (var err in kv.Value!.Errors)
+                        {
+                            <li><code>@kv.Key</code>: @err.ErrorMessage</li>
+                        }
+                    }
+                </ul>
+            </div>
+        }
+
         <div class="card shadow-sm">
             <div class="card-header bg-warning text-dark">Edit Enrollment</div>
             <div class="card-body">
@@ -36,13 +53,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="EnrollmentDate" class="form-label fw-semibold"></label>
+                        <label asp-for="EnrollmentDate" class="form-label fw-semibold">Enrollment Date</label>
                         <input asp-for="EnrollmentDate" type="date" class="form-control" />
                         <span asp-validation-for="EnrollmentDate" class="text-danger small"></span>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="EnrollmentStatusId" class="form-label fw-semibold">Enrollment Status</label>
+                        <label asp-for="EnrollmentStatusId" class="form-label fw-semibold">Status</label>
                         <select asp-for="EnrollmentStatusId" asp-items="ViewBag.EnrollmentStatusId" class="form-select">
                             <option value="">-- Select Status --</option>
                         </select>

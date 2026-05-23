@@ -6,10 +6,15 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Trainee Certification Progress</h2>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Add Record
-    </a>
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
 
 <div class="card shadow-sm">
     <div class="card-body p-0">
@@ -30,21 +35,20 @@
                         <td>@item.Trainee?.FullName</td>
                         <td>@item.Certification?.Name</td>
                         <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="progress flex-grow-1" style="height:18px;">
-                                    @{
-                                        var pct = (double)item.ProgressPercentage;
-                                        var barClass = pct >= 100 ? "bg-success"
-                                                     : pct >= 50  ? "bg-info"
-                                                     : "bg-warning";
-                                    }
-                                    <div class="progress-bar @barClass"
-                                         role="progressbar"
-                                         style="width:@pct%"
-                                         aria-valuenow="@pct"
-                                         aria-valuemin="0" aria-valuemax="100">
-                                        @item.ProgressPercentage%
-                                    </div>
+                            @{
+                                var pctStr = item.ProgressPercentage.ToString("F1",
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                                var barClass = item.ProgressPercentage >= 100 ? "bg-success"
+                                             : item.ProgressPercentage >= 50  ? "bg-info"
+                                             : "bg-warning";
+                            }
+                            <div class="progress" style="height:18px;">
+                                <div class="progress-bar @barClass"
+                                     role="progressbar"
+                                     style="width:@pctStr%"
+                                     aria-valuenow="@pctStr"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    @item.ProgressPercentage%
                                 </div>
                             </div>
                         </td>
@@ -77,7 +81,9 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">No certification progress records found.</td>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            No records yet. Progress is updated automatically when assessments are saved.
+                        </td>
                     </tr>
                 }
             </tbody>

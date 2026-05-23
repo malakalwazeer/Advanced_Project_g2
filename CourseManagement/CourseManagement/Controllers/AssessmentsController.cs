@@ -65,12 +65,12 @@ public class AssessmentsController : Controller
         [Bind("EnrollmentId,InstructorId,Score,Result")]
         Assessment assessment)
     {
+        // Enrollment and Instructor are non-nullable nav properties not posted from the form.
+        ModelState.Remove(nameof(Assessment.Enrollment));
+        ModelState.Remove(nameof(Assessment.Instructor));
+
         if (!ValidateScoreAndResult(assessment, out var scoreError))
-        {
             ModelState.AddModelError(string.Empty, scoreError!);
-            LoadDropdowns(assessment.EnrollmentId, assessment.InstructorId);
-            return View(assessment);
-        }
 
         if (ModelState.IsValid)
         {
@@ -79,6 +79,7 @@ public class AssessmentsController : Controller
 
             await UpdateCertificationProgressAsync(assessment.EnrollmentId);
 
+            TempData["Success"] = "Assessment saved. Certification progress updated.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -107,12 +108,11 @@ public class AssessmentsController : Controller
     {
         if (id != assessment.AssessmentId) return NotFound();
 
+        ModelState.Remove(nameof(Assessment.Enrollment));
+        ModelState.Remove(nameof(Assessment.Instructor));
+
         if (!ValidateScoreAndResult(assessment, out var scoreError))
-        {
             ModelState.AddModelError(string.Empty, scoreError!);
-            LoadDropdowns(assessment.EnrollmentId, assessment.InstructorId);
-            return View(assessment);
-        }
 
         if (ModelState.IsValid)
         {
@@ -122,6 +122,8 @@ public class AssessmentsController : Controller
                 await _context.SaveChangesAsync();
 
                 await UpdateCertificationProgressAsync(assessment.EnrollmentId);
+
+                TempData["Success"] = "Assessment updated. Certification progress recalculated.";
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -161,30 +163,24 @@ public class AssessmentsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var assessment = await _context.Assessments
-            .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.AssessmentId == id);
-
-        int? enrollmentId = assessment?.EnrollmentId;
-
+        // Use FindAsync (tracked) — do not mix AsNoTracking and Remove.
+        var assessment = await _context.Assessments.FindAsync(id);
         if (assessment != null)
         {
-            _context.Assessments.Remove(_context.Assessments.Find(id)!);
+            int enrollmentId = assessment.EnrollmentId;
+
+            _context.Assessments.Remove(assessment);
             await _context.SaveChangesAsync();
 
-            if (enrollmentId.HasValue)
-                await UpdateCertificationProgressAsync(enrollmentId.Value);
-        }
+            await UpdateCertificationProgressAsync(enrollmentId);
 
+            TempData["Success"] = "Assessment deleted. Certification progress recalculated.";
+        }
         return RedirectToAction(nameof(Index));
     }
 
     // ─── Business Rule Helpers ────────────────────────────────────────────────
 
-    /// <summary>
-    /// Validates Score (0–100) and Result (0 or 1).
-    /// Returns false and sets errorMessage when invalid.
-    /// </summary>
     private static bool ValidateScoreAndResult(Assessment assessment, out string? errorMessage)
     {
         if (assessment.Score.HasValue && (assessment.Score < 0 || assessment.Score > 100))
@@ -203,10 +199,6 @@ public class AssessmentsController : Controller
         return true;
     }
 
-    /// <summary>
-    /// After an assessment is saved or deleted, recalculates certification progress
-    /// for the trainee enrolled in the given enrollment.
-    /// </summary>
     private async Task UpdateCertificationProgressAsync(int enrollmentId)
     {
         var enrollment = await _context.Enrollments
@@ -218,7 +210,6 @@ public class AssessmentsController : Controller
 
         int traineeId = enrollment.TraineeId;
 
-        // Find all certifications that contain courses the trainee has enrollments in
         var traineePassedCourseIds = await _context.Assessments
             .Include(a => a.Enrollment)
                 .ThenInclude(e => e.Session)
@@ -227,48 +218,43 @@ public class AssessmentsController : Controller
             .Distinct()
             .ToListAsync();
 
-        // Get all certifications that have at least one of the trainee's courses
-        var relevantCertificationIds = await _context.CertificationCourses
+        var relevantCertIds = await _context.CertificationCourses
             .Where(cc => traineePassedCourseIds.Contains(cc.CourseId))
             .Select(cc => cc.CertificationId)
             .Distinct()
             .ToListAsync();
 
-        foreach (var certId in relevantCertificationIds)
+        foreach (var certId in relevantCertIds)
         {
-            var requiredCourses = await _context.CertificationCourses
+            var requiredCourseIds = await _context.CertificationCourses
                 .Where(cc => cc.CertificationId == certId && cc.IsRequired)
                 .Select(cc => cc.CourseId)
                 .ToListAsync();
 
-            if (requiredCourses.Count == 0) continue;
+            if (requiredCourseIds.Count == 0) continue;
 
-            var passedRequiredCount = requiredCourses
-                .Count(courseId => traineePassedCourseIds.Contains(courseId));
-
-            var progressPct = Math.Round(
-                (decimal)passedRequiredCount / requiredCourses.Count * 100, 2);
+            var passedCount = requiredCourseIds.Count(c => traineePassedCourseIds.Contains(c));
+            var pct = Math.Round((decimal)passedCount / requiredCourseIds.Count * 100, 2);
 
             var progress = await _context.TraineeCertificationProgresses
                 .FirstOrDefaultAsync(p => p.TraineeId == traineeId && p.CertificationId == certId);
 
             if (progress == null)
             {
-                progress = new TraineeCertificationProgress
+                _context.TraineeCertificationProgresses.Add(new TraineeCertificationProgress
                 {
                     TraineeId = traineeId,
                     CertificationId = certId,
-                    ProgressPercentage = progressPct,
-                    AchievedDate = progressPct >= 100 ? DateOnly.FromDateTime(DateTime.Today) : null
-                };
-                _context.TraineeCertificationProgresses.Add(progress);
+                    ProgressPercentage = pct,
+                    AchievedDate = pct >= 100 ? DateOnly.FromDateTime(DateTime.Today) : null
+                });
             }
             else
             {
-                progress.ProgressPercentage = progressPct;
-                if (progressPct >= 100 && progress.AchievedDate == null)
+                progress.ProgressPercentage = pct;
+                if (pct >= 100 && progress.AchievedDate == null)
                     progress.AchievedDate = DateOnly.FromDateTime(DateTime.Today);
-                else if (progressPct < 100)
+                else if (pct < 100)
                     progress.AchievedDate = null;
             }
         }
@@ -284,6 +270,7 @@ public class AssessmentsController : Controller
                 .Include(e => e.Session)
                     .ThenInclude(s => s.Course)
                 .AsNoTracking()
+                .OrderBy(e => e.Trainee.FullName)
                 .Select(e => new
                 {
                     e.EnrollmentId,
@@ -293,6 +280,7 @@ public class AssessmentsController : Controller
 
         ViewData["InstructorId"] = new SelectList(
             _context.Instructors.AsNoTracking()
+                .OrderBy(i => i.FullName)
                 .Select(i => new { i.InstructorId, i.FullName }),
             "InstructorId", "FullName", selectedInstructorId);
     }

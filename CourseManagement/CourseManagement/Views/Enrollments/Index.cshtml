@@ -6,10 +6,24 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Enrollments</h2>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Create New
-    </a>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
 
 <div class="card shadow-sm">
     <div class="card-body p-0">
@@ -34,24 +48,17 @@
                         <td>@item.Session?.StartDateTime.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>@item.Session?.EndDateTime.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>@item.EnrollmentDate.ToString("yyyy-MM-dd")</td>
-                        <td>
-                            <span class="badge bg-info text-dark">@item.EnrollmentStatus?.StatusName</span>
-                        </td>
+                        <td><span class="badge bg-info text-dark">@item.EnrollmentStatus?.StatusName</span></td>
                         <td class="text-center">
-                            <a asp-action="Details" asp-route-id="@item.EnrollmentId"
-                               class="btn btn-sm btn-outline-info me-1">Details</a>
-                            <a asp-action="Edit" asp-route-id="@item.EnrollmentId"
-                               class="btn btn-sm btn-outline-warning me-1">Edit</a>
-                            <a asp-action="Delete" asp-route-id="@item.EnrollmentId"
-                               class="btn btn-sm btn-outline-danger">Delete</a>
+                            <a asp-action="Details" asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-info me-1">Details</a>
+                            <a asp-action="Edit"    asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
+                            <a asp-action="Delete"  asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-danger">Delete</a>
                         </td>
                     </tr>
                 }
                 @if (!Model.Any())
                 {
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-4">No enrollments found.</td>
-                    </tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">No enrollments found.</td></tr>
                 }
             </tbody>
         </table>

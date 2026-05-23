@@ -36,6 +36,8 @@ public class TraineesController : Controller
             .Include(t => t.Enrollments)
                 .ThenInclude(e => e.Session)
                     .ThenInclude(s => s.Course)
+            .Include(t => t.Enrollments)
+                .ThenInclude(e => e.EnrollmentStatus)
             .Include(t => t.TraineeCertificationProgresses)
                 .ThenInclude(p => p.Certification)
             .AsNoTracking()
@@ -60,10 +62,16 @@ public class TraineesController : Controller
         [Bind("FullName,OrganizationName,RegistrationDate,Email,Phone,Password,TraineeStatusId")]
         Trainee trainee)
     {
+        // Navigation properties are loaded from DB — never posted from form.
+        // Without removing them, ModelState.IsValid is always false because
+        // TraineeStatus is a non-nullable reference type with no form value.
+        ModelState.Remove(nameof(Trainee.TraineeStatus));
+
         if (ModelState.IsValid)
         {
             _context.Add(trainee);
             await _context.SaveChangesAsync();
+            TempData["Success"] = $"Trainee \"{trainee.FullName}\" created successfully.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -92,12 +100,15 @@ public class TraineesController : Controller
     {
         if (id != trainee.TraineeId) return NotFound();
 
+        ModelState.Remove(nameof(Trainee.TraineeStatus));
+
         if (ModelState.IsValid)
         {
             try
             {
                 _context.Update(trainee);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = $"Trainee \"{trainee.FullName}\" updated successfully.";
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -137,6 +148,7 @@ public class TraineesController : Controller
         {
             _context.Trainees.Remove(trainee);
             await _context.SaveChangesAsync();
+            TempData["Success"] = $"Trainee \"{trainee.FullName}\" deleted.";
         }
         return RedirectToAction(nameof(Index));
     }
