@@ -1,5 +1,7 @@
 using CourseManagementAPI.Data;
+using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
+using CourseManagementAPI.Services.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +11,14 @@ namespace CourseManagement.Controllers;
 public class EnrollmentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
+    private readonly EnrollmentValidationService _enrollmentValidator;
 
-    public EnrollmentsController(CourseManagementDbContext context)
+    public EnrollmentsController(
+        CourseManagementDbContext context,
+        EnrollmentValidationService enrollmentValidator)
     {
         _context = context;
+        _enrollmentValidator = enrollmentValidator;
     }
 
     // GET: Enrollments
@@ -61,24 +67,31 @@ public class EnrollmentsController : Controller
     }
 
     // POST: Enrollments/Create
+    // Uses EnrollmentValidationService (injected from API project via DI) for full business-rule
+    // validation: trainee active status, session capacity, prerequisites, duplicate check.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
         [Bind("TraineeId,SessionId,EnrollmentDate,EnrollmentStatusId")]
         Enrollment enrollment)
     {
-        // Trainee, Session, EnrollmentStatus are non-nullable nav properties not in the form.
-        // Remove them so ModelState.IsValid is not blocked by null-reference validation.
         ModelState.Remove(nameof(Enrollment.Trainee));
         ModelState.Remove(nameof(Enrollment.Session));
         ModelState.Remove(nameof(Enrollment.EnrollmentStatus));
 
         if (ModelState.IsValid)
         {
-            var validationError = await ValidateEnrollment(enrollment.TraineeId, enrollment.SessionId);
-            if (validationError != null)
+            // Map scalar form values to the DTO the service expects.
+            var dto = new CreateEnrollmentDto
             {
-                ModelState.AddModelError(string.Empty, validationError);
+                TraineeId = enrollment.TraineeId,
+                SessionId = enrollment.SessionId
+            };
+
+            var error = await _enrollmentValidator.ValidateCreateAsync(dto);
+            if (error != null)
+            {
+                ModelState.AddModelError(string.Empty, error);
                 LoadDropdowns(enrollment.TraineeId, enrollment.SessionId, enrollment.EnrollmentStatusId);
                 return View(enrollment);
             }
@@ -106,6 +119,8 @@ public class EnrollmentsController : Controller
     }
 
     // POST: Enrollments/Edit/5
+    // Edit uses a local helper instead of the service because ValidateCreateAsync would false-positive
+    // on the "already enrolled" check for the record being edited.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id,
@@ -126,12 +141,12 @@ public class EnrollmentsController : Controller
             if (existing != null &&
                 (existing.TraineeId != enrollment.TraineeId || existing.SessionId != enrollment.SessionId))
             {
-                var validationError = await ValidateEnrollment(
+                var error = await ValidateEnrollmentEdit(
                     enrollment.TraineeId, enrollment.SessionId, excludeEnrollmentId: id);
 
-                if (validationError != null)
+                if (error != null)
                 {
-                    ModelState.AddModelError(string.Empty, validationError);
+                    ModelState.AddModelError(string.Empty, error);
                     LoadDropdowns(enrollment.TraineeId, enrollment.SessionId, enrollment.EnrollmentStatusId);
                     return View(enrollment);
                 }
@@ -189,22 +204,20 @@ public class EnrollmentsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // ─── Business Rule Helpers ────────────────────────────────────────────────
-
-    private async Task<string?> ValidateEnrollment(
-        int traineeId, int sessionId, int? excludeEnrollmentId = null)
+    // ─── Edit-only validation helper ────────────────────────────────────────
+    // Used only for Edit POST. EnrollmentValidationService is used for Create.
+    // This version accepts an excludeId so the duplicate check skips the record being edited.
+    private async Task<string?> ValidateEnrollmentEdit(
+        int traineeId, int sessionId, int excludeEnrollmentId)
     {
-        // 1. Duplicate check
-        var duplicateQuery = _context.Enrollments
-            .Where(e => e.TraineeId == traineeId && e.SessionId == sessionId);
+        var duplicate = await _context.Enrollments.AnyAsync(e =>
+            e.TraineeId == traineeId &&
+            e.SessionId == sessionId &&
+            e.EnrollmentId != excludeEnrollmentId);
 
-        if (excludeEnrollmentId.HasValue)
-            duplicateQuery = duplicateQuery.Where(e => e.EnrollmentId != excludeEnrollmentId.Value);
-
-        if (await duplicateQuery.AnyAsync())
+        if (duplicate)
             return "This trainee is already enrolled in the selected session.";
 
-        // 2. Capacity check
         var session = await _context.CourseSessions
             .Include(s => s.Enrollments)
             .AsNoTracking()
@@ -212,38 +225,9 @@ public class EnrollmentsController : Controller
 
         if (session == null) return "The selected session does not exist.";
 
-        var enrolledCount = session.Enrollments
-            .Count(e => !excludeEnrollmentId.HasValue || e.EnrollmentId != excludeEnrollmentId.Value);
-
+        var enrolledCount = session.Enrollments.Count(e => e.EnrollmentId != excludeEnrollmentId);
         if (enrolledCount >= session.Capacity)
             return "This session has reached its maximum capacity.";
-
-        // 3. Prerequisite check
-        var prerequisites = await _context.CoursePrerequisites
-            .Where(cp => cp.CourseId == session.CourseId)
-            .AsNoTracking()
-            .ToListAsync();
-
-        foreach (var prereq in prerequisites)
-        {
-            var hasPassed = await _context.Assessments
-                .Include(a => a.Enrollment)
-                    .ThenInclude(e => e.Session)
-                .AnyAsync(a =>
-                    a.Enrollment.TraineeId == traineeId &&
-                    a.Enrollment.Session.CourseId == prereq.CoursePrerequisiteId &&
-                    a.Result == 1);
-
-            if (!hasPassed)
-            {
-                var prereqCourse = await _context.Courses.AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.CourseId == prereq.CoursePrerequisiteId);
-
-                return $"Prerequisite not met: trainee must pass " +
-                       $"\"{prereqCourse?.CourseName ?? $"Course #{prereq.CoursePrerequisiteId}"}\" " +
-                       $"before enrolling in this course.";
-            }
-        }
 
         return null;
     }

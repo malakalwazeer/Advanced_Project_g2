@@ -1,5 +1,7 @@
 using CourseManagementAPI.Data;
+using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
+using CourseManagementAPI.Services.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +11,14 @@ namespace CourseManagement.Controllers;
 public class AssessmentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
+    private readonly AssessmentValidationService _assessmentValidator;
 
-    public AssessmentsController(CourseManagementDbContext context)
+    public AssessmentsController(
+        CourseManagementDbContext context,
+        AssessmentValidationService assessmentValidator)
     {
         _context = context;
+        _assessmentValidator = assessmentValidator;
     }
 
     // GET: Assessments
@@ -59,21 +65,44 @@ public class AssessmentsController : Controller
     }
 
     // POST: Assessments/Create
+    // Uses AssessmentValidationService (from API project, injected via DI) which checks:
+    //   • Enrollment exists
+    //   • Instructor exists and is assigned to the session
+    //   • Session has already ended (EndDateTime <= now)
+    //   • No duplicate assessment for this enrollment
+    // After passing validation, saves via EF Core and triggers certification progress update.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
         [Bind("EnrollmentId,InstructorId,Score,Result")]
         Assessment assessment)
     {
-        // Enrollment and Instructor are non-nullable nav properties not posted from the form.
         ModelState.Remove(nameof(Assessment.Enrollment));
         ModelState.Remove(nameof(Assessment.Instructor));
 
-        if (!ValidateScoreAndResult(assessment, out var scoreError))
-            ModelState.AddModelError(string.Empty, scoreError!);
+        // Score/result range check before calling the service.
+        if (!ValidateScoreAndResult(assessment, out var rangeError))
+            ModelState.AddModelError(string.Empty, rangeError!);
 
         if (ModelState.IsValid)
         {
+            // Map to the DTO the service expects.
+            var dto = new CreateAssessmentDto
+            {
+                EnrollmentId = assessment.EnrollmentId,
+                InstructorId = assessment.InstructorId,
+                Result       = assessment.Result ?? 0,
+                Score        = assessment.Score
+            };
+
+            var error = await _assessmentValidator.ValidateCreateAsync(dto);
+            if (error != null)
+            {
+                ModelState.AddModelError(string.Empty, error);
+                LoadDropdowns(assessment.EnrollmentId, assessment.InstructorId);
+                return View(assessment);
+            }
+
             _context.Add(assessment);
             await _context.SaveChangesAsync();
 
@@ -100,6 +129,9 @@ public class AssessmentsController : Controller
     }
 
     // POST: Assessments/Edit/5
+    // Edit does NOT use AssessmentValidationService — the service's "assessment already exists"
+    // check would always fail for an existing record being edited. Score/result range
+    // validation is applied locally instead.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id,
@@ -111,8 +143,8 @@ public class AssessmentsController : Controller
         ModelState.Remove(nameof(Assessment.Enrollment));
         ModelState.Remove(nameof(Assessment.Instructor));
 
-        if (!ValidateScoreAndResult(assessment, out var scoreError))
-            ModelState.AddModelError(string.Empty, scoreError!);
+        if (!ValidateScoreAndResult(assessment, out var rangeError))
+            ModelState.AddModelError(string.Empty, rangeError!);
 
         if (ModelState.IsValid)
         {
@@ -163,7 +195,6 @@ public class AssessmentsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        // Use FindAsync (tracked) — do not mix AsNoTracking and Remove.
         var assessment = await _context.Assessments.FindAsync(id);
         if (assessment != null)
         {
@@ -179,8 +210,9 @@ public class AssessmentsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // ─── Business Rule Helpers ────────────────────────────────────────────────
+    // ─── Helpers ─────────────────────────────────────────────────────────────
 
+    /// <summary>Validates Score (0–100) and Result (0 or 1). Used for both Create and Edit.</summary>
     private static bool ValidateScoreAndResult(Assessment assessment, out string? errorMessage)
     {
         if (assessment.Score.HasValue && (assessment.Score < 0 || assessment.Score > 100))
@@ -199,6 +231,10 @@ public class AssessmentsController : Controller
         return true;
     }
 
+    /// <summary>
+    /// Recalculates TraineeCertificationProgress for all certifications whose required courses
+    /// include any course the trainee has passed. Called after every Create/Edit/Delete.
+    /// </summary>
     private async Task UpdateCertificationProgressAsync(int enrollmentId)
     {
         var enrollment = await _context.Enrollments
@@ -226,15 +262,15 @@ public class AssessmentsController : Controller
 
         foreach (var certId in relevantCertIds)
         {
-            var requiredCourseIds = await _context.CertificationCourses
+            var requiredIds = await _context.CertificationCourses
                 .Where(cc => cc.CertificationId == certId && cc.IsRequired)
                 .Select(cc => cc.CourseId)
                 .ToListAsync();
 
-            if (requiredCourseIds.Count == 0) continue;
+            if (requiredIds.Count == 0) continue;
 
-            var passedCount = requiredCourseIds.Count(c => traineePassedCourseIds.Contains(c));
-            var pct = Math.Round((decimal)passedCount / requiredCourseIds.Count * 100, 2);
+            var passedCount = requiredIds.Count(c => traineePassedCourseIds.Contains(c));
+            var pct = Math.Round((decimal)passedCount / requiredIds.Count * 100, 2);
 
             var progress = await _context.TraineeCertificationProgresses
                 .FirstOrDefaultAsync(p => p.TraineeId == traineeId && p.CertificationId == certId);
@@ -243,10 +279,10 @@ public class AssessmentsController : Controller
             {
                 _context.TraineeCertificationProgresses.Add(new TraineeCertificationProgress
                 {
-                    TraineeId = traineeId,
-                    CertificationId = certId,
-                    ProgressPercentage = pct,
-                    AchievedDate = pct >= 100 ? DateOnly.FromDateTime(DateTime.Today) : null
+                    TraineeId           = traineeId,
+                    CertificationId     = certId,
+                    ProgressPercentage  = pct,
+                    AchievedDate        = pct >= 100 ? DateOnly.FromDateTime(DateTime.Today) : null
                 });
             }
             else

@@ -1,5 +1,7 @@
 using CourseManagementAPI.Data;
+using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
+using CourseManagementAPI.Services.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +11,14 @@ namespace CourseManagement.Controllers;
 public class PaymentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
+    private readonly PaymentValidationService _paymentValidator;
 
-    public PaymentsController(CourseManagementDbContext context)
+    public PaymentsController(
+        CourseManagementDbContext context,
+        PaymentValidationService paymentValidator)
     {
         _context = context;
+        _paymentValidator = paymentValidator;
     }
 
     // GET: Payments
@@ -59,29 +65,51 @@ public class PaymentsController : Controller
     }
 
     // POST: Payments/Create
+    // Flow:
+    //  1. Resolve the correct PaymentStatus (Paid/Partial/Pending) from totals.
+    //  2. Map to CreatePaymentDto and delegate to PaymentValidationService.
+    //  3. The service returns (ErrorMessage, BalanceRemaining) — use its balance if valid.
+    //  4. Save via EF Core directly.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
         [Bind("EnrollmentId,AmountPaid,PaymentDate")]
         Payment payment)
     {
-        // Enrollment and PaymentStatus are non-nullable nav properties not posted from the form.
         ModelState.Remove(nameof(Payment.Enrollment));
         ModelState.Remove(nameof(Payment.PaymentStatus));
 
         if (ModelState.IsValid)
         {
-            var result = await CalculatePaymentStatus(payment.EnrollmentId, payment.AmountPaid);
-
-            if (result.Error != null)
+            // Step 1: determine which PaymentStatus applies after this payment.
+            var statusResult = await ResolvePaymentStatus(payment.EnrollmentId, payment.AmountPaid);
+            if (statusResult.Error != null)
             {
-                ModelState.AddModelError(string.Empty, result.Error);
+                ModelState.AddModelError(string.Empty, statusResult.Error);
                 LoadDropdowns(payment.EnrollmentId);
                 return View(payment);
             }
 
-            payment.BalanceRemaining = result.BalanceRemaining;
-            payment.PaymentStatusId = result.PaymentStatusId;
+            // Step 2: build the DTO the service expects and run validation.
+            var dto = new CreatePaymentDto
+            {
+                EnrollmentId    = payment.EnrollmentId,
+                AmountPaid      = payment.AmountPaid,
+                PaymentDate     = payment.PaymentDate,
+                PaymentStatusId = statusResult.PaymentStatusId
+            };
+
+            var (errorMessage, balanceRemaining) = await _paymentValidator.ValidateCreateAsync(dto);
+            if (errorMessage != null)
+            {
+                ModelState.AddModelError(string.Empty, errorMessage);
+                LoadDropdowns(payment.EnrollmentId);
+                return View(payment);
+            }
+
+            // Step 3: apply computed values and save.
+            payment.PaymentStatusId  = statusResult.PaymentStatusId;
+            payment.BalanceRemaining = balanceRemaining;
 
             _context.Add(payment);
             await _context.SaveChangesAsync();
@@ -106,6 +134,9 @@ public class PaymentsController : Controller
     }
 
     // POST: Payments/Edit/5
+    // Edit does NOT use PaymentValidationService — the service's "enrollment already fully paid"
+    // check would false-positive because it counts the existing payment being edited.
+    // Custom ResolvePaymentStatus (with excludePaymentId) handles balance recalculation instead.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id,
@@ -119,18 +150,18 @@ public class PaymentsController : Controller
 
         if (ModelState.IsValid)
         {
-            var result = await CalculatePaymentStatus(
+            var statusResult = await ResolvePaymentStatus(
                 payment.EnrollmentId, payment.AmountPaid, excludePaymentId: id);
 
-            if (result.Error != null)
+            if (statusResult.Error != null)
             {
-                ModelState.AddModelError(string.Empty, result.Error);
+                ModelState.AddModelError(string.Empty, statusResult.Error);
                 LoadDropdowns(payment.EnrollmentId);
                 return View(payment);
             }
 
-            payment.BalanceRemaining = result.BalanceRemaining;
-            payment.PaymentStatusId = result.PaymentStatusId;
+            payment.PaymentStatusId  = statusResult.PaymentStatusId;
+            payment.BalanceRemaining = statusResult.BalanceRemaining;
 
             try
             {
@@ -186,14 +217,20 @@ public class PaymentsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // ─── Business Rule Helpers ────────────────────────────────────────────────
+    // ─── Helpers ─────────────────────────────────────────────────────────────
 
-    private record PaymentCalculationResult(
-        decimal BalanceRemaining,
+    private record StatusResolution(
         int PaymentStatusId,
+        decimal BalanceRemaining,
         string? Error);
 
-    private async Task<PaymentCalculationResult> CalculatePaymentStatus(
+    /// <summary>
+    /// Determines Paid / Partial / Pending based on previous payments + the new amount,
+    /// resolves the matching PaymentStatus row, and returns the remaining balance.
+    /// Used for both Create (no excludePaymentId) and Edit (pass excludePaymentId to
+    /// exclude the record being updated from the previous-total sum).
+    /// </summary>
+    private async Task<StatusResolution> ResolvePaymentStatus(
         int enrollmentId, decimal newAmountPaid, int? excludePaymentId = null)
     {
         var enrollment = await _context.Enrollments
@@ -203,7 +240,7 @@ public class PaymentsController : Controller
             .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId);
 
         if (enrollment == null)
-            return new PaymentCalculationResult(0, 0, "Enrollment not found.");
+            return new StatusResolution(0, 0, "Enrollment not found.");
 
         var courseFee = enrollment.Session.Course.EnrollmentFee;
 
@@ -212,21 +249,21 @@ public class PaymentsController : Controller
             prevQuery = prevQuery.Where(p => p.PaymentId != excludePaymentId.Value);
 
         var previousTotal = await prevQuery.SumAsync(p => (decimal?)p.AmountPaid) ?? 0m;
-        var totalPaid = previousTotal + newAmountPaid;
-        var balance = totalPaid >= courseFee ? 0m : courseFee - totalPaid;
+        var totalPaid     = previousTotal + newAmountPaid;
+        var balance       = totalPaid >= courseFee ? 0m : courseFee - totalPaid;
 
-        var statusName = totalPaid <= 0 ? "Pending"
+        var statusName = totalPaid <= 0         ? "Pending"
                        : totalPaid >= courseFee ? "Paid"
-                       : "Partial";
+                                                : "Partial";
 
         var status = await _context.PaymentStatuses.AsNoTracking()
             .FirstOrDefaultAsync(s => s.StatusName == statusName);
 
         if (status == null)
-            return new PaymentCalculationResult(0, 0,
-                $"Payment status '{statusName}' not found. Ensure the database has been seeded.");
+            return new StatusResolution(0, 0,
+                $"Payment status '{statusName}' not found. Ensure the database is seeded.");
 
-        return new PaymentCalculationResult(balance, status.PaymentStatusId, null);
+        return new StatusResolution(status.PaymentStatusId, balance, null);
     }
 
     private void LoadDropdowns(int? selectedEnrollmentId = null, int? selectedStatusId = null)
