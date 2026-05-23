@@ -1,0 +1,76 @@
+@model IEnumerable<CourseManagementAPI.Models.Payment>
+
+@{
+    ViewData["Title"] = "Payments";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Payments</h2>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Create New
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover table-striped mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Trainee</th>
+                    <th>Course</th>
+                    <th>Amount Paid</th>
+                    <th>Payment Date</th>
+                    <th>Balance Remaining</th>
+                    <th>Status</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Enrollment?.Trainee?.FullName</td>
+                        <td>@item.Enrollment?.Session?.Course?.CourseName</td>
+                        <td>@item.AmountPaid.ToString("C")</td>
+                        <td>@item.PaymentDate.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            @if (item.BalanceRemaining == 0)
+                            {
+                                <span class="text-success fw-semibold">Settled</span>
+                            }
+                            else
+                            {
+                                @(item.BalanceRemaining?.ToString("C") ?? "—")
+                            }
+                        </td>
+                        <td>
+                            @{
+                                var badgeClass = item.PaymentStatus?.StatusName switch
+                                {
+                                    "Paid" => "bg-success",
+                                    "Partial" => "bg-warning text-dark",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass">@item.PaymentStatus?.StatusName</span>
+                        </td>
+                        <td class="text-center">
+                            <a asp-action="Details" asp-route-id="@item.PaymentId"
+                               class="btn btn-sm btn-outline-info me-1">Details</a>
+                            <a asp-action="Edit" asp-route-id="@item.PaymentId"
+                               class="btn btn-sm btn-outline-warning me-1">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.PaymentId"
+                               class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No payments found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

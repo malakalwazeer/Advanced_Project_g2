@@ -1,0 +1,125 @@
+@model CourseManagementAPI.Models.Trainee
+
+@{
+    ViewData["Title"] = "Trainee Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Trainee Details</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">
+                <strong>Personal Information</strong>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Full Name</dt>
+                    <dd class="col-sm-8">@Model.FullName</dd>
+
+                    <dt class="col-sm-4">Organization</dt>
+                    <dd class="col-sm-8">@(Model.OrganizationName ?? "—")</dd>
+
+                    <dt class="col-sm-4">Registration Date</dt>
+                    <dd class="col-sm-8">@Model.RegistrationDate.ToString("yyyy-MM-dd")</dd>
+
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">@Model.Email</dd>
+
+                    <dt class="col-sm-4">Phone</dt>
+                    <dd class="col-sm-8">@Model.Phone</dd>
+
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-secondary">@Model.TraineeStatus?.StatusName</span>
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer d-flex gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.TraineeId" class="btn btn-warning btn-sm">Edit</a>
+                <a asp-action="Delete" asp-route-id="@Model.TraineeId" class="btn btn-danger btn-sm">Delete</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <strong>Certification Progress</strong>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Certification</th>
+                            <th>Progress</th>
+                            <th>Achieved</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.TraineeCertificationProgresses)
+                        {
+                            <tr>
+                                <td>@p.Certification?.Name</td>
+                                <td>
+                                    <div class="progress" style="height:18px;">
+                                        <div class="progress-bar bg-success"
+                                             role="progressbar"
+                                             style="width:@p.ProgressPercentage%"
+                                             aria-valuenow="@p.ProgressPercentage"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            @p.ProgressPercentage%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@(p.AchievedDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                            </tr>
+                        }
+                        @if (!Model.TraineeCertificationProgresses.Any())
+                        {
+                            <tr><td colspan="3" class="text-muted text-center py-3">No progress records.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-secondary text-white">
+        <strong>Enrollments</strong>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Course</th>
+                    <th>Session Start</th>
+                    <th>Session End</th>
+                    <th>Enrollment Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Enrollments)
+                {
+                    <tr>
+                        <td>@e.Session?.Course?.CourseName</td>
+                        <td>@e.Session?.StartDateTime.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@e.Session?.EndDateTime.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@e.EnrollmentDate.ToString("yyyy-MM-dd")</td>
+                        <td><span class="badge bg-info text-dark">@e.EnrollmentStatus?.StatusName</span></td>
+                    </tr>
+                }
+                @if (!Model.Enrollments.Any())
+                {
+                    <tr><td colspan="5" class="text-muted text-center py-3">No enrollments found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

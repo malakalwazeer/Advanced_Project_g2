@@ -1,0 +1,71 @@
+@model CourseManagementAPI.Models.Assessment
+
+@{
+    ViewData["Title"] = "Edit Assessment";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Edit Assessment</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">Edit Assessment #@Model.AssessmentId</div>
+            <div class="card-body">
+                <form asp-action="Edit">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <input type="hidden" asp-for="AssessmentId" />
+
+                    <div class="mb-3">
+                        <label asp-for="EnrollmentId" class="form-label fw-semibold">Enrollment</label>
+                        <select asp-for="EnrollmentId" asp-items="ViewBag.EnrollmentId" class="form-select">
+                            <option value="">-- Select Enrollment --</option>
+                        </select>
+                        <span asp-validation-for="EnrollmentId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="InstructorId" class="form-label fw-semibold">Instructor</label>
+                        <select asp-for="InstructorId" asp-items="ViewBag.InstructorId" class="form-select">
+                            <option value="">-- Select Instructor --</option>
+                        </select>
+                        <span asp-validation-for="InstructorId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Score" class="form-label fw-semibold">Score (0 – 100)</label>
+                        <input asp-for="Score" type="number" min="0" max="100" class="form-control" />
+                        <span asp-validation-for="Score" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Result" class="form-label fw-semibold">Result</label>
+                        <select asp-for="Result" class="form-select">
+                            <option value="">-- Not Graded --</option>
+                            <option value="1">Pass</option>
+                            <option value="0">Fail</option>
+                        </select>
+                        <span asp-validation-for="Result" class="text-danger small"></span>
+                    </div>
+
+                    <div class="alert alert-info small py-2">
+                        <strong>Note:</strong> Certification progress is recalculated automatically on save.
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-warning">Save Changes</button>
+                        <a asp-action="Details" asp-route-id="@Model.AssessmentId" class="btn btn-outline-info">View Details</a>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
