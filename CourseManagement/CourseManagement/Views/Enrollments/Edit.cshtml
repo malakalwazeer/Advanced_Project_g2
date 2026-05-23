@@ -11,23 +11,6 @@
 
 <div class="row justify-content-center">
     <div class="col-md-6">
-
-        @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
-        {
-            <div class="alert alert-warning">
-                <strong>Validation issues:</strong>
-                <ul class="mb-0 mt-1">
-                    @foreach (var kv in ViewData.ModelState.Where(m => m.Value!.Errors.Any()))
-                    {
-                        foreach (var err in kv.Value!.Errors)
-                        {
-                            <li><code>@kv.Key</code>: @err.ErrorMessage</li>
-                        }
-                    }
-                </ul>
-            </div>
-        }
-
         <div class="card shadow-sm">
             <div class="card-header bg-warning text-dark">Edit Enrollment</div>
             <div class="card-body">

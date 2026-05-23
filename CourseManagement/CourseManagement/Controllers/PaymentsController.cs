@@ -254,7 +254,7 @@ public class PaymentsController : Controller
 
         var statusName = totalPaid <= 0         ? "Pending"
                        : totalPaid >= courseFee ? "Paid"
-                                                : "Partial";
+                                                : "Partially Paid";
 
         var status = await _context.PaymentStatuses.AsNoTracking()
             .FirstOrDefaultAsync(s => s.StatusName == statusName);
