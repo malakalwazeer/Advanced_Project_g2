@@ -1,0 +1,24 @@
+@model CourseManagementAPI.Models.ClassroomEquipment
+
+@{ ViewData["Title"] = "Delete Room Equipment"; }
+
+<h2>Delete Assignment</h2>
+<h3>Are you sure you want to remove this equipment from the classroom?</h3>
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-2">Classroom:</dt>
+        <dd class="col-sm-10">@Model.Classroom.Location</dd>
+        <dt class="col-sm-2">Equipment:</dt>
+        <dd class="col-sm-10">@Model.Equipment.EquipmentName</dd>
+        <dt class="col-sm-2">Quantity:</dt>
+        <dd class="col-sm-10">@Model.Quantity</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post">
+        <input type="hidden" name="classroomId" value="@Model.ClassroomId" />
+        <input type="hidden" name="equipmentId" value="@Model.EquipmentId" />
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

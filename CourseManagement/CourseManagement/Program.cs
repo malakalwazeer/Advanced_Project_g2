@@ -19,6 +19,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
+builder.Services.AddScoped<CourseManagementAPI.Services.Validation.CourseValidationService>(); 
+builder.Services.AddScoped<CourseManagementAPI.Services.Validation.CourseSessionValidationService>(); 
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

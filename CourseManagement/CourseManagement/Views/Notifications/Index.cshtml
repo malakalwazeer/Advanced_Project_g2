@@ -1,0 +1,23 @@
+@model IEnumerable<CourseManagementAPI.Models.Notification>
+
+<h2>Notifications</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Message</th>
+            <th>Session ID</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>@item.Message</td>
+                <td>@item.SessionId</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using CourseManagement.Models;
+using CourseManagement.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseManagement.Controllers
@@ -15,6 +15,10 @@ namespace CourseManagement.Controllers
 
         public IActionResult Index()
         {
+            if (User.IsInRole("Coordinator"))
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
             return View();
         }
 

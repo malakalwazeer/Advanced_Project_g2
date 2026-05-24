@@ -1,4 +1,4 @@
-using CourseManagement.Models;
+using CourseManagement.ViewModels;
 using CourseManagementAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;

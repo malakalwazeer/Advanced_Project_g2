@@ -1,0 +1,38 @@
+@model IEnumerable<CourseManagement.ViewModels.ExpertiseIndexViewModel>
+
+@{
+    ViewData["Title"] = "Instructor Expertise";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>@ViewData["Title"]</h1>
+        <a asp-action="Create" class="btn btn-primary">Link Instructor to Category</a>
+    </div>
+
+    <table class="table table-striped table-hover shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Instructor Name</th>
+                <th>Course Category</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.InstructorName</td>
+                    <td>@item.CategoryName</td>
+                    <td>
+                        <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to remove this expertise link?');">
+                            <input type="hidden" name="instructorId" value="@item.InstructorId" />
+                            <input type="hidden" name="categoryId" value="@item.CategoryId" />
+                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

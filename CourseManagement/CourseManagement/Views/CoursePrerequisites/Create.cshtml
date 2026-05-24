@@ -1,0 +1,42 @@
+@model CourseManagement.ViewModels.CoursePrerequisiteCreateViewModel
+
+@{
+    ViewData["Title"] = "Add Course Prerequisite";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="mb-3">
+                    <label asp-for="CourseId" class="form-label"></label>
+                    <select asp-for="CourseId" class="form-select" asp-items="ViewBag.CourseId">
+                        <option value="">-- Select Course --</option>
+                    </select>
+                    <span asp-validation-for="CourseId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="PrerequisiteCourseId" class="form-label"></label>
+                    <select asp-for="PrerequisiteCourseId" class="form-select" asp-items="ViewBag.PrerequisiteCourseId">
+                        <option value="">-- Select Prerequisite --</option>
+                    </select>
+                    <span asp-validation-for="PrerequisiteCourseId" class="text-danger"></span>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Link Courses</button>
+                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
