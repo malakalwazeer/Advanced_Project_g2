@@ -65,18 +65,46 @@
                         </div>
                     </div>
                 }
-                else if (!Model.IsValid)
-                {
-                    <!-- Invalid Certificate -->
-                    <div class="card border-danger shadow-sm">
-                        <div class="card-header bg-danger text-white fw-semibold">
-                            &#10060; Certificate Not Valid
+                    else if (!Model.IsValid)
+                    {
+                        <div class="card border-danger shadow-sm">
+                            <div class="card-header bg-danger text-white fw-semibold">
+                                &#10060; Certificate Not Valid
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-2 text-danger fw-semibold">@Model.Message</p>
+
+                                <div class="row mb-2">
+                                    <div class="col-sm-4 text-muted">Trainee</div>
+                                    <div class="col-sm-8 fw-semibold">@Model.TraineeName</div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-sm-4 text-muted">Certification</div>
+                                    <div class="col-sm-8 fw-semibold">@Model.CertificationName</div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-sm-4 text-muted">Progress</div>
+                                    <div class="col-sm-8">
+                                        @Model.CompletedCoursesCount / @Model.RequiredCoursesCount courses completed
+                                        (@Model.ProgressPercentage.ToString("F1")%)
+                                    </div>
+                                </div>
+
+                                @if (Model.MissingCourses.Any())
+                                {
+                                    <h6 class="fw-semibold mt-3 text-warning">Missing Courses</h6>
+                                    <ul>
+                                        @foreach (var course in Model.MissingCourses)
+                                        {
+                                            <li>@course</li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <p class="mb-0 text-danger fw-semibold">@Model.Message</p>
-                        </div>
-                    </div>
-                }
+                    }
                 else
                 {
                     <!-- Valid Certificate -->
@@ -133,20 +161,6 @@
                                     }
                                 </ul>
                             }
-
-                            @if (Model.MissingCourses.Any())
-                            {
-                                <h6 class="fw-semibold mt-3 text-warning">Missing Courses</h6>
-                                <ul class="list-group list-group-flush">
-                                    @foreach (var course in Model.MissingCourses)
-                                    {
-                                        <li class="list-group-item d-flex align-items-center gap-2 ps-0">
-                                            <span class="text-warning">&#9888;</span> @course
-                                        </li>
-                                    }
-                                </ul>
-                            }
-
                         </div>
                     </div>
                 }

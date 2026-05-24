@@ -59,12 +59,26 @@ public class PublicCertificationLookupController : Controller
             }
             else
             {
-                var errorBody = await response.Content.ReadAsStringAsync();
+                var result = await response.Content.ReadFromJsonAsync<CertificationLookupResultDto>();
+
                 model.HasResult = true;
                 model.IsValid = false;
-                model.ErrorMessage = string.IsNullOrWhiteSpace(errorBody)
-                    ? $"Verification failed (HTTP {(int)response.StatusCode})."
-                    : errorBody;
+
+                if (result is not null)
+                {
+                    model.Message = result.Message;
+                    model.TraineeName = result.TraineeName;
+                    model.CertificationName = result.CertificationName;
+                    model.RequiredCoursesCount = result.RequiredCoursesCount;
+                    model.CompletedCoursesCount = result.CompletedCoursesCount;
+                    model.ProgressPercentage = result.ProgressPercentage;
+                    model.CompletedCourses = result.CompletedCourses ?? new List<string>();
+                    model.MissingCourses = result.MissingCourses ?? new List<string>();
+                }
+                else
+                {
+                    model.ErrorMessage = "Certificate verification failed. Please check the trainee ID and reference number.";
+                }
             }
         }
         catch (HttpRequestException)
