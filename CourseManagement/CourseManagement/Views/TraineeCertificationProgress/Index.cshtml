@@ -48,14 +48,14 @@
                                      style="width:@pctStr%"
                                      aria-valuenow="@pctStr"
                                      aria-valuemin="0" aria-valuemax="100">
-                                    @item.ProgressPercentage%
+                                    @pctStr%
                                 </div>
                             </div>
                         </td>
                         <td class="text-center">
                             @if (item.AchievedDate.HasValue)
                             {
-                                <span class="badge bg-success">@item.AchievedDate.Value.ToString("yyyy-MM-dd")</span>
+                                <span class="badge bg-success">@(item.AchievedDate.Value.ToString("yyyy-MM-dd"))</span>
                             }
                             else
                             {
