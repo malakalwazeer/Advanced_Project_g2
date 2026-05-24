@@ -1,0 +1,161 @@
+@model CourseManagement.Models.ViewModels.PublicCertificationLookupViewModel
+
+@{
+    ViewData["Title"] = "Certificate Verification";
+    Layout = "_Layout";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+
+            <!-- Page Header -->
+            <div class="text-center mb-4">
+                <div class="display-6 fw-bold text-primary">
+                    <i class="bi bi-patch-check-fill"></i> Certificate Verification
+                </div>
+                <p class="text-muted mt-2">Enter your Trainee ID and Certificate Reference Number to verify your certification status.</p>
+            </div>
+
+            <!-- Lookup Form -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white fw-semibold">
+                    Verify Your Certificate
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Index" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="TraineeId" class="form-label fw-semibold">Trainee ID</label>
+                            <input asp-for="TraineeId" type="number" class="form-control form-control-lg"
+                                   placeholder="e.g. 42" min="1" />
+                            <span asp-validation-for="TraineeId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CertificateReferenceNumber" class="form-label fw-semibold">Certificate Reference Number</label>
+                            <input asp-for="CertificateReferenceNumber" class="form-control form-control-lg"
+                                   placeholder="e.g. CERT-42-3" />
+                            <div class="form-text">Format: <code>CERT-{TraineeId}-{CertificationId}</code></div>
+                            <span asp-validation-for="CertificateReferenceNumber" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Verify Certificate
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            @if (Model.HasResult)
+            {
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <!-- Service / HTTP Error -->
+                    <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
+                        <span class="fs-5">&#10060;</span>
+                        <div>
+                            <strong>Verification Error</strong><br />
+                            @Model.ErrorMessage
+                        </div>
+                    </div>
+                }
+                else if (!Model.IsValid)
+                {
+                    <!-- Invalid Certificate -->
+                    <div class="card border-danger shadow-sm">
+                        <div class="card-header bg-danger text-white fw-semibold">
+                            &#10060; Certificate Not Valid
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0 text-danger fw-semibold">@Model.Message</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Valid Certificate -->
+                    <div class="card border-success shadow-sm">
+                        <div class="card-header bg-success text-white fw-semibold">
+                            &#9989; Certificate Verified
+                        </div>
+                        <div class="card-body p-4">
+
+                            <div class="row mb-3">
+                                <div class="col-sm-4 text-muted">Trainee</div>
+                                <div class="col-sm-8 fw-semibold">@Model.TraineeName</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4 text-muted">Certification</div>
+                                <div class="col-sm-8 fw-semibold">@Model.CertificationName</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4 text-muted">Reference</div>
+                                <div class="col-sm-8"><code>@Model.CertificateReferenceNumber</code></div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4 text-muted">Progress</div>
+                                <div class="col-sm-8">
+                                    @Model.CompletedCoursesCount / @Model.RequiredCoursesCount courses completed
+                                    <div class="progress mt-1" style="height: 10px;">
+                                        <div class="progress-bar bg-success"
+                                             role="progressbar"
+                                             style="width: @(Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"
+                                             aria-valuenow="@Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">@Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%</small>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(Model.Message))
+                            {
+                                <div class="alert alert-success py-2 mb-3">
+                                    @Model.Message
+                                </div>
+                            }
+
+                            @if (Model.CompletedCourses.Any())
+                            {
+                                <h6 class="fw-semibold mt-3 text-success">Completed Courses</h6>
+                                <ul class="list-group list-group-flush mb-3">
+                                    @foreach (var course in Model.CompletedCourses)
+                                    {
+                                        <li class="list-group-item d-flex align-items-center gap-2 ps-0">
+                                            <span class="text-success">&#9989;</span> @course
+                                        </li>
+                                    }
+                                </ul>
+                            }
+
+                            @if (Model.MissingCourses.Any())
+                            {
+                                <h6 class="fw-semibold mt-3 text-warning">Missing Courses</h6>
+                                <ul class="list-group list-group-flush">
+                                    @foreach (var course in Model.MissingCourses)
+                                    {
+                                        <li class="list-group-item d-flex align-items-center gap-2 ps-0">
+                                            <span class="text-warning">&#9888;</span> @course
+                                        </li>
+                                    }
+                                </ul>
+                            }
+
+                        </div>
+                    </div>
+                }
+            }
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

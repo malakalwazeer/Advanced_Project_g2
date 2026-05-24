@@ -13,6 +13,16 @@ builder.Services.AddScoped<EnrollmentValidationService>();
 builder.Services.AddScoped<PaymentValidationService>();
 builder.Services.AddScoped<AssessmentValidationService>();
 
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7072/";
+builder.Services.AddHttpClient("ApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
