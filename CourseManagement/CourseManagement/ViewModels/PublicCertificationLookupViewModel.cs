@@ -1,4 +1,4 @@
-namespace CourseManagement.Models.ViewModels;
+namespace CourseManagement.ViewModels;
 
 public class PublicCertificationLookupViewModel
 {

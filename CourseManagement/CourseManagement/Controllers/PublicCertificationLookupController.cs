@@ -1,4 +1,4 @@
-using CourseManagement.Models.ViewModels;
+using CourseManagement.ViewModels;
 using CourseManagementAPI.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
