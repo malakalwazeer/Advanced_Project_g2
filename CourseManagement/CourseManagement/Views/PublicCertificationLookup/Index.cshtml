@@ -58,7 +58,6 @@
                 {
                     <!-- Service / HTTP Error -->
                     <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
-                        <span class="fs-5">&#10060;</span>
                         <div>
                             <strong>Verification Error</strong><br />
                             @Model.ErrorMessage
@@ -69,7 +68,7 @@
                     {
                         <div class="card border-danger shadow-sm">
                             <div class="card-header bg-danger text-white fw-semibold">
-                                &#10060; Certificate Not Valid
+                                Certificate Not Valid
                             </div>
                             <div class="card-body">
                                 <p class="mb-2 text-danger fw-semibold">@Model.Message</p>
@@ -110,7 +109,7 @@
                     <!-- Valid Certificate -->
                     <div class="card border-success shadow-sm">
                         <div class="card-header bg-success text-white fw-semibold">
-                            &#9989; Certificate Verified
+                            Certificate Verified
                         </div>
                         <div class="card-body p-4">
 
@@ -156,11 +155,12 @@
                                     @foreach (var course in Model.CompletedCourses)
                                     {
                                         <li class="list-group-item d-flex align-items-center gap-2 ps-0">
-                                            <span class="text-success">&#9989;</span> @course
+                                            <span class="text-success"></span> @course
                                         </li>
                                     }
                                 </ul>
                             }
+
                         </div>
                     </div>
                 }
