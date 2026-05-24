@@ -1,0 +1,32 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model List<ReportingCourseManagement.Dtos.CertificationCompletionReportDto>
+
+@{
+    ViewData["Title"] = "Certification Completion";
+}
+
+<h2>Certification Completion</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Certification Name</th>
+            <th>Completed Count</th>
+            <th>In Progress Count</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.CertificationName</td>
+                <td>@item.CompletedCount</td>
+                <td>@item.InProgressCount</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-controller="Reports" asp-action="Index" class="btn btn-secondary">Back to Dashboard</a>
