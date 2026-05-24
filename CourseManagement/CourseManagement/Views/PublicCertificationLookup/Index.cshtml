@@ -38,7 +38,7 @@
                             <label asp-for="CertificateReferenceNumber" class="form-label fw-semibold">Certificate Reference Number</label>
                             <input asp-for="CertificateReferenceNumber" class="form-control form-control-lg"
                                    placeholder="e.g. CERT-42-3" />
-                            <div class="form-text">Format: <code>CERT-[TraineeId]-[CertificationId]</code></div>
+                            <div class="form-text">Format: <code>CERT-{TraineeId}-{CertificationId}</code></div>
                             <span asp-validation-for="CertificateReferenceNumber" class="text-danger small"></span>
                         </div>
 
