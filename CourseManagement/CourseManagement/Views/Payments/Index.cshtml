@@ -1,4 +1,4 @@
-@model IEnumerable<CourseManagementAPI.Models.Payment>
+@model IEnumerable<CourseManagement.ViewModels.PaymentIndexViewModel>
 
 @{
     ViewData["Title"] = "Payments";
@@ -13,6 +13,14 @@
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
@@ -35,10 +43,10 @@
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td>@item.Enrollment?.Trainee?.FullName</td>
-                        <td>@item.Enrollment?.Session?.Course?.CourseName</td>
-                        <td>@item.AmountPaid.ToString("N2")</td>
-                        <td>@item.PaymentDate.ToString("yyyy-MM-dd")</td>
+                        <td>@item.TraineeName</td>
+                        <td>@item.CourseName</td>
+                        <td>@(item.AmountPaid.ToString("N2", System.Globalization.CultureInfo.InvariantCulture))</td>
+                        <td>@(item.PaymentDate.ToString("yyyy-MM-dd"))</td>
                         <td>
                             @if (item.BalanceRemaining == 0)
                             {
@@ -46,19 +54,19 @@
                             }
                             else
                             {
-                                @(item.BalanceRemaining?.ToString("N2") ?? "—")
+                                @(item.BalanceRemaining.HasValue ? item.BalanceRemaining.Value.ToString("N2", System.Globalization.CultureInfo.InvariantCulture) : "—")
                             }
                         </td>
                         <td>
                             @{
-                                var badgeClass = item.PaymentStatus?.StatusName switch
+                                var badgeClass = item.StatusName switch
                                 {
                                     "Paid"    => "bg-success",
                                     "Partial" => "bg-warning text-dark",
                                     _         => "bg-secondary"
                                 };
                             }
-                            <span class="badge @badgeClass">@item.PaymentStatus?.StatusName</span>
+                            <span class="badge @badgeClass">@item.StatusName</span>
                         </td>
                         <td class="text-center">
                             <a asp-action="Details" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-info me-1">Details</a>

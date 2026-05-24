@@ -1,9 +1,7 @@
-@model CourseManagementAPI.Models.TraineeCertificationProgress
+@model CourseManagement.ViewModels.TraineeCertificationProgressDetailsViewModel
 
 @{
     ViewData["Title"] = "Certification Progress Details";
-    var requiredCount = (int)(ViewData["RequiredCourseCount"] ?? 0);
-    var passedCount   = (int)(ViewData["PassedCourseCount"]   ?? 0);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -18,29 +16,30 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-5">Trainee</dt>
-                    <dd class="col-sm-7">@Model.Trainee?.FullName</dd>
+                    <dd class="col-sm-7">@Model.TraineeName</dd>
 
                     <dt class="col-sm-5">Certification</dt>
-                    <dd class="col-sm-7">@Model.Certification?.Name</dd>
+                    <dd class="col-sm-7">@Model.CertificationName</dd>
 
                     <dt class="col-sm-5">Progress</dt>
                     <dd class="col-sm-7">
                         <div class="progress mb-1" style="height:20px;">
                             @{
-                                var pct = (double)Model.ProgressPercentage;
-                                var barClass = pct >= 100 ? "bg-success"
-                                             : pct >= 50  ? "bg-info"
+                                var pctStr = Model.ProgressPercentage.ToString("F1",
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                                var barClass = Model.ProgressPercentage >= 100 ? "bg-success"
+                                             : Model.ProgressPercentage >= 50  ? "bg-info"
                                              : "bg-warning";
                             }
                             <div class="progress-bar @barClass"
                                  role="progressbar"
-                                 style="width:@pct%"
-                                 aria-valuenow="@pct"
+                                 style="width:@pctStr%"
+                                 aria-valuenow="@pctStr"
                                  aria-valuemin="0" aria-valuemax="100">
-                                @Model.ProgressPercentage%
+                                @pctStr%
                             </div>
                         </div>
-                        <small class="text-muted">@passedCount of @requiredCount required courses passed</small>
+                        <small class="text-muted">@Model.PassedCoursesCount of @Model.RequiredCoursesCount required courses passed</small>
                     </dd>
 
                     <dt class="col-sm-5">Achieved Date</dt>
@@ -48,7 +47,7 @@
                         @if (Model.AchievedDate.HasValue)
                         {
                             <span class="badge bg-success fs-6">
-                                @Model.AchievedDate.Value.ToString("yyyy-MM-dd")
+                                @(Model.AchievedDate.Value.ToString("yyyy-MM-dd"))
                             </span>
                         }
                         else
@@ -83,10 +82,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var cc in Model.Certification?.CertificationCourses ?? Enumerable.Empty<CourseManagementAPI.Models.CertificationCourse>())
+                        @foreach (var cc in Model.CertificationCourses)
                         {
                             <tr>
-                                <td>@cc.Course?.CourseName</td>
+                                <td>@cc.CourseName</td>
                                 <td class="text-center">
                                     @if (cc.IsRequired)
                                     {
@@ -99,7 +98,7 @@
                                 </td>
                             </tr>
                         }
-                        @if (!(Model.Certification?.CertificationCourses?.Any() ?? false))
+                        @if (!Model.CertificationCourses.Any())
                         {
                             <tr><td colspan="2" class="text-muted text-center py-3">No courses linked.</td></tr>
                         }

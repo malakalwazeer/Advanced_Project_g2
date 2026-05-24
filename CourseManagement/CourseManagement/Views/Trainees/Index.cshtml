@@ -1,4 +1,4 @@
-@model IEnumerable<CourseManagementAPI.Models.Trainee>
+@model IEnumerable<CourseManagement.ViewModels.TraineeIndexViewModel>
 
 @{
     ViewData["Title"] = "Trainees";
@@ -37,10 +37,10 @@
                     <tr>
                         <td>@item.FullName</td>
                         <td>@(item.OrganizationName ?? "—")</td>
-                        <td>@item.RegistrationDate.ToString("yyyy-MM-dd")</td>
+                        <td>@(item.RegistrationDate.ToString("yyyy-MM-dd"))</td>
                         <td>@item.Email</td>
                         <td>@item.Phone</td>
-                        <td><span class="badge bg-secondary">@item.TraineeStatus?.StatusName</span></td>
+                        <td><span class="badge bg-secondary">@item.StatusName</span></td>
                         <td class="text-center">
                             <a asp-action="Details" asp-route-id="@item.TraineeId" class="btn btn-sm btn-outline-info me-1">Details</a>
                             <a asp-action="Edit"    asp-route-id="@item.TraineeId" class="btn btn-sm btn-outline-warning me-1">Edit</a>

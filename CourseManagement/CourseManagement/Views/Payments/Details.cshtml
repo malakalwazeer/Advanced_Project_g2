@@ -1,4 +1,4 @@
-@model CourseManagementAPI.Models.Payment
+@model CourseManagement.ViewModels.PaymentDetailsViewModel
 
 @{
     ViewData["Title"] = "Payment Details";
@@ -16,16 +16,16 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-4">Trainee</dt>
-                    <dd class="col-sm-8">@Model.Enrollment?.Trainee?.FullName</dd>
+                    <dd class="col-sm-8">@Model.TraineeName</dd>
 
                     <dt class="col-sm-4">Course</dt>
-                    <dd class="col-sm-8">@Model.Enrollment?.Session?.Course?.CourseName</dd>
+                    <dd class="col-sm-8">@Model.CourseName</dd>
 
                     <dt class="col-sm-4">Amount Paid</dt>
-                    <dd class="col-sm-8">@Model.AmountPaid.ToString("C")</dd>
+                    <dd class="col-sm-8">@(Model.AmountPaid.ToString("N2", System.Globalization.CultureInfo.InvariantCulture))</dd>
 
                     <dt class="col-sm-4">Payment Date</dt>
-                    <dd class="col-sm-8">@Model.PaymentDate.ToString("yyyy-MM-dd")</dd>
+                    <dd class="col-sm-8">@(Model.PaymentDate.ToString("yyyy-MM-dd"))</dd>
 
                     <dt class="col-sm-4">Balance Remaining</dt>
                     <dd class="col-sm-8">
@@ -35,21 +35,21 @@
                         }
                         else
                         {
-                            @(Model.BalanceRemaining?.ToString("C") ?? "—")
+                            @(Model.BalanceRemaining.HasValue ? Model.BalanceRemaining.Value.ToString("N2", System.Globalization.CultureInfo.InvariantCulture) : "—")
                         }
                     </dd>
 
                     <dt class="col-sm-4">Payment Status</dt>
                     <dd class="col-sm-8">
                         @{
-                            var badgeClass = Model.PaymentStatus?.StatusName switch
+                            var badgeClass = Model.StatusName switch
                             {
-                                "Paid" => "bg-success",
+                                "Paid"    => "bg-success",
                                 "Partial" => "bg-warning text-dark",
-                                _ => "bg-secondary"
+                                _         => "bg-secondary"
                             };
                         }
-                        <span class="badge @badgeClass">@Model.PaymentStatus?.StatusName</span>
+                        <span class="badge @badgeClass">@Model.StatusName</span>
                     </dd>
                 </dl>
             </div>

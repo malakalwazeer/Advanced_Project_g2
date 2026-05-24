@@ -1,11 +1,14 @@
+using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
+[Authorize(Roles = "TrainingCoordinator,Trainee")]
 public class TraineeCertificationProgressController : Controller
 {
     private readonly CourseManagementDbContext _context;
@@ -15,7 +18,6 @@ public class TraineeCertificationProgressController : Controller
         _context = context;
     }
 
-    // GET: TraineeCertificationProgress
     public async Task<IActionResult> Index()
     {
         var progresses = await _context.TraineeCertificationProgresses
@@ -24,15 +26,24 @@ public class TraineeCertificationProgressController : Controller
             .AsNoTracking()
             .ToListAsync();
 
-        return View(progresses);
+        var vm = progresses.Select(p => new TraineeCertificationProgressIndexViewModel
+        {
+            TraineeId         = p.TraineeId,
+            CertificationId   = p.CertificationId,
+            TraineeName       = p.Trainee?.FullName,
+            CertificationName = p.Certification?.Name,
+            ProgressPercentage = p.ProgressPercentage,
+            AchievedDate      = p.AchievedDate
+        }).ToList();
+
+        return View(vm);
     }
 
-    // GET: TraineeCertificationProgress/Details?traineeId=5&certificationId=3
     public async Task<IActionResult> Details(int? traineeId, int? certificationId)
     {
         if (traineeId == null || certificationId == null) return NotFound();
 
-        var progress = await _context.TraineeCertificationProgresses
+        var p = await _context.TraineeCertificationProgresses
             .Include(p => p.Trainee)
             .Include(p => p.Certification)
                 .ThenInclude(c => c.CertificationCourses)
@@ -41,15 +52,32 @@ public class TraineeCertificationProgressController : Controller
             .FirstOrDefaultAsync(p =>
                 p.TraineeId == traineeId && p.CertificationId == certificationId);
 
-        if (progress == null) return NotFound();
+        if (p == null) return NotFound();
 
-        ViewData["RequiredCourseCount"] = await CountRequiredCourses(certificationId.Value);
-        ViewData["PassedCourseCount"]   = await CountPassedRequiredCourses(traineeId.Value, certificationId.Value);
+        int requiredCount = await CountRequiredCourses(certificationId.Value);
+        int passedCount   = await CountPassedRequiredCourses(traineeId.Value, certificationId.Value);
 
-        return View(progress);
+        var vm = new TraineeCertificationProgressDetailsViewModel
+        {
+            TraineeId           = p.TraineeId,
+            CertificationId     = p.CertificationId,
+            TraineeName         = p.Trainee?.FullName,
+            CertificationName   = p.Certification?.Name,
+            ProgressPercentage  = p.ProgressPercentage,
+            AchievedDate        = p.AchievedDate,
+            RequiredCoursesCount = requiredCount,
+            PassedCoursesCount  = passedCount,
+            CertificationCourses = (p.Certification?.CertificationCourses ?? [])
+                .Select(cc => new CertCourseRow
+                {
+                    CourseName = cc.Course?.CourseName,
+                    IsRequired = cc.IsRequired
+                }).ToList()
+        };
+
+        return View(vm);
     }
 
-    // GET: TraineeCertificationProgress/Edit?traineeId=5&certificationId=3
     public async Task<IActionResult> Edit(int? traineeId, int? certificationId)
     {
         if (traineeId == null || certificationId == null) return NotFound();
@@ -64,7 +92,6 @@ public class TraineeCertificationProgressController : Controller
         return View(progress);
     }
 
-    // POST: TraineeCertificationProgress/Edit?traineeId=5&certificationId=3
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int traineeId, int certificationId,
@@ -101,24 +128,32 @@ public class TraineeCertificationProgressController : Controller
         return View(progress);
     }
 
-    // GET: TraineeCertificationProgress/Delete?traineeId=5&certificationId=3
     public async Task<IActionResult> Delete(int? traineeId, int? certificationId)
     {
         if (traineeId == null || certificationId == null) return NotFound();
 
-        var progress = await _context.TraineeCertificationProgresses
+        var p = await _context.TraineeCertificationProgresses
             .Include(p => p.Trainee)
             .Include(p => p.Certification)
             .AsNoTracking()
             .FirstOrDefaultAsync(p =>
                 p.TraineeId == traineeId && p.CertificationId == certificationId);
 
-        if (progress == null) return NotFound();
+        if (p == null) return NotFound();
 
-        return View(progress);
+        var vm = new TraineeCertificationProgressDeleteViewModel
+        {
+            TraineeId         = p.TraineeId,
+            CertificationId   = p.CertificationId,
+            TraineeName       = p.Trainee?.FullName,
+            CertificationName = p.Certification?.Name,
+            ProgressPercentage = p.ProgressPercentage,
+            AchievedDate      = p.AchievedDate
+        };
+
+        return View(vm);
     }
 
-    // POST: TraineeCertificationProgress/Delete
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int traineeId, int certificationId)
@@ -137,7 +172,7 @@ public class TraineeCertificationProgressController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // ─── Business Rule Helpers ────────────────────────────────────────────────
+    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private async Task RecalculateProgress(TraineeCertificationProgress progress)
     {

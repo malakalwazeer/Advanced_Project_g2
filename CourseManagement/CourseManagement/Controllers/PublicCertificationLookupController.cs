@@ -1,10 +1,12 @@
 using CourseManagement.ViewModels;
 using CourseManagementAPI.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 
 namespace CourseManagement.Controllers;
 
+[AllowAnonymous]
 public class PublicCertificationLookupController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -39,52 +41,34 @@ public class PublicCertificationLookupController : Controller
         {
             var response = await client.PostAsJsonAsync("api/PublicCertifications/verify", requestDto);
 
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<CertificationLookupResultDto>();
+            var result = await response.Content.ReadFromJsonAsync<CertificationLookupResultDto>();
 
-                if (result is not null)
-                {
-                    model.HasResult = true;
-                    model.IsValid = result.IsValid;
-                    model.Message = result.Message;
-                    model.TraineeName = result.TraineeName;
-                    model.CertificationName = result.CertificationName;
-                    model.RequiredCoursesCount = result.RequiredCoursesCount;
-                    model.CompletedCoursesCount = result.CompletedCoursesCount;
-                    model.ProgressPercentage = result.ProgressPercentage;
-                    model.CompletedCourses = result.CompletedCourses ?? new List<string>();
-                    model.MissingCourses = result.MissingCourses ?? new List<string>();
-                }
+            if (result is not null)
+            {
+                model.HasResult              = true;
+                model.IsValid                = result.IsValid;
+                model.Message                = result.Message;
+                model.TraineeName            = result.TraineeName;
+                model.CertificationName      = result.CertificationName;
+                model.RequiredCoursesCount   = result.RequiredCoursesCount;
+                model.CompletedCoursesCount  = result.CompletedCoursesCount;
+                model.ProgressPercentage     = result.ProgressPercentage;
+                model.CompletedCourses       = result.CompletedCourses ?? new List<string>();
+                model.MissingCourses         = result.MissingCourses ?? new List<string>();
             }
             else
             {
-                var result = await response.Content.ReadFromJsonAsync<CertificationLookupResultDto>();
-
-                model.HasResult = true;
-                model.IsValid = false;
-
-                if (result is not null)
-                {
-                    model.Message = result.Message;
-                    model.TraineeName = result.TraineeName;
-                    model.CertificationName = result.CertificationName;
-                    model.RequiredCoursesCount = result.RequiredCoursesCount;
-                    model.CompletedCoursesCount = result.CompletedCoursesCount;
-                    model.ProgressPercentage = result.ProgressPercentage;
-                    model.CompletedCourses = result.CompletedCourses ?? new List<string>();
-                    model.MissingCourses = result.MissingCourses ?? new List<string>();
-                }
-                else
-                {
-                    model.ErrorMessage = "Certificate verification failed. Please check the trainee ID and reference number.";
-                }
+                model.HasResult    = true;
+                model.IsValid      = false;
+                model.ErrorMessage = response.IsSuccessStatusCode
+                    ? "Unexpected empty response from the verification service."
+                    : "Certificate verification failed. Please check the details and try again.";
             }
         }
         catch (HttpRequestException)
         {
-            model.HasResult = true;
-            model.IsValid = false;
+            model.HasResult    = true;
+            model.IsValid      = false;
             model.ErrorMessage = "The certification service is currently unavailable. Please try again later.";
         }
 

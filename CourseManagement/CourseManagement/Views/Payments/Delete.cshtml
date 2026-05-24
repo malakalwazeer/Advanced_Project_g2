@@ -1,4 +1,4 @@
-@model CourseManagementAPI.Models.Payment
+@model CourseManagement.ViewModels.PaymentDeleteViewModel
 
 @{
     ViewData["Title"] = "Delete Payment";
@@ -18,29 +18,29 @@
 
                 <dl class="row">
                     <dt class="col-sm-4">Trainee</dt>
-                    <dd class="col-sm-8">@Model.Enrollment?.Trainee?.FullName</dd>
+                    <dd class="col-sm-8">@Model.TraineeName</dd>
 
                     <dt class="col-sm-4">Course</dt>
-                    <dd class="col-sm-8">@Model.Enrollment?.Session?.Course?.CourseName</dd>
+                    <dd class="col-sm-8">@Model.CourseName</dd>
 
                     <dt class="col-sm-4">Amount Paid</dt>
-                    <dd class="col-sm-8">@Model.AmountPaid.ToString("C")</dd>
+                    <dd class="col-sm-8">@(Model.AmountPaid.ToString("N2", System.Globalization.CultureInfo.InvariantCulture))</dd>
 
                     <dt class="col-sm-4">Payment Date</dt>
-                    <dd class="col-sm-8">@Model.PaymentDate.ToString("yyyy-MM-dd")</dd>
+                    <dd class="col-sm-8">@(Model.PaymentDate.ToString("yyyy-MM-dd"))</dd>
 
                     <dt class="col-sm-4">Balance Remaining</dt>
-                    <dd class="col-sm-8">@(Model.BalanceRemaining?.ToString("C") ?? "—")</dd>
+                    <dd class="col-sm-8">@(Model.BalanceRemaining.HasValue ? Model.BalanceRemaining.Value.ToString("N2", System.Globalization.CultureInfo.InvariantCulture) : "—")</dd>
 
                     <dt class="col-sm-4">Status</dt>
                     <dd class="col-sm-8">
-                        <span class="badge bg-secondary">@Model.PaymentStatus?.StatusName</span>
+                        <span class="badge bg-secondary">@Model.StatusName</span>
                     </dd>
                 </dl>
             </div>
             <div class="card-footer d-flex gap-2">
                 <form asp-action="Delete" method="post">
-                    <input type="hidden" asp-for="PaymentId" />
+                    <input type="hidden" name="id" value="@Model.PaymentId" />
                     <button type="submit" class="btn btn-danger">Yes, Delete</button>
                 </form>
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>

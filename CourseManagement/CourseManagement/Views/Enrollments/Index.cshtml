@@ -1,4 +1,4 @@
-@model IEnumerable<CourseManagementAPI.Models.Enrollment>
+@model IEnumerable<CourseManagement.ViewModels.EnrollmentIndexViewModel>
 
 @{
     ViewData["Title"] = "Enrollments";
@@ -43,12 +43,12 @@
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td>@item.Trainee?.FullName</td>
-                        <td>@item.Session?.Course?.CourseName</td>
-                        <td>@item.Session?.StartDateTime.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>@item.Session?.EndDateTime.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>@item.EnrollmentDate.ToString("yyyy-MM-dd")</td>
-                        <td><span class="badge bg-info text-dark">@item.EnrollmentStatus?.StatusName</span></td>
+                        <td>@item.TraineeName</td>
+                        <td>@item.CourseName</td>
+                        <td>@(item.SessionStart?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        <td>@(item.SessionEnd?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        <td>@(item.EnrollmentDate.ToString("yyyy-MM-dd"))</td>
+                        <td><span class="badge bg-info text-dark">@item.StatusName</span></td>
                         <td class="text-center">
                             <a asp-action="Details" asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-info me-1">Details</a>
                             <a asp-action="Edit"    asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>

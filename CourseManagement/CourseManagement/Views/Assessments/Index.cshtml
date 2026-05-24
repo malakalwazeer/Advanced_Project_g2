@@ -1,4 +1,4 @@
-@model IEnumerable<CourseManagementAPI.Models.Assessment>
+@model IEnumerable<CourseManagement.ViewModels.AssessmentIndexViewModel>
 
 @{
     ViewData["Title"] = "Assessments";
@@ -13,6 +13,14 @@
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
@@ -34,10 +42,10 @@
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td>@item.Enrollment?.Trainee?.FullName</td>
-                        <td>@item.Enrollment?.Session?.Course?.CourseName</td>
-                        <td>@item.Instructor?.FullName</td>
-                        <td class="text-center">@(item.Score?.ToString() ?? "—")</td>
+                        <td>@item.TraineeName</td>
+                        <td>@item.CourseName</td>
+                        <td>@(item.InstructorName ?? "—")</td>
+                        <td class="text-center">@(item.Score.HasValue ? item.Score.ToString() : "—")</td>
                         <td class="text-center">
                             @if (item.Result == 1)
                             {

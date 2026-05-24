@@ -1,4 +1,4 @@
-@model CourseManagementAPI.Models.Enrollment
+@model CourseManagement.ViewModels.EnrollmentDeleteViewModel
 
 @{
     ViewData["Title"] = "Delete Enrollment";
@@ -18,26 +18,26 @@
 
                 <dl class="row">
                     <dt class="col-sm-4">Trainee</dt>
-                    <dd class="col-sm-8">@Model.Trainee?.FullName</dd>
+                    <dd class="col-sm-8">@Model.TraineeName</dd>
 
                     <dt class="col-sm-4">Course</dt>
-                    <dd class="col-sm-8">@Model.Session?.Course?.CourseName</dd>
+                    <dd class="col-sm-8">@Model.CourseName</dd>
 
                     <dt class="col-sm-4">Session Start</dt>
-                    <dd class="col-sm-8">@Model.Session?.StartDateTime.ToString("yyyy-MM-dd HH:mm")</dd>
+                    <dd class="col-sm-8">@(Model.SessionStart?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
 
                     <dt class="col-sm-4">Enrollment Date</dt>
-                    <dd class="col-sm-8">@Model.EnrollmentDate.ToString("yyyy-MM-dd")</dd>
+                    <dd class="col-sm-8">@(Model.EnrollmentDate.ToString("yyyy-MM-dd"))</dd>
 
                     <dt class="col-sm-4">Status</dt>
                     <dd class="col-sm-8">
-                        <span class="badge bg-info text-dark">@Model.EnrollmentStatus?.StatusName</span>
+                        <span class="badge bg-info text-dark">@Model.StatusName</span>
                     </dd>
                 </dl>
             </div>
             <div class="card-footer d-flex gap-2">
                 <form asp-action="Delete" method="post">
-                    <input type="hidden" asp-for="EnrollmentId" />
+                    <input type="hidden" name="id" value="@Model.EnrollmentId" />
                     <button type="submit" class="btn btn-danger">Yes, Delete</button>
                 </form>
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>

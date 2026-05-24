@@ -1,4 +1,4 @@
-@model CourseManagementAPI.Models.Enrollment
+@model CourseManagement.ViewModels.EnrollmentDetailsViewModel
 
 @{
     ViewData["Title"] = "Enrollment Details";
@@ -16,26 +16,26 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-4">Trainee</dt>
-                    <dd class="col-sm-8">@Model.Trainee?.FullName</dd>
+                    <dd class="col-sm-8">@Model.TraineeName</dd>
 
                     <dt class="col-sm-4">Course</dt>
-                    <dd class="col-sm-8">@Model.Session?.Course?.CourseName</dd>
+                    <dd class="col-sm-8">@Model.CourseName</dd>
 
                     <dt class="col-sm-4">Instructor</dt>
-                    <dd class="col-sm-8">@Model.Session?.Instructor?.FullName</dd>
+                    <dd class="col-sm-8">@(Model.InstructorName ?? "—")</dd>
 
                     <dt class="col-sm-4">Session Start</dt>
-                    <dd class="col-sm-8">@Model.Session?.StartDateTime.ToString("yyyy-MM-dd HH:mm")</dd>
+                    <dd class="col-sm-8">@(Model.SessionStart?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
 
                     <dt class="col-sm-4">Session End</dt>
-                    <dd class="col-sm-8">@Model.Session?.EndDateTime.ToString("yyyy-MM-dd HH:mm")</dd>
+                    <dd class="col-sm-8">@(Model.SessionEnd?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
 
                     <dt class="col-sm-4">Enrollment Date</dt>
-                    <dd class="col-sm-8">@Model.EnrollmentDate.ToString("yyyy-MM-dd")</dd>
+                    <dd class="col-sm-8">@(Model.EnrollmentDate.ToString("yyyy-MM-dd"))</dd>
 
                     <dt class="col-sm-4">Status</dt>
                     <dd class="col-sm-8">
-                        <span class="badge bg-info text-dark">@Model.EnrollmentStatus?.StatusName</span>
+                        <span class="badge bg-info text-dark">@Model.StatusName</span>
                     </dd>
                 </dl>
             </div>
@@ -63,10 +63,10 @@
                         @foreach (var p in Model.Payments)
                         {
                             <tr>
-                                <td>@p.AmountPaid.ToString("C")</td>
-                                <td>@p.PaymentDate.ToString("yyyy-MM-dd")</td>
-                                <td>@(p.BalanceRemaining?.ToString("C") ?? "—")</td>
-                                <td><span class="badge bg-success">@p.PaymentStatus?.StatusName</span></td>
+                                <td>@(p.AmountPaid.ToString("N2", System.Globalization.CultureInfo.InvariantCulture))</td>
+                                <td>@(p.PaymentDate.ToString("yyyy-MM-dd"))</td>
+                                <td>@(p.BalanceRemaining.HasValue ? p.BalanceRemaining.Value.ToString("N2", System.Globalization.CultureInfo.InvariantCulture) : "—")</td>
+                                <td><span class="badge bg-success">@p.StatusName</span></td>
                             </tr>
                         }
                         @if (!Model.Payments.Any())
@@ -95,8 +95,8 @@
                 @foreach (var a in Model.Assessments)
                 {
                     <tr>
-                        <td>@a.Instructor?.FullName</td>
-                        <td>@(a.Score?.ToString() ?? "—")</td>
+                        <td>@(a.InstructorName ?? "—")</td>
+                        <td>@(a.Score.HasValue ? a.Score.ToString() : "—")</td>
                         <td>
                             @if (a.Result == 1)
                             {

@@ -1,4 +1,4 @@
-@model CourseManagementAPI.Models.Trainee
+@model CourseManagement.ViewModels.TraineeCreateViewModel
 
 @{
     ViewData["Title"] = "Create Trainee";
@@ -43,7 +43,7 @@
 
                     <div class="mb-3">
                         <label asp-for="Phone" class="form-label fw-semibold"></label>
-                        <input asp-for="Phone" class="form-control" />
+                        <input asp-for="Phone" class="form-control" placeholder="8 digits" />
                         <span asp-validation-for="Phone" class="text-danger small"></span>
                     </div>
 
@@ -54,8 +54,8 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="TraineeStatusId" class="form-label fw-semibold">Status</label>
-                        <select asp-for="TraineeStatusId" asp-items="ViewBag.TraineeStatusId" class="form-select">
+                        <label asp-for="TraineeStatusId" class="form-label fw-semibold"></label>
+                        <select asp-for="TraineeStatusId" asp-items="Model.TraineeStatuses" class="form-select">
                             <option value="">-- Select Status --</option>
                         </select>
                         <span asp-validation-for="TraineeStatusId" class="text-danger small"></span>

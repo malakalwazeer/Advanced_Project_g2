@@ -1,4 +1,4 @@
-@model CourseManagementAPI.Models.Assessment
+@model CourseManagement.ViewModels.AssessmentDetailsViewModel
 
 @{
     ViewData["Title"] = "Assessment Details";
@@ -18,16 +18,16 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-4">Trainee</dt>
-                    <dd class="col-sm-8">@Model.Enrollment?.Trainee?.FullName</dd>
+                    <dd class="col-sm-8">@Model.TraineeName</dd>
 
                     <dt class="col-sm-4">Course</dt>
-                    <dd class="col-sm-8">@Model.Enrollment?.Session?.Course?.CourseName</dd>
+                    <dd class="col-sm-8">@Model.CourseName</dd>
 
                     <dt class="col-sm-4">Session Start</dt>
-                    <dd class="col-sm-8">@Model.Enrollment?.Session?.StartDateTime.ToString("yyyy-MM-dd HH:mm")</dd>
+                    <dd class="col-sm-8">@(Model.SessionStart?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
 
                     <dt class="col-sm-4">Instructor</dt>
-                    <dd class="col-sm-8">@Model.Instructor?.FullName</dd>
+                    <dd class="col-sm-8">@(Model.InstructorName ?? "—")</dd>
 
                     <dt class="col-sm-4">Score</dt>
                     <dd class="col-sm-8">

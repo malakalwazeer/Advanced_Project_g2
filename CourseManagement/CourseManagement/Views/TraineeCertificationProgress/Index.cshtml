@@ -1,4 +1,4 @@
-@model IEnumerable<CourseManagementAPI.Models.TraineeCertificationProgress>
+@model IEnumerable<CourseManagement.ViewModels.TraineeCertificationProgressIndexViewModel>
 
 @{
     ViewData["Title"] = "Certification Progress";
@@ -32,8 +32,8 @@
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td>@item.Trainee?.FullName</td>
-                        <td>@item.Certification?.Name</td>
+                        <td>@item.TraineeName</td>
+                        <td>@item.CertificationName</td>
                         <td>
                             @{
                                 var pctStr = item.ProgressPercentage.ToString("F1",
@@ -48,14 +48,14 @@
                                      style="width:@pctStr%"
                                      aria-valuenow="@pctStr"
                                      aria-valuemin="0" aria-valuemax="100">
-                                    @item.ProgressPercentage%
+                                    @pctStr%
                                 </div>
                             </div>
                         </td>
                         <td class="text-center">
                             @if (item.AchievedDate.HasValue)
                             {
-                                <span class="badge bg-success">@item.AchievedDate.Value.ToString("yyyy-MM-dd")</span>
+                                <span class="badge bg-success">@(item.AchievedDate.Value.ToString("yyyy-MM-dd"))</span>
                             }
                             else
                             {

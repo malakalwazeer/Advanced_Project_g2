@@ -1,4 +1,4 @@
-@model CourseManagementAPI.Models.TraineeCertificationProgress
+@model CourseManagement.ViewModels.TraineeCertificationProgressDeleteViewModel
 
 @{
     ViewData["Title"] = "Delete Certification Progress";
@@ -21,10 +21,10 @@
 
                 <dl class="row">
                     <dt class="col-sm-4">Trainee</dt>
-                    <dd class="col-sm-8">@Model.Trainee?.FullName</dd>
+                    <dd class="col-sm-8">@Model.TraineeName</dd>
 
                     <dt class="col-sm-4">Certification</dt>
-                    <dd class="col-sm-8">@Model.Certification?.Name</dd>
+                    <dd class="col-sm-8">@Model.CertificationName</dd>
 
                     <dt class="col-sm-4">Progress</dt>
                     <dd class="col-sm-8">
@@ -38,17 +38,16 @@
                                  style="width:@pctStr%"
                                  aria-valuenow="@pctStr"
                                  aria-valuemin="0" aria-valuemax="100">
-                                @Model.ProgressPercentage%
+                                @pctStr%
                             </div>
                         </div>
                     </dd>
 
                     <dt class="col-sm-4">Achieved Date</dt>
-                    <dd class="col-sm-8">@(Model.AchievedDate?.ToString("yyyy-MM-dd") ?? "Not yet achieved")</dd>
+                    <dd class="col-sm-8">@(Model.AchievedDate.HasValue ? Model.AchievedDate.Value.ToString("yyyy-MM-dd") : "Not yet achieved")</dd>
                 </dl>
             </div>
             <div class="card-footer d-flex gap-2">
-                @* asp-action on the form tag automatically injects the anti-forgery token — no manual @Html.AntiForgeryToken() needed *@
                 <form asp-action="Delete" asp-controller="TraineeCertificationProgress" method="post">
                     <input type="hidden" name="traineeId"       value="@Model.TraineeId" />
                     <input type="hidden" name="certificationId" value="@Model.CertificationId" />
