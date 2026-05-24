@@ -13,6 +13,8 @@ public partial class Course
 
     public string? Description { get; set; }
 
+    public int DurationHours { get; set; } //new field
+
     public int Capacity { get; set; }
 
     public decimal EnrollmentFee { get; set; }

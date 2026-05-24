@@ -23,5 +23,8 @@ namespace CourseManagementAPI.Dtos
 
         [Range(1, int.MaxValue, ErrorMessage = "CategoryId must be greater than 0.")]
         public int CategoryId { get; set; }
+
+        [Range(1, 200, ErrorMessage = "Duration hours must be between 1 and 200.")]
+        public int DurationHours { get; set; }
     }
 }
