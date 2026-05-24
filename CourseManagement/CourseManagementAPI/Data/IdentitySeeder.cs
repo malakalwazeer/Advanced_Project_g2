@@ -7,6 +7,9 @@ namespace CourseManagementAPI.Data
     public class IdentitySeeder
     {
         public const string AdminRole = "Admin";
+        public const string CoordinatorRole = "Coordinator";
+        public const string InstructorRole = "Instructor";
+        public const string TraineeRole = "Trainee";
         public const string UserRole = "User";
 
         public static async Task InitializeAsync(IServiceProvider services)
@@ -15,7 +18,7 @@ namespace CourseManagementAPI.Data
             var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
             // Seed roles 
-            foreach (var roleName in new[] { AdminRole, UserRole })
+            foreach (var roleName in new[] { AdminRole, CoordinatorRole, InstructorRole, TraineeRole, UserRole })
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
@@ -39,7 +42,25 @@ namespace CourseManagementAPI.Data
                 var result = await userManager.CreateAsync(admin, "Admin#12345");
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(admin, AdminRole);
+                    await AddMissingRolesAsync(userManager, admin, AdminRole, CoordinatorRole);
+                }
+            }
+            else
+            {
+                await AddMissingRolesAsync(userManager, admin, AdminRole, CoordinatorRole);
+            }
+        }
+
+        private static async Task AddMissingRolesAsync(
+            UserManager<ApplicationUser> userManager,
+            ApplicationUser user,
+            params string[] roles)
+        {
+            foreach (var role in roles)
+            {
+                if (!await userManager.IsInRoleAsync(user, role))
+                {
+                    await userManager.AddToRoleAsync(user, role);
                 }
             }
         }

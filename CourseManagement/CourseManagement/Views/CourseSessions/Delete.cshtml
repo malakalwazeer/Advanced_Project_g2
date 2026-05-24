@@ -1,0 +1,40 @@
+@model CourseManagement.ViewModels.SessionIndexViewModel
+
+@{
+    ViewData["Title"] = "Delete Session";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <h3 class="text-danger">Are you sure you want to delete this session?</h3>
+    <hr />
+    <div class="card shadow-sm col-md-8 border-danger">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-4">Course</dt>
+                <dd class="col-sm-8">@Model.CourseName</dd>
+
+                <dt class="col-sm-4">Instructor</dt>
+                <dd class="col-sm-8">@Model.InstructorName</dd>
+
+                <dt class="col-sm-4">Location</dt>
+                <dd class="col-sm-8">@Model.ClassroomLocation</dd>
+
+                <dt class="col-sm-4">Start</dt>
+                <dd class="col-sm-8">@Model.StartDateTime.ToString("g")</dd>
+
+                <dt class="col-sm-4">End</dt>
+                <dd class="col-sm-8">@Model.EndDateTime.ToString("g")</dd>
+
+                <dt class="col-sm-4">Capacity</dt>
+                <dd class="col-sm-8">@Model.Capacity</dd>
+            </dl>
+            
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="SessionId" />
+                <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>

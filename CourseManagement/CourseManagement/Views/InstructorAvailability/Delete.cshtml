@@ -1,0 +1,43 @@
+@model CourseManagement.ViewModels.AvailabilityIndexViewModel
+
+@{
+    ViewData["Title"] = "Delete Availability Record";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <h3 class="text-danger">Are you sure you want to delete this availability record?</h3>
+    <hr />
+    <div class="card shadow-sm col-md-6 border-danger">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Instructor</dt>
+                <dd class="col-sm-8">@Model.InstructorName</dd>
+
+                <dt class="col-sm-4">Date</dt>
+                <dd class="col-sm-8">@Model.AvailableDate.ToLongDateString()</dd>
+
+                <dt class="col-sm-4">Time</dt>
+                <dd class="col-sm-8">@Model.StartTime.ToString("h:mm tt") - @Model.EndTime.ToString("h:mm tt")</dd>
+
+                <dt class="col-sm-4">Status</dt>
+                <dd class="col-sm-8">
+                    @if (Model.IsAvailable)
+                    {
+                        <span class="badge bg-success">Available</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Booked/Unavailable</span>
+                    }
+                </dd>
+            </dl>
+            
+            <form asp-action="Delete" class="mt-4">
+                <input type="hidden" asp-for="AvailabilityId" />
+                <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,50 @@
+@model IEnumerable<CourseManagement.ViewModels.AvailabilityIndexViewModel>
+
+@{
+    ViewData["Title"] = "Instructor Availability";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>@ViewData["Title"]</h1>
+        <a asp-action="Create" class="btn btn-primary">Add Availability</a>
+    </div>
+
+    <table class="table table-striped table-hover shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Instructor</th>
+                <th>Date</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.InstructorName</td>
+                    <td>@item.AvailableDate.ToShortDateString()</td>
+                    <td>@item.StartTime.ToString("h:mm tt")</td>
+                    <td>@item.EndTime.ToString("h:mm tt")</td>
+                    <td>
+                        @if (item.IsAvailable)
+                        {
+                            <span class="badge bg-success">Available</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Booked/Unavailable</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.AvailabilityId" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@item.AvailabilityId" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

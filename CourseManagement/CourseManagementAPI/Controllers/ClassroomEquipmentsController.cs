@@ -22,14 +22,17 @@ namespace CourseManagementAPI.Controllers
         [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<ClassroomEquipment>>> GetClassroomEquipments()
         {
-            return await _context.ClassroomEquipments.ToListAsync();
+            return await _context.ClassroomEquipments
+                .Include(ce => ce.Classroom)
+                .Include(ce => ce.Equipment)
+                .ToListAsync();
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{classroomId}/{equipmentId}")]
         [AllowAnonymous]
-        public async Task<ActionResult<ClassroomEquipment>> GetClassroomEquipment(int id)
+        public async Task<ActionResult<ClassroomEquipment>> GetClassroomEquipment(int classroomId, int equipmentId)
         {
-            var classroomEquipment = await _context.ClassroomEquipments.FindAsync(id);
+            var classroomEquipment = await _context.ClassroomEquipments.FindAsync(classroomId, equipmentId);
             if (classroomEquipment == null)
             {
                 return NotFound();
@@ -43,16 +46,18 @@ namespace CourseManagementAPI.Controllers
         {
             _context.ClassroomEquipments.Add(classroomEquipment);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetClassroomEquipment), new { id = classroomEquipment.ClassroomId }, classroomEquipment);
+            return CreatedAtAction(nameof(GetClassroomEquipment), 
+                new { classroomId = classroomEquipment.ClassroomId, equipmentId = classroomEquipment.EquipmentId }, 
+                classroomEquipment);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{classroomId}/{equipmentId}")]
         [Authorize]
-        public async Task<ActionResult<ClassroomEquipment>> UpdateClassroomEquipment(int id, ClassroomEquipment updatedClassroomEquipment)
+        public async Task<IActionResult> UpdateClassroomEquipment(int classroomId, int equipmentId, ClassroomEquipment updatedClassroomEquipment)
         {
-            if (id != updatedClassroomEquipment.ClassroomId) return BadRequest();
+            if (classroomId != updatedClassroomEquipment.ClassroomId || equipmentId != updatedClassroomEquipment.EquipmentId) return BadRequest();
 
-            var exists = await _context.ClassroomEquipments.AnyAsync(a => a.ClassroomId == id);
+            var exists = await _context.ClassroomEquipments.AnyAsync(a => a.ClassroomId == classroomId && a.EquipmentId == equipmentId);
             if (!exists) return NotFound();
 
             _context.Entry(updatedClassroomEquipment).State = EntityState.Modified;
@@ -60,14 +65,14 @@ namespace CourseManagementAPI.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{classroomId}/{equipmentId}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteClassroom(int id)
+        public async Task<IActionResult> DeleteClassroomEquipment(int classroomId, int equipmentId)
         {
-            var classroom = await _context.Classrooms.FindAsync(id);
-            if (classroom == null) return NotFound();
+            var classroomEquipment = await _context.ClassroomEquipments.FindAsync(classroomId, equipmentId);
+            if (classroomEquipment == null) return NotFound();
 
-            _context.Classrooms.Remove(classroom);
+            _context.ClassroomEquipments.Remove(classroomEquipment);
             await _context.SaveChangesAsync();
             return NoContent();
         }

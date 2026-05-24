@@ -1,0 +1,99 @@
+@model CourseManagement.ViewModels.InstructorDetailsViewModel
+
+@{
+    ViewData["Title"] = "Instructor Details";
+}
+
+<div class="row">
+    <!-- Left Column: Instructor Profile -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">Profile</div>
+            <div class="card-body">
+                <h5>@Model.FullName</h5>
+                <p><strong>Email:</strong> @Model.Email</p>
+                <p><strong>Phone:</strong> @Model.Phone</p>
+                <p><strong>Qualifications:</strong> @Model.Qualifications</p>
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Expertise & Availability -->
+    <div class="col-md-8">
+        
+        <!-- Expertise -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">Expertise</div>
+            <div class="card-body">
+                <ul class="list-group mb-3">
+                    @foreach (var item in Model.Expertises)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @item.Category.CategoryName
+                            <form asp-action="RemoveExpertise" method="post">
+                                <input type="hidden" name="instructorId" value="@Model.InstructorId" />
+                                <input type="hidden" name="categoryId" value="@item.CategoryId" />
+                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+                <form asp-action="AddExpertise" method="post" class="row g-2 align-items-center">
+                    <input type="hidden" asp-for="InstructorId" />
+                    <div class="col-auto">
+                        <select asp-for="AddCategoryId" asp-items="Model.CategoryList" class="form-select" required>
+                            <option value="">-- Select Category --</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Availability -->
+        <div class="card">
+            <div class="card-header bg-success text-white">Availability</div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead><tr><th>Date</th><th>Start</th><th>End</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.Availabilities)
+                        {
+                            <tr>
+                                <td>@item.AvailableDate.ToString("yyyy-MM-dd")</td>
+                                <td>@item.StartTime</td>
+                                <td>@item.EndTime</td>
+                                <td>
+                                    <form asp-action="RemoveAvailability" method="post">
+                                        <input type="hidden" name="instructorId" value="@Model.InstructorId" />
+                                        <input type="hidden" name="availabilityId" value="@item.AvailabilityId" />
+                                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <hr />
+                <form asp-action="AddAvailability" method="post" class="row g-2 align-items-center">
+                    <input type="hidden" asp-for="InstructorId" />
+                    <div class="col-auto">
+                        <input asp-for="AddAvailableDate" type="date" class="form-control" />
+                    </div>
+                    <div class="col-auto">
+                        <input asp-for="AddStartTime" type="time" class="form-control" />
+                    </div>
+                    <div class="col-auto">
+                        <input asp-for="AddEndTime" type="time" class="form-control" />
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
