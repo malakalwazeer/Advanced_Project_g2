@@ -1,0 +1,18 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+@{
+    ViewData["Title"] = "Reports Dashboard";
+}
+<h2>Reports Dashboard</h2>
+
+<p>Select a report to view:</p>
+
+<ul>
+    <li><a asp-controller="Reports" asp-action="EnrollmentByCourse">Enrollment by Course</a></li>
+    <li><a asp-controller="Reports" asp-action="EnrollmentByCategory">Enrollment by Category</a></li>
+    <li><a asp-controller="Reports" asp-action="InstructorWorkload">Instructor Workload</a></li>
+    <li><a asp-controller="Reports" asp-action="RevenueSummary">Revenue Summary</a></li>
+    <li><a asp-controller="Reports" asp-action="CertificationCompletion">Certification Completion</a></li>
+</ul>

@@ -1,0 +1,30 @@
+﻿@*
+   This view will render report view about enrollments by Category
+*@
+@model List<ReportingCourseManagement.Dtos.EnrollmentByCategoryReportDto>
+
+@{
+    ViewData["Title"] = "Enrollment by Category";
+}
+
+<h2>Enrollment by Category</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Category Name</th>
+            <th>Enrollment Count</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.CategoryName</td>
+                <td>@item.EnrollmentCount</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-controller="Reports" asp-action="Index" class="btn btn-secondary">Back to Dashboard</a>
