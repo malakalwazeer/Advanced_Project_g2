@@ -9,11 +9,15 @@
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-7">
 
+            <!-- Page Header -->
             <div class="text-center mb-4">
-                <h2 class="fw-bold text-primary">Certificate Verification</h2>
-                <p class="text-muted">Enter your Trainee ID and Certificate Reference Number to verify your certification status.</p>
+                <div class="display-6 fw-bold text-primary">
+                    <i class="bi bi-patch-check-fill"></i> Certificate Verification
+                </div>
+                <p class="text-muted mt-2">Enter your Trainee ID and Certificate Reference Number to verify your certification status.</p>
             </div>
 
+            <!-- Lookup Form -->
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-primary text-white fw-semibold">
                     Verify Your Certificate
@@ -39,67 +43,70 @@
                         </div>
 
                         <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg">Verify Certificate</button>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Verify Certificate
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
 
+            <!-- Results Section -->
             @if (Model.HasResult)
             {
                 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                 {
-                    <div class="alert alert-danger" role="alert">
-                        <strong>Verification Error:</strong> @Model.ErrorMessage
+                    <!-- Service / HTTP Error -->
+                    <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
+                        <div>
+                            <strong>Verification Error</strong><br />
+                            @Model.ErrorMessage
+                        </div>
                     </div>
                 }
-                else if (!Model.IsValid)
-                {
-                    <div class="card border-danger shadow-sm">
-                        <div class="card-header bg-danger text-white fw-semibold">
-                            Certificate Not Valid
-                        </div>
-                        <div class="card-body">
-                            <p class="mb-3 text-danger fw-semibold">@Model.Message</p>
+                    else if (!Model.IsValid)
+                    {
+                        <div class="card border-danger shadow-sm">
+                            <div class="card-header bg-danger text-white fw-semibold">
+                                Certificate Not Valid
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-2 text-danger fw-semibold">@Model.Message</p>
 
-                            @if (!string.IsNullOrEmpty(Model.TraineeName))
-                            {
                                 <div class="row mb-2">
                                     <div class="col-sm-4 text-muted">Trainee</div>
                                     <div class="col-sm-8 fw-semibold">@Model.TraineeName</div>
                                 </div>
-                            }
 
-                            @if (!string.IsNullOrEmpty(Model.CertificationName))
-                            {
                                 <div class="row mb-2">
                                     <div class="col-sm-4 text-muted">Certification</div>
                                     <div class="col-sm-8 fw-semibold">@Model.CertificationName</div>
                                 </div>
+
                                 <div class="row mb-2">
                                     <div class="col-sm-4 text-muted">Progress</div>
                                     <div class="col-sm-8">
                                         @Model.CompletedCoursesCount / @Model.RequiredCoursesCount courses completed
-                                        (@(Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%)
+                                        (@Model.ProgressPercentage.ToString("F1")%)
                                     </div>
                                 </div>
-                            }
 
-                            @if (Model.MissingCourses.Any())
-                            {
-                                <h6 class="fw-semibold mt-3 text-warning">Missing Courses</h6>
-                                <ul class="mb-0">
-                                    @foreach (var course in Model.MissingCourses)
-                                    {
-                                        <li>@course</li>
-                                    }
-                                </ul>
-                            }
+                                @if (Model.MissingCourses.Any())
+                                {
+                                    <h6 class="fw-semibold mt-3 text-warning">Missing Courses</h6>
+                                    <ul>
+                                        @foreach (var course in Model.MissingCourses)
+                                        {
+                                            <li>@course</li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
                         </div>
-                    </div>
-                }
+                    }
                 else
                 {
+                    <!-- Valid Certificate -->
                     <div class="card border-success shadow-sm">
                         <div class="card-header bg-success text-white fw-semibold">
                             Certificate Verified
@@ -126,11 +133,11 @@
                                         <div class="progress-bar bg-success"
                                              role="progressbar"
                                              style="width: @(Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"
-                                             aria-valuenow="@(Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))"
+                                             aria-valuenow="@Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
                                              aria-valuemin="0" aria-valuemax="100">
                                         </div>
                                     </div>
-                                    <small class="text-muted">@(Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%</small>
+                                    <small class="text-muted">@Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%</small>
                                 </div>
                             </div>
 
@@ -147,18 +154,9 @@
                                 <ul class="list-group list-group-flush mb-3">
                                     @foreach (var course in Model.CompletedCourses)
                                     {
-                                        <li class="list-group-item ps-0">@course</li>
-                                    }
-                                </ul>
-                            }
-
-                            @if (Model.MissingCourses.Any())
-                            {
-                                <h6 class="fw-semibold mt-3 text-warning">Missing Courses</h6>
-                                <ul class="list-group list-group-flush">
-                                    @foreach (var course in Model.MissingCourses)
-                                    {
-                                        <li class="list-group-item ps-0">@course</li>
+                                        <li class="list-group-item d-flex align-items-center gap-2 ps-0">
+                                            <span class="text-success"></span> @course
+                                        </li>
                                     }
                                 </ul>
                             }
