@@ -1,4 +1,4 @@
-@model CourseManagement.Models.ViewModels.PublicCertificationLookupViewModel
+@model CourseManagement.ViewModels.PublicCertificationLookupViewModel
 
 @{
     ViewData["Title"] = "Certificate Verification";
@@ -10,10 +10,8 @@
         <div class="col-md-8 col-lg-7">
 
             <div class="text-center mb-4">
-                <div class="display-6 fw-bold text-primary">
-                    <i class="bi bi-patch-check-fill"></i> Certificate Verification
-                </div>
-                <p class="text-muted mt-2">Enter your Trainee ID and Certificate Reference Number to verify your certification status.</p>
+                <h2 class="fw-bold text-primary">Certificate Verification</h2>
+                <p class="text-muted">Enter your Trainee ID and Certificate Reference Number to verify your certification status.</p>
             </div>
 
             <div class="card shadow-sm border-0 mb-4">
@@ -36,14 +34,12 @@
                             <label asp-for="CertificateReferenceNumber" class="form-label fw-semibold">Certificate Reference Number</label>
                             <input asp-for="CertificateReferenceNumber" class="form-control form-control-lg"
                                    placeholder="e.g. CERT-42-3" />
-                            <div class="form-text">Format: <code>CERT-{TraineeId}-{CertificationId}</code></div>
+                            <div class="form-text">Format: <code>CERT-[TraineeId]-[CertificationId]</code></div>
                             <span asp-validation-for="CertificateReferenceNumber" class="text-danger small"></span>
                         </div>
 
                         <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                Verify Certificate
-                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg">Verify Certificate</button>
                         </div>
                     </form>
                 </div>
@@ -53,12 +49,8 @@
             {
                 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                 {
-                    <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
-                        <span class="fs-5"></span>
-                        <div>
-                            <strong>Verification Error</strong><br />
-                            @Model.ErrorMessage
-                        </div>
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Verification Error:</strong> @Model.ErrorMessage
                     </div>
                 }
                 else if (!Model.IsValid)
@@ -68,7 +60,41 @@
                             Certificate Not Valid
                         </div>
                         <div class="card-body">
-                            <p class="mb-0 text-danger fw-semibold">@Model.Message</p>
+                            <p class="mb-3 text-danger fw-semibold">@Model.Message</p>
+
+                            @if (!string.IsNullOrEmpty(Model.TraineeName))
+                            {
+                                <div class="row mb-2">
+                                    <div class="col-sm-4 text-muted">Trainee</div>
+                                    <div class="col-sm-8 fw-semibold">@Model.TraineeName</div>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.CertificationName))
+                            {
+                                <div class="row mb-2">
+                                    <div class="col-sm-4 text-muted">Certification</div>
+                                    <div class="col-sm-8 fw-semibold">@Model.CertificationName</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-sm-4 text-muted">Progress</div>
+                                    <div class="col-sm-8">
+                                        @Model.CompletedCoursesCount / @Model.RequiredCoursesCount courses completed
+                                        (@(Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%)
+                                    </div>
+                                </div>
+                            }
+
+                            @if (Model.MissingCourses.Any())
+                            {
+                                <h6 class="fw-semibold mt-3 text-warning">Missing Courses</h6>
+                                <ul class="mb-0">
+                                    @foreach (var course in Model.MissingCourses)
+                                    {
+                                        <li>@course</li>
+                                    }
+                                </ul>
+                            }
                         </div>
                     </div>
                 }
@@ -100,11 +126,11 @@
                                         <div class="progress-bar bg-success"
                                              role="progressbar"
                                              style="width: @(Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"
-                                             aria-valuenow="@Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
+                                             aria-valuenow="@(Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))"
                                              aria-valuemin="0" aria-valuemax="100">
                                         </div>
                                     </div>
-                                    <small class="text-muted">@Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%</small>
+                                    <small class="text-muted">@(Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%</small>
                                 </div>
                             </div>
 
@@ -121,9 +147,7 @@
                                 <ul class="list-group list-group-flush mb-3">
                                     @foreach (var course in Model.CompletedCourses)
                                     {
-                                        <li class="list-group-item d-flex align-items-center gap-2 ps-0">
-                                            <span class="text-success"></span> @course
-                                        </li>
+                                        <li class="list-group-item ps-0">@course</li>
                                     }
                                 </ul>
                             }
@@ -134,9 +158,7 @@
                                 <ul class="list-group list-group-flush">
                                     @foreach (var course in Model.MissingCourses)
                                     {
-                                        <li class="list-group-item d-flex align-items-center gap-2 ps-0">
-                                            <span class="text-warning"></span> @course
-                                        </li>
+                                        <li class="list-group-item ps-0">@course</li>
                                     }
                                 </ul>
                             }
