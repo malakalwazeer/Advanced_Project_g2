@@ -1,13 +1,16 @@
+using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
 using CourseManagementAPI.Services.Validation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
+[Authorize(Roles = "TrainingCoordinator,Trainee")]
 public class PaymentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
@@ -21,7 +24,6 @@ public class PaymentsController : Controller
         _paymentValidator = paymentValidator;
     }
 
-    // GET: Payments
     public async Task<IActionResult> Index()
     {
         var payments = await _context.Payments
@@ -33,11 +35,9 @@ public class PaymentsController : Controller
             .Include(p => p.PaymentStatus)
             .AsNoTracking()
             .ToListAsync();
-
         return View(payments);
     }
 
-    // GET: Payments/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -53,49 +53,38 @@ public class PaymentsController : Controller
             .FirstOrDefaultAsync(p => p.PaymentId == id);
 
         if (payment == null) return NotFound();
-
         return View(payment);
     }
 
-    // GET: Payments/Create
     public IActionResult Create()
     {
-        LoadDropdowns();
-        return View();
+        var vm = new PaymentCreateEditViewModel
+        {
+            PaymentDate = DateOnly.FromDateTime(DateTime.Today)
+        };
+        LoadDropdowns(vm);
+        return View(vm);
     }
 
-    // POST: Payments/Create
-    // Flow:
-    //  1. Resolve the correct PaymentStatus (Paid/Partial/Pending) from totals.
-    //  2. Map to CreatePaymentDto and delegate to PaymentValidationService.
-    //  3. The service returns (ErrorMessage, BalanceRemaining) — use its balance if valid.
-    //  4. Save via EF Core directly.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(
-        [Bind("EnrollmentId,AmountPaid,PaymentDate")]
-        Payment payment)
+    public async Task<IActionResult> Create(PaymentCreateEditViewModel vm)
     {
-        ModelState.Remove(nameof(Payment.Enrollment));
-        ModelState.Remove(nameof(Payment.PaymentStatus));
-
         if (ModelState.IsValid)
         {
-            // Step 1: determine which PaymentStatus applies after this payment.
-            var statusResult = await ResolvePaymentStatus(payment.EnrollmentId, payment.AmountPaid);
+            var statusResult = await ResolvePaymentStatus(vm.EnrollmentId, vm.AmountPaid);
             if (statusResult.Error != null)
             {
                 ModelState.AddModelError(string.Empty, statusResult.Error);
-                LoadDropdowns(payment.EnrollmentId);
-                return View(payment);
+                LoadDropdowns(vm);
+                return View(vm);
             }
 
-            // Step 2: build the DTO the service expects and run validation.
             var dto = new CreatePaymentDto
             {
-                EnrollmentId    = payment.EnrollmentId,
-                AmountPaid      = payment.AmountPaid,
-                PaymentDate     = payment.PaymentDate,
+                EnrollmentId    = vm.EnrollmentId,
+                AmountPaid      = vm.AmountPaid,
+                PaymentDate     = vm.PaymentDate,
                 PaymentStatusId = statusResult.PaymentStatusId
             };
 
@@ -103,25 +92,27 @@ public class PaymentsController : Controller
             if (errorMessage != null)
             {
                 ModelState.AddModelError(string.Empty, errorMessage);
-                LoadDropdowns(payment.EnrollmentId);
-                return View(payment);
+                LoadDropdowns(vm);
+                return View(vm);
             }
 
-            // Step 3: apply computed values and save.
-            payment.PaymentStatusId  = statusResult.PaymentStatusId;
-            payment.BalanceRemaining = balanceRemaining;
-
+            var payment = new Payment
+            {
+                EnrollmentId     = vm.EnrollmentId,
+                AmountPaid       = vm.AmountPaid,
+                PaymentDate      = vm.PaymentDate,
+                PaymentStatusId  = statusResult.PaymentStatusId,
+                BalanceRemaining = balanceRemaining
+            };
             _context.Add(payment);
             await _context.SaveChangesAsync();
             TempData["Success"] = "Payment recorded successfully.";
             return RedirectToAction(nameof(Index));
         }
-
-        LoadDropdowns(payment.EnrollmentId);
-        return View(payment);
+        LoadDropdowns(vm);
+        return View(vm);
     }
 
-    // GET: Payments/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -129,40 +120,42 @@ public class PaymentsController : Controller
         var payment = await _context.Payments.FindAsync(id);
         if (payment == null) return NotFound();
 
-        LoadDropdowns(payment.EnrollmentId, payment.PaymentStatusId);
-        return View(payment);
+        var vm = new PaymentCreateEditViewModel
+        {
+            PaymentId    = payment.PaymentId,
+            EnrollmentId = payment.EnrollmentId,
+            AmountPaid   = payment.AmountPaid,
+            PaymentDate  = payment.PaymentDate
+        };
+        LoadDropdowns(vm);
+        return View(vm);
     }
 
-    // POST: Payments/Edit/5
-    // Edit does NOT use PaymentValidationService — the service's "enrollment already fully paid"
-    // check would false-positive because it counts the existing payment being edited.
-    // Custom ResolvePaymentStatus (with excludePaymentId) handles balance recalculation instead.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id,
-        [Bind("PaymentId,EnrollmentId,AmountPaid,PaymentDate")]
-        Payment payment)
+    public async Task<IActionResult> Edit(int id, PaymentCreateEditViewModel vm)
     {
-        if (id != payment.PaymentId) return NotFound();
-
-        ModelState.Remove(nameof(Payment.Enrollment));
-        ModelState.Remove(nameof(Payment.PaymentStatus));
+        if (id != vm.PaymentId) return NotFound();
 
         if (ModelState.IsValid)
         {
-            var statusResult = await ResolvePaymentStatus(
-                payment.EnrollmentId, payment.AmountPaid, excludePaymentId: id);
-
+            var statusResult = await ResolvePaymentStatus(vm.EnrollmentId, vm.AmountPaid, excludePaymentId: id);
             if (statusResult.Error != null)
             {
                 ModelState.AddModelError(string.Empty, statusResult.Error);
-                LoadDropdowns(payment.EnrollmentId);
-                return View(payment);
+                LoadDropdowns(vm);
+                return View(vm);
             }
 
-            payment.PaymentStatusId  = statusResult.PaymentStatusId;
-            payment.BalanceRemaining = statusResult.BalanceRemaining;
-
+            var payment = new Payment
+            {
+                PaymentId        = vm.PaymentId,
+                EnrollmentId     = vm.EnrollmentId,
+                AmountPaid       = vm.AmountPaid,
+                PaymentDate      = vm.PaymentDate,
+                PaymentStatusId  = statusResult.PaymentStatusId,
+                BalanceRemaining = statusResult.BalanceRemaining
+            };
             try
             {
                 _context.Update(payment);
@@ -171,18 +164,15 @@ public class PaymentsController : Controller
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await PaymentExists(payment.PaymentId))
-                    return NotFound();
+                if (!await PaymentExists(vm.PaymentId)) return NotFound();
                 throw;
             }
             return RedirectToAction(nameof(Index));
         }
-
-        LoadDropdowns(payment.EnrollmentId, payment.PaymentStatusId);
-        return View(payment);
+        LoadDropdowns(vm);
+        return View(vm);
     }
 
-    // GET: Payments/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -198,11 +188,9 @@ public class PaymentsController : Controller
             .FirstOrDefaultAsync(p => p.PaymentId == id);
 
         if (payment == null) return NotFound();
-
         return View(payment);
     }
 
-    // POST: Payments/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -217,19 +205,8 @@ public class PaymentsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
+    private record StatusResolution(int PaymentStatusId, decimal BalanceRemaining, string? Error);
 
-    private record StatusResolution(
-        int PaymentStatusId,
-        decimal BalanceRemaining,
-        string? Error);
-
-    /// <summary>
-    /// Determines Paid / Partial / Pending based on previous payments + the new amount,
-    /// resolves the matching PaymentStatus row, and returns the remaining balance.
-    /// Used for both Create (no excludePaymentId) and Edit (pass excludePaymentId to
-    /// exclude the record being updated from the previous-total sum).
-    /// </summary>
     private async Task<StatusResolution> ResolvePaymentStatus(
         int enrollmentId, decimal newAmountPaid, int? excludePaymentId = null)
     {
@@ -266,25 +243,20 @@ public class PaymentsController : Controller
         return new StatusResolution(status.PaymentStatusId, balance, null);
     }
 
-    private void LoadDropdowns(int? selectedEnrollmentId = null, int? selectedStatusId = null)
+    private void LoadDropdowns(PaymentCreateEditViewModel vm)
     {
-        ViewData["EnrollmentId"] = new SelectList(
-            _context.Enrollments
-                .Include(e => e.Trainee)
-                .Include(e => e.Session)
-                    .ThenInclude(s => s.Course)
-                .AsNoTracking()
-                .OrderBy(e => e.Trainee.FullName)
-                .Select(e => new
-                {
-                    e.EnrollmentId,
-                    Display = e.Trainee.FullName + " — " + e.Session.Course.CourseName
-                }),
-            "EnrollmentId", "Display", selectedEnrollmentId);
-
-        ViewData["PaymentStatusId"] = new SelectList(
-            _context.PaymentStatuses.AsNoTracking(),
-            "PaymentStatusId", "StatusName", selectedStatusId);
+        vm.Enrollments = _context.Enrollments
+            .Include(e => e.Trainee)
+            .Include(e => e.Session)
+                .ThenInclude(s => s.Course)
+            .AsNoTracking()
+            .OrderBy(e => e.Trainee.FullName)
+            .Select(e => new SelectListItem
+            {
+                Value = e.EnrollmentId.ToString(),
+                Text  = e.Trainee.FullName + " — " + e.Session.Course.CourseName
+            })
+            .ToList();
     }
 
     private async Task<bool> PaymentExists(int id) =>

@@ -1,11 +1,14 @@
+using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
+[Authorize(Roles = "TrainingCoordinator")]
 public class TraineesController : Controller
 {
     private readonly CourseManagementDbContext _context;
@@ -15,18 +18,15 @@ public class TraineesController : Controller
         _context = context;
     }
 
-    // GET: Trainees
     public async Task<IActionResult> Index()
     {
         var trainees = await _context.Trainees
             .Include(t => t.TraineeStatus)
             .AsNoTracking()
             .ToListAsync();
-
         return View(trainees);
     }
 
-    // GET: Trainees/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -44,42 +44,44 @@ public class TraineesController : Controller
             .FirstOrDefaultAsync(t => t.TraineeId == id);
 
         if (trainee == null) return NotFound();
-
         return View(trainee);
     }
 
-    // GET: Trainees/Create
     public IActionResult Create()
     {
-        LoadDropdowns();
-        return View();
+        var vm = new TraineeCreateEditViewModel
+        {
+            RegistrationDate = DateOnly.FromDateTime(DateTime.Today)
+        };
+        LoadDropdowns(vm);
+        return View(vm);
     }
 
-    // POST: Trainees/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(
-        [Bind("FullName,OrganizationName,RegistrationDate,Email,Phone,Password,TraineeStatusId")]
-        Trainee trainee)
+    public async Task<IActionResult> Create(TraineeCreateEditViewModel vm)
     {
-        // Navigation properties are loaded from DB — never posted from form.
-        // Without removing them, ModelState.IsValid is always false because
-        // TraineeStatus is a non-nullable reference type with no form value.
-        ModelState.Remove(nameof(Trainee.TraineeStatus));
-
         if (ModelState.IsValid)
         {
+            var trainee = new Trainee
+            {
+                FullName          = vm.FullName,
+                OrganizationName  = vm.OrganizationName,
+                RegistrationDate  = vm.RegistrationDate,
+                Email             = vm.Email,
+                Phone             = vm.Phone,
+                Password          = vm.Password,
+                TraineeStatusId   = vm.TraineeStatusId
+            };
             _context.Add(trainee);
             await _context.SaveChangesAsync();
             TempData["Success"] = $"Trainee \"{trainee.FullName}\" created successfully.";
             return RedirectToAction(nameof(Index));
         }
-
-        LoadDropdowns(trainee.TraineeStatusId);
-        return View(trainee);
+        LoadDropdowns(vm);
+        return View(vm);
     }
 
-    // GET: Trainees/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -87,23 +89,40 @@ public class TraineesController : Controller
         var trainee = await _context.Trainees.FindAsync(id);
         if (trainee == null) return NotFound();
 
-        LoadDropdowns(trainee.TraineeStatusId);
-        return View(trainee);
+        var vm = new TraineeCreateEditViewModel
+        {
+            TraineeId        = trainee.TraineeId,
+            FullName         = trainee.FullName,
+            OrganizationName = trainee.OrganizationName,
+            RegistrationDate = trainee.RegistrationDate,
+            Email            = trainee.Email,
+            Phone            = trainee.Phone,
+            Password         = trainee.Password,
+            TraineeStatusId  = trainee.TraineeStatusId
+        };
+        LoadDropdowns(vm);
+        return View(vm);
     }
 
-    // POST: Trainees/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id,
-        [Bind("TraineeId,FullName,OrganizationName,RegistrationDate,Email,Phone,Password,TraineeStatusId")]
-        Trainee trainee)
+    public async Task<IActionResult> Edit(int id, TraineeCreateEditViewModel vm)
     {
-        if (id != trainee.TraineeId) return NotFound();
-
-        ModelState.Remove(nameof(Trainee.TraineeStatus));
+        if (id != vm.TraineeId) return NotFound();
 
         if (ModelState.IsValid)
         {
+            var trainee = new Trainee
+            {
+                TraineeId        = vm.TraineeId,
+                FullName         = vm.FullName,
+                OrganizationName = vm.OrganizationName,
+                RegistrationDate = vm.RegistrationDate,
+                Email            = vm.Email,
+                Phone            = vm.Phone,
+                Password         = vm.Password,
+                TraineeStatusId  = vm.TraineeStatusId
+            };
             try
             {
                 _context.Update(trainee);
@@ -112,18 +131,15 @@ public class TraineesController : Controller
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await TraineeExists(trainee.TraineeId))
-                    return NotFound();
+                if (!await TraineeExists(vm.TraineeId)) return NotFound();
                 throw;
             }
             return RedirectToAction(nameof(Index));
         }
-
-        LoadDropdowns(trainee.TraineeStatusId);
-        return View(trainee);
+        LoadDropdowns(vm);
+        return View(vm);
     }
 
-    // GET: Trainees/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -134,11 +150,9 @@ public class TraineesController : Controller
             .FirstOrDefaultAsync(t => t.TraineeId == id);
 
         if (trainee == null) return NotFound();
-
         return View(trainee);
     }
 
-    // POST: Trainees/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -153,13 +167,12 @@ public class TraineesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private void LoadDropdowns(int? selectedStatusId = null)
+    private void LoadDropdowns(TraineeCreateEditViewModel vm)
     {
-        ViewData["TraineeStatusId"] = new SelectList(
-            _context.TraineeStatuses.AsNoTracking(),
-            "TraineeStatusId",
-            "StatusName",
-            selectedStatusId);
+        vm.TraineeStatuses = _context.TraineeStatuses.AsNoTracking()
+            .OrderBy(s => s.StatusName)
+            .Select(s => new SelectListItem { Value = s.TraineeStatusId.ToString(), Text = s.StatusName })
+            .ToList();
     }
 
     private async Task<bool> TraineeExists(int id) =>

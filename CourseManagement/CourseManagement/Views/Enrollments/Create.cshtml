@@ -1,4 +1,4 @@
-@model CourseManagementAPI.Models.Enrollment
+@model CourseManagement.ViewModels.EnrollmentCreateEditViewModel
 
 @{
     ViewData["Title"] = "Create Enrollment";
@@ -19,7 +19,7 @@
 
                     <div class="mb-3">
                         <label asp-for="TraineeId" class="form-label fw-semibold">Trainee</label>
-                        <select asp-for="TraineeId" asp-items="ViewBag.TraineeId" class="form-select">
+                        <select asp-for="TraineeId" asp-items="Model.Trainees" class="form-select">
                             <option value="">-- Select Trainee --</option>
                         </select>
                         <span asp-validation-for="TraineeId" class="text-danger small"></span>
@@ -27,7 +27,7 @@
 
                     <div class="mb-3">
                         <label asp-for="SessionId" class="form-label fw-semibold">Session</label>
-                        <select asp-for="SessionId" asp-items="ViewBag.SessionId" class="form-select">
+                        <select asp-for="SessionId" asp-items="Model.Sessions" class="form-select">
                             <option value="">-- Select Session --</option>
                         </select>
                         <span asp-validation-for="SessionId" class="text-danger small"></span>
@@ -41,7 +41,7 @@
 
                     <div class="mb-3">
                         <label asp-for="EnrollmentStatusId" class="form-label fw-semibold">Status</label>
-                        <select asp-for="EnrollmentStatusId" asp-items="ViewBag.EnrollmentStatusId" class="form-select">
+                        <select asp-for="EnrollmentStatusId" asp-items="Model.EnrollmentStatuses" class="form-select">
                             <option value="">-- Select Status --</option>
                         </select>
                         <span asp-validation-for="EnrollmentStatusId" class="text-danger small"></span>

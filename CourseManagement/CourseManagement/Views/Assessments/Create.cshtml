@@ -1,4 +1,4 @@
-@model CourseManagementAPI.Models.Assessment
+@model CourseManagement.ViewModels.AssessmentCreateEditViewModel
 
 @{
     ViewData["Title"] = "Create Assessment";
@@ -19,7 +19,7 @@
 
                     <div class="mb-3">
                         <label asp-for="EnrollmentId" class="form-label fw-semibold">Enrollment</label>
-                        <select asp-for="EnrollmentId" asp-items="ViewBag.EnrollmentId" class="form-select">
+                        <select asp-for="EnrollmentId" asp-items="Model.Enrollments" class="form-select">
                             <option value="">-- Select Enrollment --</option>
                         </select>
                         <span asp-validation-for="EnrollmentId" class="text-danger small"></span>
@@ -27,7 +27,7 @@
 
                     <div class="mb-3">
                         <label asp-for="InstructorId" class="form-label fw-semibold">Instructor</label>
-                        <select asp-for="InstructorId" asp-items="ViewBag.InstructorId" class="form-select">
+                        <select asp-for="InstructorId" asp-items="Model.Instructors" class="form-select">
                             <option value="">-- Select Instructor --</option>
                         </select>
                         <span asp-validation-for="InstructorId" class="text-danger small"></span>
