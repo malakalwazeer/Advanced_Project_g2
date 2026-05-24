@@ -13,6 +13,7 @@
             </div>
             <div class="card-body">
                 <p><strong>Description:</strong> @Model.Description</p>
+                <p><strong>Duration:</strong> @Model.DurationHours hours</p>
                 <p><strong>Capacity:</strong> @Model.Capacity</p>
                 <a asp-action="Edit" asp-route-id="@Model.CourseId" class="btn btn-warning">Edit Course</a>
                 <a asp-action="Index" class="btn btn-secondary">Back to List</a>

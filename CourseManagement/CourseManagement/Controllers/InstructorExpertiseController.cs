@@ -24,7 +24,6 @@ namespace CourseManagement.Controllers
             var expertise = await _context.InstructorExpertises
                 .Include(e => e.Instructor)
                 .Include(e => e.Category)
-                .AsNoTracking()
                 .OrderBy(e => e.Instructor.FullName)
                 .ThenBy(e => e.Category.CategoryName)
                 .Select(e => new ExpertiseIndexViewModel
@@ -95,12 +94,10 @@ namespace CourseManagement.Controllers
         private async Task PopulateSelectListsAsync(int? selectedInstructorId = null, int? selectedCategoryId = null)
         {
             var instructors = await _context.Instructors
-                .AsNoTracking()
                 .OrderBy(i => i.FullName)
                 .ToListAsync();
 
             var categories = await _context.CourseCategories
-                .AsNoTracking()
                 .OrderBy(c => c.CategoryName)
                 .ToListAsync();
 

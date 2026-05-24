@@ -177,6 +177,8 @@ namespace CourseManagement.Controllers
 
             if (session == null) return NotFound();
 
+            // Validation to stop FK errors - check if session is saved somewhere else
+            
             List<string> reasons = new List<string>();
 
             if (session.Enrollments.Any()) reasons.Add("It has enrollments.");

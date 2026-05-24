@@ -10,7 +10,7 @@ public class CourseDetailsViewModel
     public string CourseName { get; set; } = null!;
     public string? Description { get; set; }
     public int Capacity { get; set; }
-
+    public int DurationHours { get; set; }
     public List<CourseReqEquipment> CurrentRequirements { get; set; } = new();
     public List<CoursePrerequisite> CurrentPrerequisites { get; set; } = new();
 

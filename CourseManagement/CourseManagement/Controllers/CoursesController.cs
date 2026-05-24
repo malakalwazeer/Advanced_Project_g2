@@ -27,7 +27,6 @@ namespace CourseManagement.Controllers
         {
             var courses = await _context.Courses
                 .Include(c => c.Category)
-                .AsNoTracking()
                 .Select(c => new CourseIndexViewModel
                 {
                     CourseId = c.CourseId,
@@ -60,6 +59,7 @@ namespace CourseManagement.Controllers
                 CourseCode = course.CourseCode,
                 CourseName = course.CourseName,
                 Description = course.Description,
+                DurationHours = course.DurationHours,
                 Capacity = course.Capacity,
                 CurrentRequirements = course.CourseReqEquipments.ToList(),
                 CurrentPrerequisites = course.CoursePrerequisites.ToList(),
@@ -174,6 +174,7 @@ namespace CourseManagement.Controllers
                         CourseCode = model.CourseCode,
                         CourseName = model.CourseName,
                         Description = model.Description,
+                        DurationHours = model.DurationHours,
                         Capacity = model.Capacity,
                         EnrollmentFee = model.EnrollmentFee,
                         CategoryId = model.CategoryId
@@ -201,7 +202,7 @@ namespace CourseManagement.Controllers
                 CourseCode = course.CourseCode,
                 CourseName = course.CourseName,
                 Description = course.Description,
-                DurationHours = course.DurationHours, 
+                DurationHours = course.DurationHours,
                 Capacity = course.Capacity,
                 EnrollmentFee = course.EnrollmentFee,
                 CategoryId = course.CategoryId,
@@ -225,7 +226,7 @@ namespace CourseManagement.Controllers
                 course.CourseCode = model.CourseCode;
                 course.CourseName = model.CourseName;
                 course.Description = model.Description;
-                course.DurationHours = course.DurationHours;
+                course.DurationHours = model.DurationHours;
                 course.Capacity = model.Capacity;
                 course.EnrollmentFee = model.EnrollmentFee;
                 course.CategoryId = model.CategoryId;
@@ -243,7 +244,6 @@ namespace CourseManagement.Controllers
         {
             var course = await _context.Courses
                 .Include(c => c.Category)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.CourseId == id);
 
             if (course == null) return NotFound();
@@ -273,13 +273,13 @@ namespace CourseManagement.Controllers
 
             if (course == null) return NotFound();
 
-            
             // Validation to stop FK errors - check if course is saved somewhere else
+            
             List<string> reasons = new List<string>();
 
             if (course.CourseSessions.Any()) reasons.Add("It has active course sessions.");
             if (course.CourseReqEquipments.Any()) reasons.Add("It has equipment requirements defined.");
-            if (course.CoursePrerequisites.Any() || course.RequiredForCourses.Any())
+            if (course.CoursePrerequisites.Any() || course.RequiredForCourses.Any()) 
                 reasons.Add("It is linked as a prerequisite for/by other courses.");
 
             if (reasons.Any())
@@ -300,10 +300,10 @@ namespace CourseManagement.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
         private async Task<SelectList> GetCategorySelectListAsync(int? selectedCategoryId = null)
         {
             var categories = await _context.CourseCategories
-                .AsNoTracking()
                 .OrderBy(c => c.CategoryName)
                 .ToListAsync();
 

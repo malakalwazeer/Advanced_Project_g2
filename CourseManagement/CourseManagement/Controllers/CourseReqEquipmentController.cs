@@ -18,7 +18,6 @@ namespace CourseManagement.Controllers
             _context = context;
         }
 
-        // GET: CourseReqEquipment
         public async Task<IActionResult> Index()
         {
             var requirements = await _context.CourseReqEquipments
@@ -37,7 +36,6 @@ namespace CourseManagement.Controllers
             return View(requirements);
         }
 
-        // GET: CourseReqEquipment/Create
         public IActionResult Create()
         {
             ViewData["CourseId"] = new SelectList(_context.Courses, "CourseId", "CourseName");
@@ -45,14 +43,14 @@ namespace CourseManagement.Controllers
             return View();
         }
 
-        // POST: CourseReqEquipment/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CourseReqEqCreateViewModel model)
         {
             if (ModelState.IsValid)
             {
-                // Check if already exists
+                // Check if requirement already exists \
+                // If there, just edit the record instead oif making a new one
                 var exists = await _context.CourseReqEquipments.AnyAsync(r => r.CourseId == model.CourseId && r.EquipmentId == model.EquipmentId);
                 if (exists)
                 {
@@ -78,7 +76,6 @@ namespace CourseManagement.Controllers
             return View(model);
         }
 
-        // GET: CourseReqEquipment/Edit
         public async Task<IActionResult> Edit(int courseId, int equipmentId)
         {
             var requirement = await _context.CourseReqEquipments
@@ -100,7 +97,6 @@ namespace CourseManagement.Controllers
             return View(model);
         }
 
-        // POST: CourseReqEquipment/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CourseReqEqEditViewModel model)
@@ -117,7 +113,6 @@ namespace CourseManagement.Controllers
             return View(model);
         }
 
-        // GET: CourseReqEquipment/Delete
         public async Task<IActionResult> Delete(int courseId, int equipmentId)
         {
             var requirement = await _context.CourseReqEquipments
@@ -139,7 +134,6 @@ namespace CourseManagement.Controllers
             return View(model);
         }
 
-        // POST: CourseReqEquipment/Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int courseId, int equipmentId)

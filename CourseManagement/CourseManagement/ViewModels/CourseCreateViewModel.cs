@@ -16,7 +16,7 @@ public class CourseCreateViewModel
     public string? Description { get; set; }
 
     [Display(Name = "Duration (Hours)")]
-    [Range(1, int.MaxValue, ErrorMessage = "Duration must be at least 1 hour.")]
+    [Range(1, 200, ErrorMessage = "Duration must be between 1 and 200 hours.")]
     public int DurationHours { get; set; }
 
     [Range(1, int.MaxValue, ErrorMessage = "Capacity must be greater than zero.")]

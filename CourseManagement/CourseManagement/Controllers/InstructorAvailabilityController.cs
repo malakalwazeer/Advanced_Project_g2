@@ -23,7 +23,6 @@ namespace CourseManagement.Controllers
         {
             var availabilities = await _context.InstructorAvailabilities
                 .Include(a => a.Instructor)
-                .AsNoTracking()
                 .OrderByDescending(a => a.AvailableDate)
                 .ThenBy(a => a.StartTime)
                 .Select(a => new AvailabilityIndexViewModel
@@ -132,7 +131,6 @@ namespace CourseManagement.Controllers
         {
             var availability = await _context.InstructorAvailabilities
                 .Include(a => a.Instructor)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.AvailabilityId == id);
 
             if (availability == null) return NotFound();
@@ -166,7 +164,6 @@ namespace CourseManagement.Controllers
         private async Task PopulateInstructorsAsync(int? selectedInstructorId = null)
         {
             var instructors = await _context.Instructors
-                .AsNoTracking()
                 .OrderBy(i => i.FullName)
                 .ToListAsync();
 

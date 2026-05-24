@@ -16,7 +16,6 @@ namespace CourseManagement.ViewModels
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
         public int Quantity { get; set; }
         
-        // Names for display only in the Edit view header
         public string? CourseName { get; set; }
         public string? EquipmentName { get; set; }
     }
