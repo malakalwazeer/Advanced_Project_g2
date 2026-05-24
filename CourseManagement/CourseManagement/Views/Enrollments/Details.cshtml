@@ -1,0 +1,123 @@
+@model CourseManagement.ViewModels.EnrollmentDetailsViewModel
+
+@{
+    ViewData["Title"] = "Enrollment Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Enrollment Details</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white"><strong>Enrollment Info</strong></div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Trainee</dt>
+                    <dd class="col-sm-8">@Model.TraineeName</dd>
+
+                    <dt class="col-sm-4">Course</dt>
+                    <dd class="col-sm-8">@Model.CourseName</dd>
+
+                    <dt class="col-sm-4">Instructor</dt>
+                    <dd class="col-sm-8">@(Model.InstructorName ?? "—")</dd>
+
+                    <dt class="col-sm-4">Session Start</dt>
+                    <dd class="col-sm-8">@(Model.SessionStart?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
+
+                    <dt class="col-sm-4">Session End</dt>
+                    <dd class="col-sm-8">@(Model.SessionEnd?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
+
+                    <dt class="col-sm-4">Enrollment Date</dt>
+                    <dd class="col-sm-8">@(Model.EnrollmentDate.ToString("yyyy-MM-dd"))</dd>
+
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-info text-dark">@Model.StatusName</span>
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer d-flex gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.EnrollmentId" class="btn btn-warning btn-sm">Edit</a>
+                <a asp-action="Delete" asp-route-id="@Model.EnrollmentId" class="btn btn-danger btn-sm">Delete</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white"><strong>Payments</strong></div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Amount Paid</th>
+                            <th>Date</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Payments)
+                        {
+                            <tr>
+                                <td>@(p.AmountPaid.ToString("N2", System.Globalization.CultureInfo.InvariantCulture))</td>
+                                <td>@(p.PaymentDate.ToString("yyyy-MM-dd"))</td>
+                                <td>@(p.BalanceRemaining.HasValue ? p.BalanceRemaining.Value.ToString("N2", System.Globalization.CultureInfo.InvariantCulture) : "—")</td>
+                                <td><span class="badge bg-success">@p.StatusName</span></td>
+                            </tr>
+                        }
+                        @if (!Model.Payments.Any())
+                        {
+                            <tr><td colspan="4" class="text-muted text-center py-3">No payments.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-secondary text-white"><strong>Assessments</strong></div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Instructor</th>
+                    <th>Score</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.Assessments)
+                {
+                    <tr>
+                        <td>@(a.InstructorName ?? "—")</td>
+                        <td>@(a.Score.HasValue ? a.Score.ToString() : "—")</td>
+                        <td>
+                            @if (a.Result == 1)
+                            {
+                                <span class="badge bg-success">Pass</span>
+                            }
+                            else if (a.Result == 0)
+                            {
+                                <span class="badge bg-danger">Fail</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted">Not Graded</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Assessments.Any())
+                {
+                    <tr><td colspan="3" class="text-muted text-center py-3">No assessments.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,77 @@
+@model IEnumerable<CourseManagement.ViewModels.AssessmentIndexViewModel>
+
+@{
+    ViewData["Title"] = "Assessments";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Assessments</h2>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover table-striped mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Trainee</th>
+                    <th>Course</th>
+                    <th>Instructor</th>
+                    <th class="text-center">Score</th>
+                    <th class="text-center">Result</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.TraineeName</td>
+                        <td>@item.CourseName</td>
+                        <td>@(item.InstructorName ?? "—")</td>
+                        <td class="text-center">@(item.Score.HasValue ? item.Score.ToString() : "—")</td>
+                        <td class="text-center">
+                            @if (item.Result == 1)
+                            {
+                                <span class="badge bg-success">Pass</span>
+                            }
+                            else if (item.Result == 0)
+                            {
+                                <span class="badge bg-danger">Fail</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted border">Not Graded</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <a asp-action="Details" asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-info me-1">Details</a>
+                            <a asp-action="Edit"    asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
+                            <a asp-action="Delete"  asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">No assessments found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

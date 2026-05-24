@@ -1,0 +1,62 @@
+@model CourseManagement.ViewModels.PaymentDetailsViewModel
+
+@{
+    ViewData["Title"] = "Payment Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Payment Details</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white"><strong>Payment #@Model.PaymentId</strong></div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Trainee</dt>
+                    <dd class="col-sm-8">@Model.TraineeName</dd>
+
+                    <dt class="col-sm-4">Course</dt>
+                    <dd class="col-sm-8">@Model.CourseName</dd>
+
+                    <dt class="col-sm-4">Amount Paid</dt>
+                    <dd class="col-sm-8">@(Model.AmountPaid.ToString("N2", System.Globalization.CultureInfo.InvariantCulture))</dd>
+
+                    <dt class="col-sm-4">Payment Date</dt>
+                    <dd class="col-sm-8">@(Model.PaymentDate.ToString("yyyy-MM-dd"))</dd>
+
+                    <dt class="col-sm-4">Balance Remaining</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.BalanceRemaining == 0)
+                        {
+                            <span class="text-success fw-semibold">Fully Paid</span>
+                        }
+                        else
+                        {
+                            @(Model.BalanceRemaining.HasValue ? Model.BalanceRemaining.Value.ToString("N2", System.Globalization.CultureInfo.InvariantCulture) : "—")
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Payment Status</dt>
+                    <dd class="col-sm-8">
+                        @{
+                            var badgeClass = Model.StatusName switch
+                            {
+                                "Paid"    => "bg-success",
+                                "Partial" => "bg-warning text-dark",
+                                _         => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass">@Model.StatusName</span>
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer d-flex gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.PaymentId" class="btn btn-warning btn-sm">Edit</a>
+                <a asp-action="Delete" asp-route-id="@Model.PaymentId" class="btn btn-danger btn-sm">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>

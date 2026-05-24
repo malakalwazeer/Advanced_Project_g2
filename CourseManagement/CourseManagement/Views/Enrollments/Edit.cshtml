@@ -1,0 +1,65 @@
+@model CourseManagement.ViewModels.EnrollmentEditViewModel
+
+@{
+    ViewData["Title"] = "Edit Enrollment";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Edit Enrollment</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">Edit Enrollment</div>
+            <div class="card-body">
+                <form asp-action="Edit">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <input type="hidden" asp-for="EnrollmentId" />
+
+                    <div class="mb-3">
+                        <label asp-for="TraineeId" class="form-label fw-semibold"></label>
+                        <select asp-for="TraineeId" asp-items="Model.Trainees" class="form-select">
+                            <option value="">-- Select Trainee --</option>
+                        </select>
+                        <span asp-validation-for="TraineeId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SessionId" class="form-label fw-semibold"></label>
+                        <select asp-for="SessionId" asp-items="Model.Sessions" class="form-select">
+                            <option value="">-- Select Session --</option>
+                        </select>
+                        <span asp-validation-for="SessionId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EnrollmentDate" class="form-label fw-semibold"></label>
+                        <input asp-for="EnrollmentDate" type="date" class="form-control" />
+                        <span asp-validation-for="EnrollmentDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EnrollmentStatusId" class="form-label fw-semibold"></label>
+                        <select asp-for="EnrollmentStatusId" asp-items="Model.EnrollmentStatuses" class="form-select">
+                            <option value="">-- Select Status --</option>
+                        </select>
+                        <span asp-validation-for="EnrollmentStatusId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-warning">Save Changes</button>
+                        <a asp-action="Details" asp-route-id="@Model.EnrollmentId" class="btn btn-outline-info">View Details</a>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

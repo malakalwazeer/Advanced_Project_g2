@@ -1,0 +1,69 @@
+@model CourseManagement.ViewModels.AssessmentCreateViewModel
+
+@{
+    ViewData["Title"] = "Create Assessment";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Create Assessment</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">New Assessment</div>
+            <div class="card-body">
+                <form asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="EnrollmentId" class="form-label fw-semibold"></label>
+                        <select asp-for="EnrollmentId" asp-items="Model.Enrollments" class="form-select">
+                            <option value="">-- Select Enrollment --</option>
+                        </select>
+                        <span asp-validation-for="EnrollmentId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="InstructorId" class="form-label fw-semibold"></label>
+                        <select asp-for="InstructorId" asp-items="Model.Instructors" class="form-select">
+                            <option value="">-- Select Instructor --</option>
+                        </select>
+                        <span asp-validation-for="InstructorId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Score" class="form-label fw-semibold">Score (0 – 100)</label>
+                        <input asp-for="Score" type="number" min="0" max="100" class="form-control"
+                            placeholder="Leave blank if not scored yet" />
+                        <span asp-validation-for="Score" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Result" class="form-label fw-semibold"></label>
+                        <select asp-for="Result" class="form-select">
+                            <option value="">-- Not Graded --</option>
+                            <option value="1">Pass</option>
+                            <option value="0">Fail</option>
+                        </select>
+                        <span asp-validation-for="Result" class="text-danger small"></span>
+                    </div>
+
+                    <div class="alert alert-info small py-2 mb-3">
+                        Saving a Pass result automatically updates the trainee's certification progress.
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Create</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
