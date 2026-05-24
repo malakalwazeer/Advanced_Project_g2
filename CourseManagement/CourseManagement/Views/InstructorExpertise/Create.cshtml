@@ -1,0 +1,42 @@
+@model CourseManagement.ViewModels.ExpertiseCreateViewModel
+
+@{
+    ViewData["Title"] = "Link Instructor to Expertise";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="mb-3">
+                    <label asp-for="InstructorId" class="form-label">Instructor</label>
+                    <select asp-for="InstructorId" class="form-select" asp-items="ViewBag.Instructors">
+                        <option value="">-- Select Instructor --</option>
+                    </select>
+                    <span asp-validation-for="InstructorId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryId" class="form-label">Course Category</label>
+                    <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
+                        <option value="">-- Select Category --</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Link Expertise</button>
+                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

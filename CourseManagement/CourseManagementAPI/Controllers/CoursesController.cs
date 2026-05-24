@@ -63,6 +63,7 @@ namespace CourseManagementAPI.Controllers
                 CourseCode = dto.CourseCode,
                 CourseName = dto.CourseName,
                 Description = dto.Description,
+                DurationHours = dto.DurationHours,
                 Capacity = dto.Capacity,
                 EnrollmentFee = dto.EnrollmentFee,
                 CategoryId = dto.CategoryId
@@ -77,6 +78,7 @@ namespace CourseManagementAPI.Controllers
                 course.CourseCode,
                 course.CourseName,
                 course.Description,
+                course.DurationHours,
                 course.Capacity,
                 course.EnrollmentFee,
                 course.CategoryId

@@ -1,0 +1,32 @@
+@model CourseManagement.ViewModels.CourseReqEqIndexViewModel
+
+@{
+    ViewData["Title"] = "Delete Course Equipment Requirement";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <h3 class="text-danger">Are you sure you want to remove this equipment requirement?</h3>
+    <hr />
+    <div class="card shadow-sm col-md-6 border-danger">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-5">Course</dt>
+                <dd class="col-sm-7">@Model.CourseName</dd>
+
+                <dt class="col-sm-5">Equipment</dt>
+                <dd class="col-sm-7">@Model.EquipmentName</dd>
+
+                <dt class="col-sm-5">Quantity Required</dt>
+                <dd class="col-sm-7">@Model.Quantity</dd>
+            </dl>
+            
+            <form asp-action="Delete" class="mt-4">
+                <input type="hidden" name="courseId" value="@Model.CourseId" />
+                <input type="hidden" name="equipmentId" value="@Model.EquipmentId" />
+                <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>

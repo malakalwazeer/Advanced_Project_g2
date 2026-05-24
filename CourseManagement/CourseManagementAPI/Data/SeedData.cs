@@ -108,6 +108,7 @@ public static class SeedData
                 CourseCode = "WEB101",
                 CourseName = "Introduction to Web Development",
                 Description = "HTML, CSS, and JavaScript basics",
+                DurationHours = 12,
                 Capacity = 20,
                 EnrollmentFee = 120,
                 CategoryId = 1
@@ -118,6 +119,7 @@ public static class SeedData
                 CourseCode = "DB101",
                 CourseName = "Database Fundamentals",
                 Description = "Introduction to relational databases",
+                DurationHours = 10,
                 Capacity = 25,
                 EnrollmentFee = 100,
                 CategoryId = 3

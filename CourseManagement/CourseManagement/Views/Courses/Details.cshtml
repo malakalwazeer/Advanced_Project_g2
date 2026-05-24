@@ -1,0 +1,99 @@
+@model CourseManagement.ViewModels.CourseDetailsViewModel
+
+@{
+    ViewData["Title"] = "Course Details";
+}
+
+<div class="row">
+    <!-- Left Column: Course Info -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">@Model.CourseName (@Model.CourseCode)</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Description:</strong> @Model.Description</p>
+                <p><strong>Duration:</strong> @Model.DurationHours hours</p>
+                <p><strong>Capacity:</strong> @Model.Capacity</p>
+                <a asp-action="Edit" asp-route-id="@Model.CourseId" class="btn btn-warning">Edit Course</a>
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Requirements & Prerequisites -->
+    <div class="col-md-6">
+        
+        <!-- Required Equipment -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">Required Equipment</div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead><tr><th>Equipment</th><th>Qty</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.CurrentRequirements)
+                        {
+                            <tr>
+                                <td>@item.Equipment.EquipmentName</td>
+                                <td>@item.Quantity</td>
+                                <td>
+                                    <form asp-action="RemoveEquipmentRequirement" method="post">
+                                        <input type="hidden" name="courseId" value="@Model.CourseId" />
+                                        <input type="hidden" name="equipmentId" value="@item.EquipmentId" />
+                                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <hr />
+                <form asp-action="AddEquipmentRequirement" method="post" class="row row-cols-lg-auto g-3 align-items-center">
+                    <input type="hidden" asp-for="CourseId" />
+                    <div class="col-12">
+                        <select asp-for="AddEquipmentId" asp-items="Model.EquipmentList" class="form-select" required>
+                            <option value="">-- Select Equipment --</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <input asp-for="AddEquipmentQuantity" class="form-control" placeholder="Qty" required />
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Prerequisites -->
+        <div class="card">
+            <div class="card-header bg-success text-white">Prerequisites</div>
+            <div class="card-body">
+                <ul class="list-group mb-3">
+                    @foreach (var item in Model.CurrentPrerequisites)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @item.PrerequisiteCourse.CourseName
+                            <form asp-action="RemovePrerequisite" method="post">
+                                <input type="hidden" name="courseId" value="@Model.CourseId" />
+                                <input type="hidden" name="prerequisiteId" value="@item.CoursePrerequisiteId" />
+                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+                <form asp-action="AddPrerequisite" method="post" class="row row-cols-lg-auto g-3 align-items-center">
+                    <input type="hidden" asp-for="CourseId" />
+                    <div class="col-12">
+                        <select asp-for="AddPrerequisiteId" asp-items="Model.PrerequisiteCourseList" class="form-select" required>
+                            <option value="">-- Select Course --</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

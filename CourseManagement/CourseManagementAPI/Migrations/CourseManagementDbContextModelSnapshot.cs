@@ -327,6 +327,12 @@ namespace CourseManagementAPI.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
+                    b.Property<int>("DurationHours")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1)
+                        .HasColumnName("durationHours");
+
                     b.Property<decimal>("EnrollmentFee")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("enrollmentFee");
@@ -346,6 +352,7 @@ namespace CourseManagementAPI.Migrations
                             CourseCode = "WEB101",
                             CourseName = "Introduction to Web Development",
                             Description = "HTML, CSS, and JavaScript basics",
+                            DurationHours = 12,
                             EnrollmentFee = 120m
                         },
                         new
@@ -356,6 +363,7 @@ namespace CourseManagementAPI.Migrations
                             CourseCode = "DB101",
                             CourseName = "Database Fundamentals",
                             Description = "Introduction to relational databases",
+                            DurationHours = 10,
                             EnrollmentFee = 100m
                         });
                 });

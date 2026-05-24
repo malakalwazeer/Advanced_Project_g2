@@ -1,0 +1,39 @@
+@model CourseManagement.ViewModels.CourseReqEqEditViewModel
+
+@{
+    ViewData["Title"] = "Edit Course Equipment Requirement";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-6">
+            <div class="alert alert-info shadow-sm">
+                <strong>Course:</strong> @Model.CourseName <br />
+                <strong>Equipment:</strong> @Model.EquipmentName
+            </div>
+            
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="CourseId" />
+                <input type="hidden" asp-for="EquipmentId" />
+
+                <div class="mb-3">
+                    <label asp-for="Quantity" class="form-label">Update Quantity</label>
+                    <input asp-for="Quantity" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

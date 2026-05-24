@@ -155,6 +155,10 @@ public partial class CourseManagementDbContext : IdentityDbContext<ApplicationUs
             entity.Property(e => e.CourseCode).HasColumnName("courseCode");
             entity.Property(e => e.CourseName).HasColumnName("courseName");
             entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.DurationHours)
+                .HasColumnName("durationHours")
+                .HasDefaultValue(1);
+
             entity.Property(e => e.Capacity).HasColumnName("capacity");
 
             entity.Property(e => e.EnrollmentFee)

@@ -1,9 +1,28 @@
 using CourseManagementAPI.Data;
-using CourseManagementAPI.Services.Validation;
+using CourseManagementAPI.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using CourseManagementAPI.Services.Validation;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
+builder.Services.AddDbContext<CourseManagementDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<CourseManagementDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
+builder.Services.AddScoped<CourseManagementAPI.Services.Validation.CourseValidationService>(); 
+builder.Services.AddScoped<CourseManagementAPI.Services.Validation.CourseSessionValidationService>(); 
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<CourseManagementDbContext>(options =>
@@ -28,6 +47,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapStaticAssets();
 
