@@ -21,22 +21,14 @@ namespace CourseManagementAPI.Controllers
 
         [AllowAnonymous]
         [HttpPost("verify")]
-        //to add API documentation
         [ProducesResponseType(typeof(CertificationLookupResultDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(CertificationLookupResultDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> VerifyCertificate(CertificationLookupDto dto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             var result = await _lookupService.VerifyAsync(dto);
-
-            if (!result.IsValid)
-            {
-                return BadRequest(result);
-            }
 
             return Ok(result);
         }
