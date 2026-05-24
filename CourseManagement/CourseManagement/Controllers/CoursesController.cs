@@ -201,6 +201,7 @@ namespace CourseManagement.Controllers
                 CourseCode = course.CourseCode,
                 CourseName = course.CourseName,
                 Description = course.Description,
+                DurationHours = course.DurationHours, 
                 Capacity = course.Capacity,
                 EnrollmentFee = course.EnrollmentFee,
                 CategoryId = course.CategoryId,
@@ -224,6 +225,7 @@ namespace CourseManagement.Controllers
                 course.CourseCode = model.CourseCode;
                 course.CourseName = model.CourseName;
                 course.Description = model.Description;
+                course.DurationHours = course.DurationHours;
                 course.Capacity = model.Capacity;
                 course.EnrollmentFee = model.EnrollmentFee;
                 course.CategoryId = model.CategoryId;
@@ -271,6 +273,8 @@ namespace CourseManagement.Controllers
 
             if (course == null) return NotFound();
 
+            
+            // Validation to stop FK errors - check if course is saved somewhere else
             List<string> reasons = new List<string>();
 
             if (course.CourseSessions.Any()) reasons.Add("It has active course sessions.");

@@ -21,7 +21,7 @@ public class ClassroomsController : Controller
     public async Task<IActionResult> Index()
     {
         var classrooms = await _context.Classrooms
-            .AsNoTracking()
+            
             .OrderBy(c => c.Location)
             .Select(c => new ClassroomIndexViewModel
             {
@@ -67,7 +67,7 @@ public class ClassroomsController : Controller
     public async Task<IActionResult> Edit(int id)
     {
         var classroom = await _context.Classrooms
-            .AsNoTracking()
+            
             .FirstOrDefaultAsync(c => c.ClassroomId == id);
 
         if (classroom == null)
@@ -120,7 +120,7 @@ public class ClassroomsController : Controller
     public async Task<IActionResult> Delete(int id)
     {
         var classroom = await _context.Classrooms
-            .AsNoTracking()
+            
             .Where(c => c.ClassroomId == id)
             .Select(c => new ClassroomIndexViewModel
             {

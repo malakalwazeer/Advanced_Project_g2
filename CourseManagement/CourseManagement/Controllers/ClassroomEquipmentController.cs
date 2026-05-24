@@ -24,7 +24,6 @@ public class ClassroomEquipmentController : Controller
         var classroomEquipment = await _context.ClassroomEquipments
             .Include(ce => ce.Classroom)
             .Include(ce => ce.Equipment)
-            .AsNoTracking()
             .OrderBy(ce => ce.Classroom.Location)
             .ThenBy(ce => ce.Equipment.EquipmentName)
             .Select(ce => new ClassroomEqIndexViewModel
@@ -125,15 +124,14 @@ public class ClassroomEquipmentController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // Helper that queries classrooms and equipment at once
     private async Task PopulateSelectListsAsync(int? selectedClassroomId = null, int? selectedEquipmentId = null)
     {
         var classrooms = await _context.Classrooms
-            .AsNoTracking()
             .OrderBy(c => c.Location)
             .ToListAsync();
 
         var equipment = await _context.Equipments
-            .AsNoTracking()
             .OrderBy(e => e.EquipmentName)
             .ToListAsync();
 

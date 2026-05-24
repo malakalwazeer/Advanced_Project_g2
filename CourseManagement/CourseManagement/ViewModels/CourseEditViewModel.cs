@@ -1,33 +1,36 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace CourseManagement.ViewModels
+namespace CourseManagement.ViewModels;
+
+public class CourseEditViewModel
 {
-    public class CourseEditViewModel
-    {
-        public int CourseId { get; set; }
+    public int CourseId { get; set; }
 
-        [Required]
-        [Display(Name = "Course Code")]
-        public string CourseCode { get; set; }
+    [Required]
+    [Display(Name = "Course Code")]
+    public string CourseCode { get; set; } = string.Empty;
 
-        [Required]
-        [Display(Name = "Course Name")]
-        public string CourseName { get; set; }
+    [Required]
+    [Display(Name = "Title")]
+    public string CourseName { get; set; } = string.Empty;
 
-        public string? Description { get; set; }
+    public string? Description { get; set; }
 
-        [Required]
-        public int Capacity { get; set; }
+    [Display(Name = "Duration (Hours)")]
+    [Range(1, int.MaxValue, ErrorMessage = "Duration must be at least 1 hour.")]
+    public int DurationHours { get; set; }
 
-        [Required]
-        [Display(Name = "Enrollment Fee")]
-        public decimal EnrollmentFee { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Capacity must be greater than zero.")]
+    public int Capacity { get; set; }
 
-        [Required]
-        [Display(Name = "Category")]
-        public int CategoryId { get; set; }
+    [Range(0.01, double.MaxValue, ErrorMessage = "Fee must be greater than zero.")]
+    [Display(Name = "Fee")]
+    public decimal EnrollmentFee { get; set; }
 
-        public SelectList? Categories { get; set; }
-    }
+    [Range(1, int.MaxValue, ErrorMessage = "Please select a category.")]
+    [Display(Name = "Category")]
+    public int CategoryId { get; set; }
+
+    public SelectList? Categories { get; set; }
 }
