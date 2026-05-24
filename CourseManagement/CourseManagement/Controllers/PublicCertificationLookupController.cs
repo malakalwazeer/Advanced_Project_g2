@@ -1,12 +1,10 @@
-using CourseManagement.ViewModels;
+using CourseManagement.Models.ViewModels;
 using CourseManagementAPI.Dtos;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 
 namespace CourseManagement.Controllers;
 
-[AllowAnonymous]
 public class PublicCertificationLookupController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;

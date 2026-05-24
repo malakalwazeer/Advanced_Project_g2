@@ -1,13 +1,11 @@
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "TrainingCoordinator,Trainee")]
 public class TraineeCertificationProgressController : Controller
 {
     private readonly CourseManagementDbContext _context;

@@ -1,16 +1,13 @@
-using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
 using CourseManagementAPI.Services.Validation;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "TrainingCoordinator,Instructor")]
 public class AssessmentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
@@ -24,6 +21,7 @@ public class AssessmentsController : Controller
         _assessmentValidator = assessmentValidator;
     }
 
+    // GET: Assessments
     public async Task<IActionResult> Index()
     {
         var assessments = await _context.Assessments
@@ -35,9 +33,11 @@ public class AssessmentsController : Controller
             .Include(a => a.Instructor)
             .AsNoTracking()
             .ToListAsync();
+
         return View(assessments);
     }
 
+    // GET: Assessments/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -53,51 +53,56 @@ public class AssessmentsController : Controller
             .FirstOrDefaultAsync(a => a.AssessmentId == id);
 
         if (assessment == null) return NotFound();
+
         return View(assessment);
     }
 
+    // GET: Assessments/Create
     public IActionResult Create()
     {
-        var vm = new AssessmentCreateEditViewModel();
-        LoadDropdowns(vm);
-        return View(vm);
+        LoadDropdowns();
+        return View();
     }
 
+    // POST: Assessments/Create
+    // Uses AssessmentValidationService (from API project, injected via DI) which checks:
+    //   • Enrollment exists
+    //   • Instructor exists and is assigned to the session
+    //   • Session has already ended (EndDateTime <= now)
+    //   • No duplicate assessment for this enrollment
+    // After passing validation, saves via EF Core and triggers certification progress update.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(AssessmentCreateEditViewModel vm)
+    public async Task<IActionResult> Create(
+        [Bind("EnrollmentId,InstructorId,Score,Result")]
+        Assessment assessment)
     {
-        if (vm.Score.HasValue && (vm.Score < 0 || vm.Score > 100))
-            ModelState.AddModelError(nameof(vm.Score), "Score must be between 0 and 100.");
+        ModelState.Remove(nameof(Assessment.Enrollment));
+        ModelState.Remove(nameof(Assessment.Instructor));
 
-        if (vm.Result.HasValue && vm.Result != 0 && vm.Result != 1)
-            ModelState.AddModelError(nameof(vm.Result), "Result must be 0 (Fail) or 1 (Pass).");
+        // Score/result range check before calling the service.
+        if (!ValidateScoreAndResult(assessment, out var rangeError))
+            ModelState.AddModelError(string.Empty, rangeError!);
 
         if (ModelState.IsValid)
         {
+            // Map to the DTO the service expects.
             var dto = new CreateAssessmentDto
             {
-                EnrollmentId = vm.EnrollmentId,
-                InstructorId = vm.InstructorId,
-                Result       = vm.Result ?? 0,
-                Score        = vm.Score
+                EnrollmentId = assessment.EnrollmentId,
+                InstructorId = assessment.InstructorId,
+                Result       = assessment.Result ?? 0,
+                Score        = assessment.Score
             };
 
             var error = await _assessmentValidator.ValidateCreateAsync(dto);
             if (error != null)
             {
                 ModelState.AddModelError(string.Empty, error);
-                LoadDropdowns(vm);
-                return View(vm);
+                LoadDropdowns(assessment.EnrollmentId, assessment.InstructorId);
+                return View(assessment);
             }
 
-            var assessment = new Assessment
-            {
-                EnrollmentId = vm.EnrollmentId,
-                InstructorId = vm.InstructorId,
-                Score        = vm.Score,
-                Result       = vm.Result
-            };
             _context.Add(assessment);
             await _context.SaveChangesAsync();
 
@@ -106,10 +111,12 @@ public class AssessmentsController : Controller
             TempData["Success"] = "Assessment saved. Certification progress updated.";
             return RedirectToAction(nameof(Index));
         }
-        LoadDropdowns(vm);
-        return View(vm);
+
+        LoadDropdowns(assessment.EnrollmentId, assessment.InstructorId);
+        return View(assessment);
     }
 
+    // GET: Assessments/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -117,40 +124,30 @@ public class AssessmentsController : Controller
         var assessment = await _context.Assessments.FindAsync(id);
         if (assessment == null) return NotFound();
 
-        var vm = new AssessmentCreateEditViewModel
-        {
-            AssessmentId = assessment.AssessmentId,
-            EnrollmentId = assessment.EnrollmentId,
-            InstructorId = assessment.InstructorId,
-            Score        = assessment.Score,
-            Result       = assessment.Result
-        };
-        LoadDropdowns(vm);
-        return View(vm);
+        LoadDropdowns(assessment.EnrollmentId, assessment.InstructorId);
+        return View(assessment);
     }
 
+    // POST: Assessments/Edit/5
+    // Edit does NOT use AssessmentValidationService — the service's "assessment already exists"
+    // check would always fail for an existing record being edited. Score/result range
+    // validation is applied locally instead.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, AssessmentCreateEditViewModel vm)
+    public async Task<IActionResult> Edit(int id,
+        [Bind("AssessmentId,EnrollmentId,InstructorId,Score,Result")]
+        Assessment assessment)
     {
-        if (id != vm.AssessmentId) return NotFound();
+        if (id != assessment.AssessmentId) return NotFound();
 
-        if (vm.Score.HasValue && (vm.Score < 0 || vm.Score > 100))
-            ModelState.AddModelError(nameof(vm.Score), "Score must be between 0 and 100.");
+        ModelState.Remove(nameof(Assessment.Enrollment));
+        ModelState.Remove(nameof(Assessment.Instructor));
 
-        if (vm.Result.HasValue && vm.Result != 0 && vm.Result != 1)
-            ModelState.AddModelError(nameof(vm.Result), "Result must be 0 (Fail) or 1 (Pass).");
+        if (!ValidateScoreAndResult(assessment, out var rangeError))
+            ModelState.AddModelError(string.Empty, rangeError!);
 
         if (ModelState.IsValid)
         {
-            var assessment = new Assessment
-            {
-                AssessmentId = vm.AssessmentId,
-                EnrollmentId = vm.EnrollmentId,
-                InstructorId = vm.InstructorId,
-                Score        = vm.Score,
-                Result       = vm.Result
-            };
             try
             {
                 _context.Update(assessment);
@@ -162,15 +159,18 @@ public class AssessmentsController : Controller
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await AssessmentExists(vm.AssessmentId)) return NotFound();
+                if (!await AssessmentExists(assessment.AssessmentId))
+                    return NotFound();
                 throw;
             }
             return RedirectToAction(nameof(Index));
         }
-        LoadDropdowns(vm);
-        return View(vm);
+
+        LoadDropdowns(assessment.EnrollmentId, assessment.InstructorId);
+        return View(assessment);
     }
 
+    // GET: Assessments/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -186,9 +186,11 @@ public class AssessmentsController : Controller
             .FirstOrDefaultAsync(a => a.AssessmentId == id);
 
         if (assessment == null) return NotFound();
+
         return View(assessment);
     }
 
+    // POST: Assessments/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -197,14 +199,42 @@ public class AssessmentsController : Controller
         if (assessment != null)
         {
             int enrollmentId = assessment.EnrollmentId;
+
             _context.Assessments.Remove(assessment);
             await _context.SaveChangesAsync();
+
             await UpdateCertificationProgressAsync(enrollmentId);
+
             TempData["Success"] = "Assessment deleted. Certification progress recalculated.";
         }
         return RedirectToAction(nameof(Index));
     }
 
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    /// <summary>Validates Score (0–100) and Result (0 or 1). Used for both Create and Edit.</summary>
+    private static bool ValidateScoreAndResult(Assessment assessment, out string? errorMessage)
+    {
+        if (assessment.Score.HasValue && (assessment.Score < 0 || assessment.Score > 100))
+        {
+            errorMessage = "Score must be between 0 and 100.";
+            return false;
+        }
+
+        if (assessment.Result.HasValue && assessment.Result != 0 && assessment.Result != 1)
+        {
+            errorMessage = "Result must be 0 (Fail) or 1 (Pass).";
+            return false;
+        }
+
+        errorMessage = null;
+        return true;
+    }
+
+    /// <summary>
+    /// Recalculates TraineeCertificationProgress for all certifications whose required courses
+    /// include any course the trainee has passed. Called after every Create/Edit/Delete.
+    /// </summary>
     private async Task UpdateCertificationProgressAsync(int enrollmentId)
     {
         var enrollment = await _context.Enrollments
@@ -249,10 +279,10 @@ public class AssessmentsController : Controller
             {
                 _context.TraineeCertificationProgresses.Add(new TraineeCertificationProgress
                 {
-                    TraineeId          = traineeId,
-                    CertificationId    = certId,
-                    ProgressPercentage = pct,
-                    AchievedDate       = pct >= 100 ? DateOnly.FromDateTime(DateTime.Today) : null
+                    TraineeId           = traineeId,
+                    CertificationId     = certId,
+                    ProgressPercentage  = pct,
+                    AchievedDate        = pct >= 100 ? DateOnly.FromDateTime(DateTime.Today) : null
                 });
             }
             else
@@ -268,25 +298,27 @@ public class AssessmentsController : Controller
         await _context.SaveChangesAsync();
     }
 
-    private void LoadDropdowns(AssessmentCreateEditViewModel vm)
+    private void LoadDropdowns(int? selectedEnrollmentId = null, int? selectedInstructorId = null)
     {
-        vm.Enrollments = _context.Enrollments
-            .Include(e => e.Trainee)
-            .Include(e => e.Session)
-                .ThenInclude(s => s.Course)
-            .AsNoTracking()
-            .OrderBy(e => e.Trainee.FullName)
-            .Select(e => new SelectListItem
-            {
-                Value = e.EnrollmentId.ToString(),
-                Text  = e.Trainee.FullName + " — " + e.Session.Course.CourseName
-            })
-            .ToList();
+        ViewData["EnrollmentId"] = new SelectList(
+            _context.Enrollments
+                .Include(e => e.Trainee)
+                .Include(e => e.Session)
+                    .ThenInclude(s => s.Course)
+                .AsNoTracking()
+                .OrderBy(e => e.Trainee.FullName)
+                .Select(e => new
+                {
+                    e.EnrollmentId,
+                    Display = e.Trainee.FullName + " — " + e.Session.Course.CourseName
+                }),
+            "EnrollmentId", "Display", selectedEnrollmentId);
 
-        vm.Instructors = _context.Instructors.AsNoTracking()
-            .OrderBy(i => i.FullName)
-            .Select(i => new SelectListItem { Value = i.InstructorId.ToString(), Text = i.FullName })
-            .ToList();
+        ViewData["InstructorId"] = new SelectList(
+            _context.Instructors.AsNoTracking()
+                .OrderBy(i => i.FullName)
+                .Select(i => new { i.InstructorId, i.FullName }),
+            "InstructorId", "FullName", selectedInstructorId);
     }
 
     private async Task<bool> AssessmentExists(int id) =>

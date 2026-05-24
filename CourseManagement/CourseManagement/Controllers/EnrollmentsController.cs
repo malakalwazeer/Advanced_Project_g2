@@ -1,16 +1,13 @@
-using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
 using CourseManagementAPI.Services.Validation;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "TrainingCoordinator,Trainee")]
 public class EnrollmentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
@@ -24,6 +21,7 @@ public class EnrollmentsController : Controller
         _enrollmentValidator = enrollmentValidator;
     }
 
+    // GET: Enrollments
     public async Task<IActionResult> Index()
     {
         var enrollments = await _context.Enrollments
@@ -33,9 +31,11 @@ public class EnrollmentsController : Controller
             .Include(e => e.EnrollmentStatus)
             .AsNoTracking()
             .ToListAsync();
+
         return View(enrollments);
     }
 
+    // GET: Enrollments/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -55,55 +55,58 @@ public class EnrollmentsController : Controller
             .FirstOrDefaultAsync(e => e.EnrollmentId == id);
 
         if (enrollment == null) return NotFound();
+
         return View(enrollment);
     }
 
+    // GET: Enrollments/Create
     public IActionResult Create()
     {
-        var vm = new EnrollmentCreateEditViewModel
-        {
-            EnrollmentDate = DateOnly.FromDateTime(DateTime.Today)
-        };
-        LoadDropdowns(vm);
-        return View(vm);
+        LoadDropdowns();
+        return View();
     }
 
+    // POST: Enrollments/Create
+    // Uses EnrollmentValidationService (injected from API project via DI) for full business-rule
+    // validation: trainee active status, session capacity, prerequisites, duplicate check.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(EnrollmentCreateEditViewModel vm)
+    public async Task<IActionResult> Create(
+        [Bind("TraineeId,SessionId,EnrollmentDate,EnrollmentStatusId")]
+        Enrollment enrollment)
     {
+        ModelState.Remove(nameof(Enrollment.Trainee));
+        ModelState.Remove(nameof(Enrollment.Session));
+        ModelState.Remove(nameof(Enrollment.EnrollmentStatus));
+
         if (ModelState.IsValid)
         {
+            // Map scalar form values to the DTO the service expects.
             var dto = new CreateEnrollmentDto
             {
-                TraineeId = vm.TraineeId,
-                SessionId = vm.SessionId
+                TraineeId = enrollment.TraineeId,
+                SessionId = enrollment.SessionId
             };
 
             var error = await _enrollmentValidator.ValidateCreateAsync(dto);
             if (error != null)
             {
                 ModelState.AddModelError(string.Empty, error);
-                LoadDropdowns(vm);
-                return View(vm);
+                LoadDropdowns(enrollment.TraineeId, enrollment.SessionId, enrollment.EnrollmentStatusId);
+                return View(enrollment);
             }
 
-            var enrollment = new Enrollment
-            {
-                TraineeId          = vm.TraineeId,
-                SessionId          = vm.SessionId,
-                EnrollmentDate     = vm.EnrollmentDate,
-                EnrollmentStatusId = vm.EnrollmentStatusId
-            };
             _context.Add(enrollment);
             await _context.SaveChangesAsync();
             TempData["Success"] = "Enrollment created successfully.";
             return RedirectToAction(nameof(Index));
         }
-        LoadDropdowns(vm);
-        return View(vm);
+
+        LoadDropdowns(enrollment.TraineeId, enrollment.SessionId, enrollment.EnrollmentStatusId);
+        return View(enrollment);
     }
 
+    // GET: Enrollments/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -111,23 +114,24 @@ public class EnrollmentsController : Controller
         var enrollment = await _context.Enrollments.FindAsync(id);
         if (enrollment == null) return NotFound();
 
-        var vm = new EnrollmentCreateEditViewModel
-        {
-            EnrollmentId       = enrollment.EnrollmentId,
-            TraineeId          = enrollment.TraineeId,
-            SessionId          = enrollment.SessionId,
-            EnrollmentDate     = enrollment.EnrollmentDate,
-            EnrollmentStatusId = enrollment.EnrollmentStatusId
-        };
-        LoadDropdowns(vm);
-        return View(vm);
+        LoadDropdowns(enrollment.TraineeId, enrollment.SessionId, enrollment.EnrollmentStatusId);
+        return View(enrollment);
     }
 
+    // POST: Enrollments/Edit/5
+    // Edit uses a local helper instead of the service because ValidateCreateAsync would false-positive
+    // on the "already enrolled" check for the record being edited.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, EnrollmentCreateEditViewModel vm)
+    public async Task<IActionResult> Edit(int id,
+        [Bind("EnrollmentId,TraineeId,SessionId,EnrollmentDate,EnrollmentStatusId")]
+        Enrollment enrollment)
     {
-        if (id != vm.EnrollmentId) return NotFound();
+        if (id != enrollment.EnrollmentId) return NotFound();
+
+        ModelState.Remove(nameof(Enrollment.Trainee));
+        ModelState.Remove(nameof(Enrollment.Session));
+        ModelState.Remove(nameof(Enrollment.EnrollmentStatus));
 
         if (ModelState.IsValid)
         {
@@ -135,25 +139,19 @@ public class EnrollmentsController : Controller
                 .FirstOrDefaultAsync(e => e.EnrollmentId == id);
 
             if (existing != null &&
-                (existing.TraineeId != vm.TraineeId || existing.SessionId != vm.SessionId))
+                (existing.TraineeId != enrollment.TraineeId || existing.SessionId != enrollment.SessionId))
             {
-                var error = await ValidateEnrollmentEdit(vm.TraineeId, vm.SessionId, id);
+                var error = await ValidateEnrollmentEdit(
+                    enrollment.TraineeId, enrollment.SessionId, excludeEnrollmentId: id);
+
                 if (error != null)
                 {
                     ModelState.AddModelError(string.Empty, error);
-                    LoadDropdowns(vm);
-                    return View(vm);
+                    LoadDropdowns(enrollment.TraineeId, enrollment.SessionId, enrollment.EnrollmentStatusId);
+                    return View(enrollment);
                 }
             }
 
-            var enrollment = new Enrollment
-            {
-                EnrollmentId       = vm.EnrollmentId,
-                TraineeId          = vm.TraineeId,
-                SessionId          = vm.SessionId,
-                EnrollmentDate     = vm.EnrollmentDate,
-                EnrollmentStatusId = vm.EnrollmentStatusId
-            };
             try
             {
                 _context.Update(enrollment);
@@ -162,15 +160,18 @@ public class EnrollmentsController : Controller
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await EnrollmentExists(vm.EnrollmentId)) return NotFound();
+                if (!await EnrollmentExists(enrollment.EnrollmentId))
+                    return NotFound();
                 throw;
             }
             return RedirectToAction(nameof(Index));
         }
-        LoadDropdowns(vm);
-        return View(vm);
+
+        LoadDropdowns(enrollment.TraineeId, enrollment.SessionId, enrollment.EnrollmentStatusId);
+        return View(enrollment);
     }
 
+    // GET: Enrollments/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -184,9 +185,11 @@ public class EnrollmentsController : Controller
             .FirstOrDefaultAsync(e => e.EnrollmentId == id);
 
         if (enrollment == null) return NotFound();
+
         return View(enrollment);
     }
 
+    // POST: Enrollments/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -201,7 +204,11 @@ public class EnrollmentsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<string?> ValidateEnrollmentEdit(int traineeId, int sessionId, int excludeEnrollmentId)
+    // ─── Edit-only validation helper ────────────────────────────────────────
+    // Used only for Edit POST. EnrollmentValidationService is used for Create.
+    // This version accepts an excludeId so the duplicate check skips the record being edited.
+    private async Task<string?> ValidateEnrollmentEdit(
+        int traineeId, int sessionId, int excludeEnrollmentId)
     {
         var duplicate = await _context.Enrollments.AnyAsync(e =>
             e.TraineeId == traineeId &&
@@ -225,28 +232,32 @@ public class EnrollmentsController : Controller
         return null;
     }
 
-    private void LoadDropdowns(EnrollmentCreateEditViewModel vm)
+    private void LoadDropdowns(
+        int? selectedTraineeId = null,
+        int? selectedSessionId = null,
+        int? selectedStatusId = null)
     {
-        vm.Trainees = _context.Trainees.AsNoTracking()
-            .OrderBy(t => t.FullName)
-            .Select(t => new SelectListItem { Value = t.TraineeId.ToString(), Text = t.FullName })
-            .ToList();
+        ViewData["TraineeId"] = new SelectList(
+            _context.Trainees.AsNoTracking()
+                .OrderBy(t => t.FullName)
+                .Select(t => new { t.TraineeId, t.FullName }),
+            "TraineeId", "FullName", selectedTraineeId);
 
-        vm.Sessions = _context.CourseSessions
-            .Include(s => s.Course)
-            .AsNoTracking()
-            .OrderBy(s => s.StartDateTime)
-            .Select(s => new SelectListItem
-            {
-                Value = s.SessionId.ToString(),
-                Text  = s.Course.CourseName + " — " + s.StartDateTime.ToString("yyyy-MM-dd HH:mm")
-            })
-            .ToList();
+        ViewData["SessionId"] = new SelectList(
+            _context.CourseSessions
+                .Include(s => s.Course)
+                .AsNoTracking()
+                .OrderBy(s => s.StartDateTime)
+                .Select(s => new
+                {
+                    s.SessionId,
+                    Display = s.Course.CourseName + " — " + s.StartDateTime.ToString("yyyy-MM-dd HH:mm")
+                }),
+            "SessionId", "Display", selectedSessionId);
 
-        vm.EnrollmentStatuses = _context.EnrollmentStatuses.AsNoTracking()
-            .OrderBy(s => s.StatusName)
-            .Select(s => new SelectListItem { Value = s.EnrollmentStatusId.ToString(), Text = s.StatusName })
-            .ToList();
+        ViewData["EnrollmentStatusId"] = new SelectList(
+            _context.EnrollmentStatuses.AsNoTracking(),
+            "EnrollmentStatusId", "StatusName", selectedStatusId);
     }
 
     private async Task<bool> EnrollmentExists(int id) =>

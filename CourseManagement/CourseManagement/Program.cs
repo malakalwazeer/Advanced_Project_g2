@@ -25,6 +25,9 @@ builder.Services.AddScoped<CourseManagementAPI.Services.Validation.CourseValidat
 builder.Services.AddScoped<CourseManagementAPI.Services.Validation.CourseSessionValidationService>(); 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddDbContext<CourseManagementDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddScoped<EnrollmentValidationService>();
 builder.Services.AddScoped<PaymentValidationService>();
 builder.Services.AddScoped<AssessmentValidationService>();
