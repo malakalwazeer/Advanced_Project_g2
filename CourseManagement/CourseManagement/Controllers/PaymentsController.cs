@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "TrainingCoordinator,Trainee")]
+[Authorize(Roles = "Coordinator,Trainee")]
 public class PaymentsController : Controller
 {
     private readonly CourseManagementDbContext _context;

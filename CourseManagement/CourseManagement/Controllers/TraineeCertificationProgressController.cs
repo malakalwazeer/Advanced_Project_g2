@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "TrainingCoordinator,Trainee")]
+[Authorize(Roles = "Coordinator,Trainee")]
 public class TraineeCertificationProgressController : Controller
 {
     private readonly CourseManagementDbContext _context;
