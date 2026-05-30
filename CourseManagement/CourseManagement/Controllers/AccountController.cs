@@ -10,13 +10,16 @@ public class AccountController : Controller
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
     public AccountController(
         SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager)
     {
         _signInManager = signInManager;
         _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     [HttpGet]
@@ -79,6 +82,23 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
+            // 1. Define your system roles explicitly
+            string defaultRole = "Trainee";
+            string[] roleNames = { "TrainingCoordinator", "Instructor", "Trainee" };
+
+            // 2. Ensure all application roles exist in the database
+            foreach (var roleName in roleNames)
+            {
+                var roleExist = await _roleManager.RoleExistsAsync(roleName);
+                if (!roleExist)
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(roleName));
+                }
+            }
+
+            // 3. Assign the newly registered MVC user as a Trainee
+            await _userManager.AddToRoleAsync(user, defaultRole);
+
             await _signInManager.SignInAsync(user, isPersistent: false);
             return RedirectToAction("Index", "Home");
         }

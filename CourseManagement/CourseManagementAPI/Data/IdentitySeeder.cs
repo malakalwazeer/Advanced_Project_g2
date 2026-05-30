@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using CourseManagementAPI.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CourseManagementAPI.Data
 {
@@ -14,6 +15,7 @@ namespace CourseManagementAPI.Data
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
+            // 1. Seed Roles
             var rolesToSeed = new[] { TrainingCoordinatorRole, InstructorRole, TraineeRole };
             foreach (var roleName in rolesToSeed)
             {
@@ -23,28 +25,63 @@ namespace CourseManagementAPI.Data
                 }
             }
 
-            const string coordinatorEmail = "admin@CourseManagementAPI.local";
-            var coordinatorUser = await userManager.FindByEmailAsync(coordinatorEmail);
+            // 2. Seed Training Coordinator (Admin)
+            await EnsureUserExistsAsync(
+                userManager,
+                "admin@CourseManagementAPI.local",
+                "Admin#12345",
+                "Training Coordinator Admin",
+                TrainingCoordinatorRole
+            );
 
-            if (coordinatorUser == null)
+            // 3. Seed Instructor
+            await EnsureUserExistsAsync(
+                userManager,
+                "instructor@CourseManagementAPI.local",
+                "Instructor#12345",
+                "Default Instructor",
+                InstructorRole
+            );
+
+            // 4. Seed Trainee
+            await EnsureUserExistsAsync(
+                userManager,
+                "trainee@CourseManagementAPI.local",
+                "Trainee#12345",
+                "Default Trainee",
+                TraineeRole
+            );
+        }
+
+        // Helper method to look up, create, and assign roles to users cleanly
+        private static async Task EnsureUserExistsAsync(
+            UserManager<ApplicationUser> userManager,
+            string email,
+            string password,
+            string displayName,
+            string role)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+
+            if (user == null)
             {
-                coordinatorUser = new ApplicationUser
+                user = new ApplicationUser
                 {
-                    UserName = coordinatorEmail,
-                    Email = coordinatorEmail,
+                    UserName = email,
+                    Email = email,
                     EmailConfirmed = true,
-                    DisplayName = "Training Coordinator Admin"
+                    DisplayName = displayName
                 };
 
-                var result = await userManager.CreateAsync(coordinatorUser, "Admin#12345");
+                var result = await userManager.CreateAsync(user, password);
                 if (result.Succeeded)
                 {
-                    await AssignRoleAsync(userManager, coordinatorUser, TrainingCoordinatorRole);
+                    await AssignRoleAsync(userManager, user, role);
                 }
             }
             else
             {
-                await AssignRoleAsync(userManager, coordinatorUser, TrainingCoordinatorRole);
+                await AssignRoleAsync(userManager, user, role);
             }
         }
 
