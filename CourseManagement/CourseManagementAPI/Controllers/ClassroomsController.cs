@@ -38,7 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<Classroom>> CreateClassroom(Classroom classroom)
         {
             _context.Classrooms.Add(classroom);
@@ -47,7 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<Classroom>> UpdateClassroom(int id, Classroom updatedClassroom)
         {
             if (id != updatedClassroom.ClassroomId) return BadRequest();
@@ -61,7 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
         public async Task<IActionResult> DeleteClassroom(int id)
         {
             var classroom = await _context.Classrooms.FindAsync(id);

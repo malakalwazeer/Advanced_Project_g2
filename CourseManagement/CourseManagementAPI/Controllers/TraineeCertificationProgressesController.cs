@@ -38,7 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<TraineeCertificationProgress>> CreateTraineeCertificationProgress(TraineeCertificationProgress traineeCertificationProgress)
         {
             _context.TraineeCertificationProgresses.Add(traineeCertificationProgress);
@@ -47,7 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<TraineeCertificationProgress>> UpdateTraineeCertificationProgress(int id, TraineeCertificationProgress updatedTraineeCertificationProgress)
         {
             if (id != updatedTraineeCertificationProgress.CertificationId) return BadRequest();
@@ -61,7 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
         public async Task<IActionResult> DeleteTraineeCertificationProgress(int id)
         {
             var traineeCertificationProgress = await _context.TraineeCertificationProgresses.FindAsync(id);

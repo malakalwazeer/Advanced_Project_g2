@@ -1,24 +1,21 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using CourseManagementAPI.Models;
 
-
 namespace CourseManagementAPI.Data
 {
     public class IdentitySeeder
     {
-        public const string AdminRole = "Admin";
-        public const string CoordinatorRole = "Coordinator";
+        public const string TrainingCoordinatorRole = "TrainingCoordinator";
         public const string InstructorRole = "Instructor";
         public const string TraineeRole = "Trainee";
-        public const string UserRole = "User";
 
         public static async Task InitializeAsync(IServiceProvider services)
         {
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
-            // Seed roles 
-            foreach (var roleName in new[] { AdminRole, CoordinatorRole, InstructorRole, TraineeRole, UserRole })
+            var rolesToSeed = new[] { TrainingCoordinatorRole, InstructorRole, TraineeRole };
+            foreach (var roleName in rolesToSeed)
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
@@ -26,42 +23,39 @@ namespace CourseManagementAPI.Data
                 }
             }
 
-            // Seed default admin user 
-            const string adminEmail = "admin@CourseManagementAPI.local";
-            var admin = await userManager.FindByEmailAsync(adminEmail);
-            if (admin == null)
+            const string coordinatorEmail = "admin@CourseManagementAPI.local";
+            var coordinatorUser = await userManager.FindByEmailAsync(coordinatorEmail);
+
+            if (coordinatorUser == null)
             {
-                admin = new ApplicationUser
+                coordinatorUser = new ApplicationUser
                 {
-                    UserName = adminEmail,
-                    Email = adminEmail,
+                    UserName = coordinatorEmail,
+                    Email = coordinatorEmail,
                     EmailConfirmed = true,
-                    DisplayName = "System Administrator"
+                    DisplayName = "Training Coordinator Admin"
                 };
 
-                var result = await userManager.CreateAsync(admin, "Admin#12345");
+                var result = await userManager.CreateAsync(coordinatorUser, "Admin#12345");
                 if (result.Succeeded)
                 {
-                    await AddMissingRolesAsync(userManager, admin, AdminRole, CoordinatorRole);
+                    await AssignRoleAsync(userManager, coordinatorUser, TrainingCoordinatorRole);
                 }
             }
             else
             {
-                await AddMissingRolesAsync(userManager, admin, AdminRole, CoordinatorRole);
+                await AssignRoleAsync(userManager, coordinatorUser, TrainingCoordinatorRole);
             }
         }
 
-        private static async Task AddMissingRolesAsync(
+        private static async Task AssignRoleAsync(
             UserManager<ApplicationUser> userManager,
             ApplicationUser user,
-            params string[] roles)
+            string role)
         {
-            foreach (var role in roles)
+            if (!await userManager.IsInRoleAsync(user, role))
             {
-                if (!await userManager.IsInRoleAsync(user, role))
-                {
-                    await userManager.AddToRoleAsync(user, role);
-                }
+                await userManager.AddToRoleAsync(user, role);
             }
         }
     }

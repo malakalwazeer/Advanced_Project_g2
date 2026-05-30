@@ -38,7 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<InstructorAvailability>> CreateInstructorAvailability(InstructorAvailability instructorAvailability)
         {
             _context.InstructorAvailabilities.Add(instructorAvailability);
@@ -47,7 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<InstructorAvailability>> UpdateInstructorAvailability(int id, InstructorAvailability updatedInstructorAvailability)
         {
             if (id != updatedInstructorAvailability.AvailabilityId) return BadRequest();
@@ -61,7 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
         public async Task<IActionResult> DeleteInstructorAvailability(int id)
         {
             var instructorAvailability = await _context.InstructorAvailabilities.FindAsync(id);

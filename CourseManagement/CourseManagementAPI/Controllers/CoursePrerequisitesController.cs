@@ -38,7 +38,7 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpPost]
-            [Authorize]
+            [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
             public async Task<ActionResult<CoursePrerequisite>> CreateCoursePrerequisite(CoursePrerequisite coursePrerequisite)
             {
                 _context.CoursePrerequisites.Add(coursePrerequisite);
@@ -47,7 +47,7 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpPut("{id}")]
-            [Authorize]
+            [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
             public async Task<ActionResult<CoursePrerequisite>> UpdateCoursePrerequisite(int id, CoursePrerequisite updatedCoursePrerequisite)
             {
                 if (id != updatedCoursePrerequisite.CoursePrerequisiteId) return BadRequest();
@@ -61,7 +61,7 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpDelete("{id}")]
-            [Authorize(Roles = "Admin")]
+            [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
             public async Task<IActionResult> DeleteCoursePrerequisite(int id)
             {
                 var coursePrerequisite = await _context.CoursePrerequisites.FindAsync(id);

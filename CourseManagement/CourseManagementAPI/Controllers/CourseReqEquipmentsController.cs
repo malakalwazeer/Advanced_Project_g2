@@ -38,7 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<CourseReqEquipment>> CreateCourseReqEquipment(CourseReqEquipment courseReqEquipment)
         {
             _context.CourseReqEquipments.Add(courseReqEquipment);
@@ -47,7 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<CourseReqEquipment>> UpdateCourseReqEquipment(int id, CourseReqEquipment updatedCourseReqEquipment)
         {
             if (id != updatedCourseReqEquipment.CourseId) return BadRequest();
@@ -61,7 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
         public async Task<IActionResult> DeleteCourseReqEquipment(int id)
         {
             var courseReqEquipment = await _context.CourseReqEquipments.FindAsync(id);

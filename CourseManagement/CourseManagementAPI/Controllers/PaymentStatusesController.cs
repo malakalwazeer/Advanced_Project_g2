@@ -38,7 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<PaymentStatus>> CreatePaymentStatus(PaymentStatus paymentStatus)
         {
             _context.PaymentStatuses.Add(paymentStatus);
@@ -47,7 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<PaymentStatus>> UpdatePaymentStatus(int id, PaymentStatus updatedPaymentStatus)
         {
             if (id != updatedPaymentStatus.PaymentStatusId) return BadRequest();
@@ -61,7 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
         public async Task<IActionResult> DeletePaymentStatus(int id)
         {
             var paymentStatus = await _context.PaymentStatuses.FindAsync(id);

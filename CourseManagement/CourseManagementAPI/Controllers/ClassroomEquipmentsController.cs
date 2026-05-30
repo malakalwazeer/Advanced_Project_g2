@@ -41,7 +41,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<ClassroomEquipment>> CreateClassroomEquipment(ClassroomEquipment classroomEquipment)
         {
             _context.ClassroomEquipments.Add(classroomEquipment);
@@ -52,7 +52,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{classroomId}/{equipmentId}")]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<IActionResult> UpdateClassroomEquipment(int classroomId, int equipmentId, ClassroomEquipment updatedClassroomEquipment)
         {
             if (classroomId != updatedClassroomEquipment.ClassroomId || equipmentId != updatedClassroomEquipment.EquipmentId) return BadRequest();
@@ -66,7 +66,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{classroomId}/{equipmentId}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
         public async Task<IActionResult> DeleteClassroomEquipment(int classroomId, int equipmentId)
         {
             var classroomEquipment = await _context.ClassroomEquipments.FindAsync(classroomId, equipmentId);

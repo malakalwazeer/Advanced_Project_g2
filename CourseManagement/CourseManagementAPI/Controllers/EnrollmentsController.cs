@@ -47,8 +47,7 @@ namespace CourseManagementAPI.Controllers
         
 
         [HttpPost]
-        [Authorize]
-        //[AllowAnonymous] //only for testing
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         [ProducesResponseType(typeof(Enrollment), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -83,7 +82,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<Enrollment>> UpdateEnrollment(int id, Enrollment updatedEnrollment)
         {
             if (id != updatedEnrollment.EnrollmentId) return BadRequest();
@@ -97,7 +96,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
         public async Task<IActionResult> DeleteEnrollment(int id)
         {
             var enrollment = await _context.Enrollments.FindAsync(id);

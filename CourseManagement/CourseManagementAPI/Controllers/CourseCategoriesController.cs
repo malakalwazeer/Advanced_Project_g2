@@ -38,7 +38,7 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpPost]
-            [Authorize]
+            [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]    
             public async Task<ActionResult<CourseCategory>> CreateCourseCategory(CourseCategory courseCategory)
             {
                 _context.CourseCategories.Add(courseCategory);
@@ -47,7 +47,7 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpPut("{id}")]
-            [Authorize]
+            [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
             public async Task<ActionResult<CourseCategory>> UpdateCourseCategory(int id, CourseCategory updatedCourseCategory)
             {
                 if (id != updatedCourseCategory.CategoryId) return BadRequest();
@@ -61,7 +61,7 @@ namespace CourseManagementAPI.Controllers
             }
 
             [HttpDelete("{id}")]
-            [Authorize(Roles = "Admin")]
+            [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
             public async Task<IActionResult> DeleteCourseCategory(int id)
             {
                 var courseCategory = await _context.CourseCategories.FindAsync(id);

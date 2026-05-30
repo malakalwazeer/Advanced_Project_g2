@@ -10,8 +10,7 @@ namespace CourseManagementAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "TrainingCoordinator")] //only a user with this role can access the reports
-    [AllowAnonymous] //for testing
+    [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
     public class ReportsController : ControllerBase
     {
         //This controller will collect report data from the database and send it as JSON to the Reporting app.

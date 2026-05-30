@@ -38,7 +38,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<InstructorExpertise>> CreateInstructorExpertise(InstructorExpertise instructorExpertise)
         {
             _context.InstructorExpertises.Add(instructorExpertise);
@@ -47,7 +47,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole},{IdentitySeeder.InstructorRole}")]
         public async Task<ActionResult<InstructorExpertise>> UpdateInstructorExpertise(int id, InstructorExpertise updatedInstructorExpertise)
         {
             if (id != updatedInstructorExpertise.InstructorId) return BadRequest();
@@ -61,7 +61,7 @@ namespace CourseManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = $"{IdentitySeeder.TrainingCoordinatorRole}")]
         public async Task<IActionResult> DeleteInstructorExpertise(int id)
         {
             var instructorExpertise = await _context.InstructorExpertises.FindAsync(id);
