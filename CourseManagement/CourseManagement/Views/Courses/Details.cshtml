@@ -297,93 +297,118 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@latest/dist/browser/signalr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/9.0.6/signalr.min.js"></script>
 
     <script>
-        (function () {
-            "use strict";
+        const courseId = @Model.CourseId;
+        console.log("[SignalR] Page loaded. courseId =", courseId);
 
-            // courseId is embedded by Razor at render time — safe, integer only.
-            var courseId = @Model.CourseId;
-            var badge    = document.getElementById("signalr-badge");
+        // Build the connection
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/enrollment")
+            .withAutomaticReconnect()
+            .build();
 
-            //set badge text and Bootstrap colour class
-            function setBadge(text, colourClass) {
-                badge.textContent = text;
-                badge.className   = "badge ms-auto " + colourClass;
-            }
+         // Register server
+        connection.on("EnrollmentUpdated", function (sessions) {
+            console.log("[SignalR] EnrollmentUpdated received — raw payload:", sessions);
 
-            // Build a persistent connection to the enrollment hub
-            var connection = new signalR.HubConnectionBuilder()
-                .withUrl("/hubs/enrollment")
-                .withAutomaticReconnect()   // retries on transient network drops
-                .build();
+            sessions.forEach(function (s) {
+                console.log("[SignalR] Session", s.sessionId,
+                    "| enrolled:", s.enrolledCount,
+                    "| capacity:", s.capacity,
+                    "| remaining:", s.remainingSpots,
+                    "| isFull:", s.isFull);
 
-            //called whenever enrollment counts change for any session in this course
-            connection.on("UpdateEnrollmentCounts", function (sessions) {
-                sessions.forEach(function (s) {
-                    var pct = s.capacity > 0
-                        ? Math.round(s.enrolledCount / s.capacity * 100)
-                        : 0;
+                const pct = s.capacity > 0
+                    ? Math.round(s.enrolledCount / s.capacity * 100)
+                    : 0;
 
-                    var barColour  = s.isFull ? "bg-danger"
-                                   : s.remainingSpots <= 3 ? "bg-warning"
-                                   : "bg-success";
+                const barColour  = s.isFull              ? "bg-danger"
+                                 : s.remainingSpots <= 3 ? "bg-warning"
+                                 : "bg-success";
 
-                    var badgeClass = s.isFull ? "badge fs-6 bg-danger"
-                                   : s.remainingSpots <= 3 ? "badge fs-6 bg-warning text-dark"
-                                   : "badge fs-6 bg-success";
+                const badgeClass = s.isFull              ? "badge fs-6 bg-danger"
+                                 : s.remainingSpots <= 3 ? "badge fs-6 bg-warning text-dark"
+                                 : "badge fs-6 bg-success";
 
-                    // Enrolled count
-                    var enrolledEl = document.getElementById("enrolled-" + s.sessionId);
-                    if (enrolledEl) enrolledEl.textContent = s.enrolledCount;
+                // Update enrolled count
+                const enrolledEl = document.getElementById("enrolled-" + s.sessionId);
+                if (enrolledEl) {
+                    enrolledEl.textContent = s.enrolledCount;
+                } else {
+                    console.warn("[SignalR] DOM element #enrolled-" + s.sessionId + " not found.");
+                }
 
-                    // Remaining spots badge
-                    var remainEl = document.getElementById("remaining-" + s.sessionId);
-                    if (remainEl) {
-                        remainEl.textContent = s.isFull ? "Full" : s.remainingSpots;
-                        remainEl.className   = badgeClass;
-                    }
+                // Update remaining spots badge
+                const remainEl = document.getElementById("remaining-" + s.sessionId);
+                if (remainEl) {
+                    remainEl.textContent = s.isFull ? "Full" : s.remainingSpots;
+                    remainEl.className   = badgeClass;
+                }
 
-                    // Progress bar width + colour
-                    var progressEl = document.getElementById("progress-" + s.sessionId);
-                    if (progressEl) {
-                        progressEl.style.width    = pct + "%";
-                        progressEl.className      = "progress-bar " + barColour;
-                        progressEl.setAttribute("aria-valuenow", s.enrolledCount);
-                    }
-                });
+                // Update progress bar width and colour
+                const progressEl = document.getElementById("progress-" + s.sessionId);
+                if (progressEl) {
+                    progressEl.style.width = pct + "%";
+                    progressEl.className   = "progress-bar " + barColour;
+                    progressEl.setAttribute("aria-valuenow", s.enrolledCount);
+                }
             });
+        });
 
-            connection.onreconnecting(function () {
-                setBadge("Reconnecting…", "bg-warning text-dark");
-            });
+        // Reconnect lifecycle hooks
+        connection.onreconnecting(function (error) {
+            console.warn("[SignalR] Reconnecting...", error);
+            document.getElementById("signalr-badge").textContent = "Reconnecting...";
+            document.getElementById("signalr-badge").className   = "badge ms-auto bg-warning text-dark";
+        });
 
-            connection.onreconnected(function () {
-                setBadge("Live", "bg-success");
-                // Re-join the group after reconnect — SignalR group membership
-                connection.invoke("JoinCourseGroup", courseId).catch(console.error);
-            });
-
-            connection.onclose(function () {
-                setBadge("Disconnected", "bg-danger");
-            });
-
-            //Start connection and join this course's group
-            connection.start()
+        // SignalR groups do NOT persist across disconnects.
+        // Must re-invoke JoinCourseGroup after every reconnect.
+        connection.onreconnected(function (connectionId) {
+            console.log("[SignalR] Reconnected. connectionId:", connectionId, " Re-joining group...");
+            connection.invoke("JoinCourseGroup", courseId)
                 .then(function () {
-                    setBadge("Live", "bg-success");
-                    return connection.invoke("JoinCourseGroup", courseId);
+                    console.log("[SignalR] Re-joined group course-" + courseId);
+                    document.getElementById("signalr-badge").textContent = "Live";
+                    document.getElementById("signalr-badge").className   = "badge ms-auto bg-success";
                 })
                 .catch(function (err) {
-                    console.error("SignalR connection failed:", err);
-                    setBadge("Offline", "bg-danger");
+                    console.error("[SignalR] Failed to re-join group:", err);
                 });
+        });
 
-            //Leave the group cleanly when the user navigates away
-            window.addEventListener("beforeunload", function () {
-                connection.invoke("LeaveCourseGroup", courseId).catch(function () {});
+        connection.onclose(function (error) {
+            console.error("[SignalR] Connection closed.", error);
+            document.getElementById("signalr-badge").textContent = "Disconnected";
+            document.getElementById("signalr-badge").className   = "badge ms-auto bg-danger";
+        });
+
+        //Start the connection, then join the course group
+        console.log("[SignalR] Starting connection...");
+
+        connection.start()
+            .then(function () {
+                console.log("[SignalR] Connection established. Invoking JoinCourseGroup(" + courseId + ")...");
+                return connection.invoke("JoinCourseGroup", courseId);
+            })
+            .then(function () {
+                // Only mark Live after BOTH start() AND JoinCourseGroup succeed.
+                console.log("[SignalR] Joined group course-" + courseId + ". Listening for EnrollmentUpdated.");
+                document.getElementById("signalr-badge").textContent = "Live";
+                document.getElementById("signalr-badge").className   = "badge ms-auto bg-success";
+            })
+            .catch(function (err) {
+                console.error("[SignalR] Startup failed (start or JoinCourseGroup):", err);
+                document.getElementById("signalr-badge").textContent = "Offline";
+                document.getElementById("signalr-badge").className   = "badge ms-auto bg-danger";
             });
-        }());
+
+        //Leave the group cleanly on page unload
+        window.addEventListener("beforeunload", function () {
+            console.log("[SignalR] Leaving group course-" + courseId);
+            connection.invoke("LeaveCourseGroup", courseId).catch(function () {});
+        });
     </script>
 }

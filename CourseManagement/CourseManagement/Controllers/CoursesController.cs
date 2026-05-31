@@ -17,11 +17,16 @@ namespace CourseManagement.Controllers
     {
         private readonly CourseManagementDbContext _context;
         private readonly CourseValidationService _validationService;
+        private readonly EnrollmentBroadcastService _broadcastService;
 
-        public CoursesController(CourseManagementDbContext context, CourseValidationService validationService)
+        public CoursesController(
+            CourseManagementDbContext context,
+            CourseValidationService validationService,
+            EnrollmentBroadcastService broadcastService)
         {
             _context = context;
             _validationService = validationService;
+            _broadcastService = broadcastService;
         }
 
         [HttpGet]
@@ -51,8 +56,6 @@ namespace CourseManagement.Controllers
                     .ThenInclude(cp => cp.PrerequisiteCourse)
                 .Include(c => c.CourseReqEquipments)
                     .ThenInclude(cre => cre.Equipment)
-                .Include(c => c.CourseSessions)
-                    .ThenInclude(s => s.Enrollments)
                 .FirstOrDefaultAsync(c => c.CourseId == id);
 
             if (course == null) return NotFound();
@@ -82,20 +85,9 @@ namespace CourseManagement.Controllers
         .ToListAsync(),
     "CourseId",
     "CourseName"),
+            Sessions = await _broadcastService.GetSessionSnapshotsAsync(id),
 
-                Sessions = course.CourseSessions
-    .OrderBy(s => s.StartDateTime)
-    .Select(s => new SessionEnrollmentViewModel
-    {
-        SessionId = s.SessionId,
-        StartDateTime = s.StartDateTime,
-        EndDateTime = s.EndDateTime,
-        Capacity = s.Capacity,
-        EnrolledCount = s.Enrollments.Count
-    })
-    .ToList(),
-
-                AvailableSessions = await _context.CourseSessions
+            AvailableSessions = await _context.CourseSessions
     .Include(s => s.Course)
     .Include(s => s.Instructor)
     .Include(s => s.Classroom)
