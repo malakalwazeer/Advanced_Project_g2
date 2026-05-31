@@ -1,18 +1,286 @@
 ﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+    this page is for displaying the reports dashboard only for coordinator
 *@
 
 @{
     ViewData["Title"] = "Reports Dashboard";
 }
-<h2>Reports Dashboard</h2>
+@model ReportingCourseManagement.ViewModels.ReportsDashboardViewModel
+@using System.Text.Json
 
-<p>Select a report to view:</p>
+@{
+    ViewData["Title"] = "Reports Dashboard";
 
-<ul>
-    <li><a asp-controller="Reports" asp-action="EnrollmentByCourse">Enrollment by Course</a></li>
-    <li><a asp-controller="Reports" asp-action="EnrollmentByCategory">Enrollment by Category</a></li>
-    <li><a asp-controller="Reports" asp-action="InstructorWorkload">Instructor Workload</a></li>
-    <li><a asp-controller="Reports" asp-action="RevenueSummary">Revenue Summary</a></li>
-    <li><a asp-controller="Reports" asp-action="CertificationCompletion">Certification Completion</a></li>
-</ul>
+    var courseLabels = Model.EnrollmentByCourse.Select(x => x.CourseName).ToList();
+    var courseData = Model.EnrollmentByCourse.Select(x => x.EnrollmentCount).ToList();
+
+    var categoryLabels = Model.EnrollmentByCategory.Select(x => x.CategoryName).ToList();
+    var categoryData = Model.EnrollmentByCategory.Select(x => x.EnrollmentCount).ToList();
+
+    var instructorLabels = Model.InstructorWorkload.Select(x => x.InstructorName).ToList();
+    var instructorData = Model.InstructorWorkload.Select(x => x.SessionCount).ToList();
+
+    var revenueLabels = new List<string> { "Collected", "Outstanding" };
+    var revenueData = new List<decimal>
+    {
+        Model.RevenueSummary.TotalCollected,
+        Model.RevenueSummary.TotalOutstanding
+    };
+
+    var certificationLabels = Model.CertificationCompletion.Select(x => x.CertificationName).ToList();
+    var certificationCompletedData = Model.CertificationCompletion.Select(x => x.CompletedCount).ToList();
+    var certificationInProgressData = Model.CertificationCompletion.Select(x => x.InProgressCount).ToList();
+}
+
+<div class="py-4">
+    <div class="container">
+
+        <div class="mb-4">
+            <h1 class="display-5 fw-bold text-dark mb-1">Reports Dashboard</h1>
+            <p class="text-muted mb-0">Operational reports for the Training Coordinator.</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <p class="text-muted mb-1">Total Collected</p>
+                        <h3 class="fw-bold text-success mb-0">
+                            @Model.RevenueSummary.TotalCollected.ToString("0.00") BD
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <p class="text-muted mb-1">Total Outstanding</p>
+                        <h3 class="fw-bold text-danger mb-0">
+                            @Model.RevenueSummary.TotalOutstanding.ToString("0.00") BD
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row">
+
+            <!-- Enrollment by Course -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white fw-semibold">
+                        Enrollment by Course
+                    </div>
+
+                    <div class="card-body" style="height: 320px;">
+                        <canvas id="enrollmentByCourseChart"></canvas>
+                    </div>
+
+                    <div class="card-footer bg-white">
+                        <a class="btn btn-outline-primary btn-sm"
+                           asp-controller="Reports"
+                           asp-action="EnrollmentByCourse">
+                            View details
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrollment by Category -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white fw-semibold">
+                        Enrollment by Category
+                    </div>
+
+                    <div class="card-body" style="height: 320px;">
+                        <canvas id="enrollmentByCategoryChart"></canvas>
+                    </div>
+
+                    <div class="card-footer bg-white">
+                        <a class="btn btn-outline-primary btn-sm"
+                           asp-controller="Reports"
+                           asp-action="EnrollmentByCategory">
+                            View details
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructor Workload -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white fw-semibold">
+                        Instructor Workload
+                    </div>
+
+                    <div class="card-body" style="height: 320px;">
+                        <canvas id="instructorWorkloadChart"></canvas>
+                    </div>
+
+                    <div class="card-footer bg-white">
+                        <a class="btn btn-outline-primary btn-sm"
+                           asp-controller="Reports"
+                           asp-action="InstructorWorkload">
+                            View details
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Summary -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white fw-semibold">
+                        Revenue Summary
+                    </div>
+
+                    <div class="card-body" style="height: 320px;">
+                        <canvas id="revenueSummaryChart"></canvas>
+                    </div>
+
+                    <div class="card-footer bg-white">
+                        <a class="btn btn-outline-primary btn-sm"
+                           asp-controller="Reports"
+                           asp-action="RevenueSummary">
+                            View details
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certification Completion -->
+            <div class="col-md-12 mb-4">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-white fw-semibold">
+                        Certification Completion
+                    </div>
+
+                    <div class="card-body" style="height: 360px;">
+                        <canvas id="certificationCompletionChart"></canvas>
+                    </div>
+
+                    <div class="card-footer bg-white">
+                        <a class="btn btn-outline-primary btn-sm"
+                           asp-controller="Reports"
+                           asp-action="CertificationCompletion">
+                            View details
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const courseLabels = @Html.Raw(JsonSerializer.Serialize(courseLabels));
+        const courseData = @Html.Raw(JsonSerializer.Serialize(courseData));
+
+        const categoryLabels = @Html.Raw(JsonSerializer.Serialize(categoryLabels));
+        const categoryData = @Html.Raw(JsonSerializer.Serialize(categoryData));
+
+        const instructorLabels = @Html.Raw(JsonSerializer.Serialize(instructorLabels));
+        const instructorData = @Html.Raw(JsonSerializer.Serialize(instructorData));
+
+        const revenueLabels = @Html.Raw(JsonSerializer.Serialize(revenueLabels));
+        const revenueData = @Html.Raw(JsonSerializer.Serialize(revenueData));
+
+        const certificationLabels = @Html.Raw(JsonSerializer.Serialize(certificationLabels));
+        const certificationCompletedData = @Html.Raw(JsonSerializer.Serialize(certificationCompletedData));
+        const certificationInProgressData = @Html.Raw(JsonSerializer.Serialize(certificationInProgressData));
+
+        new Chart(document.getElementById('enrollmentByCourseChart'), {
+            type: 'bar',
+            data: {
+                labels: courseLabels,
+                datasets: [{
+                    label: 'Enrollments',
+                    data: courseData
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        new Chart(document.getElementById('enrollmentByCategoryChart'), {
+            type: 'pie',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    label: 'Enrollments',
+                    data: categoryData
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        new Chart(document.getElementById('instructorWorkloadChart'), {
+            type: 'bar',
+            data: {
+                labels: instructorLabels,
+                datasets: [{
+                    label: 'Sessions',
+                    data: instructorData
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        new Chart(document.getElementById('revenueSummaryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: revenueLabels,
+                datasets: [{
+                    label: 'Revenue',
+                    data: revenueData
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        new Chart(document.getElementById('certificationCompletionChart'), {
+            type: 'bar',
+            data: {
+                labels: certificationLabels,
+                datasets: [
+                    {
+                        label: 'Completed',
+                        data: certificationCompletedData
+                    },
+                    {
+                        label: 'In Progress',
+                        data: certificationInProgressData
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+}
