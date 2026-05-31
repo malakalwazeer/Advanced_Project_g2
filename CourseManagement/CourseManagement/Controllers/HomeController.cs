@@ -15,10 +15,28 @@ namespace CourseManagement.Controllers
 
         public IActionResult Index()
         {
-            if (User.IsInRole("Coordinator"))
+            //if (User.IsInRole("Coordinator"))
+            //{
+            //    return RedirectToAction("Index", "Dashboard");
+            //}
+            //return View();
+
+            //malak
+            if (User.IsInRole("TrainingCoordinator"))
             {
                 return RedirectToAction("Index", "Dashboard");
             }
+
+            if (User.IsInRole("Instructor"))
+            {
+                return RedirectToAction("Index", "CourseSessions");
+            }
+
+            if (User.IsInRole("Trainee"))
+            {
+                return RedirectToAction("Index", "Courses");
+            }
+
             return View();
         }
 

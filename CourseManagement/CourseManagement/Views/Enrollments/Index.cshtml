@@ -6,7 +6,13 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Enrollments</h2>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
+    @* <a asp-action="Create" class="btn btn-primary">Create New</a> *@
+    @* added by malak *@
+    @* only coordinator can create course *@
+    @if (User.IsInRole("TrainingCoordinator"))
+    {
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    }
 </div>
 
 @if (TempData["Success"] != null)
@@ -51,8 +57,15 @@
                         <td><span class="badge bg-info text-dark">@item.StatusName</span></td>
                         <td class="text-center">
                             <a asp-action="Details" asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-info me-1">Details</a>
-                            <a asp-action="Edit"    asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
-                            <a asp-action="Delete"  asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-danger">Delete</a>
+                            @* <a asp-action="Edit"    asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
+                            <a asp-action="Delete"  asp-route-id="@item.EnrollmentId" class="btn btn-sm btn-outline-danger">Delete</a> *@
+                            @* added by malak *@
+                            @* only coordinator can edit/delete course *@
+                            @if (User.IsInRole("TrainingCoordinator"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.EnrollmentId" class="btn btn-warning">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@item.EnrollmentId" class="btn btn-danger">Delete</a>
+                            }
                         </td>
                     </tr>
                 }

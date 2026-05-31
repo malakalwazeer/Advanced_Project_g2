@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace CourseManagement.Controllers
 {
-    [Authorize(Roles = "Coordinator")]
+    //[Authorize(Roles = "Coordinator")]
+    [Authorize(Roles = "TrainingCoordinator")] //malak
     public class EquipmentController : Controller
     {
         private readonly CourseManagementDbContext _context;

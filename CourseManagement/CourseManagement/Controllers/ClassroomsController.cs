@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "Coordinator")]
+//[Authorize(Roles = "Coordinator")]
+[Authorize(Roles = "TrainingCoordinator")] //malak
 public class ClassroomsController : Controller
 {
     private readonly CourseManagementDbContext _context;

@@ -1,9 +1,12 @@
 using CourseManagementAPI.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseManagement.Controllers;
 
+[Authorize(Roles = "TrainingCoordinator,Instructor,Trainee")] //added by malak
 public class NotificationsController : Controller
 {
     private readonly CourseManagementDbContext _context;

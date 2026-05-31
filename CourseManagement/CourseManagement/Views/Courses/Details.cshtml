@@ -3,6 +3,19 @@
 @{
     ViewData["Title"] = "Course Details";
 }
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
 
 <div class="row">
     <!-- Left Column: Course Info -->
@@ -15,7 +28,11 @@
                 <p><strong>Description:</strong> @Model.Description</p>
                 <p><strong>Duration:</strong> @Model.DurationHours hours</p>
                 <p><strong>Capacity:</strong> @Model.Capacity</p>
-                <a asp-action="Edit" asp-route-id="@Model.CourseId" class="btn btn-warning">Edit Course</a>
+                @* <a asp-action="Edit" asp-route-id="@Model.CourseId" class="btn btn-warning">Edit Course</a> *@
+                @if (User.IsInRole("TrainingCoordinator"))
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.CourseId" class="btn btn-warning">Edit Course</a>
+                }
                 <a asp-action="Index" class="btn btn-secondary">Back to List</a>
             </div>
         </div>
@@ -37,18 +54,27 @@
                                 <td>@item.Equipment.EquipmentName</td>
                                 <td>@item.Quantity</td>
                                 <td>
-                                    <form asp-action="RemoveEquipmentRequirement" method="post">
+                                    @* <form asp-action="RemoveEquipmentRequirement" method="post">
                                         <input type="hidden" name="courseId" value="@Model.CourseId" />
                                         <input type="hidden" name="equipmentId" value="@item.EquipmentId" />
                                         <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                                    </form>
+                                    </form> *@
+                                    @* malak *@
+                                    @if (User.IsInRole("TrainingCoordinator"))
+                                    {
+                                        <form asp-action="RemoveEquipmentRequirement" method="post">
+                                            <input type="hidden" name="courseId" value="@Model.CourseId" />
+                                            <input type="hidden" name="equipmentId" value="@item.EquipmentId" />
+                                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                        </form>
+                                    }
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
                 <hr />
-                <form asp-action="AddEquipmentRequirement" method="post" class="row row-cols-lg-auto g-3 align-items-center">
+                @* <form asp-action="AddEquipmentRequirement" method="post" class="row row-cols-lg-auto g-3 align-items-center">
                     <input type="hidden" asp-for="CourseId" />
                     <div class="col-12">
                         <select asp-for="AddEquipmentId" asp-items="Model.EquipmentList" class="form-select" required>
@@ -61,7 +87,24 @@
                     <div class="col-12">
                         <button type="submit" class="btn btn-success">Add</button>
                     </div>
-                </form>
+                </form> *@
+                @if (User.IsInRole("TrainingCoordinator"))
+                {
+                    <form asp-action="AddEquipmentRequirement" method="post" class="row row-cols-lg-auto g-3 align-items-center">
+                        <input type="hidden" asp-for="CourseId" />
+                        <div class="col-12">
+                            <select asp-for="AddEquipmentId" asp-items="Model.EquipmentList" class="form-select" required>
+                                <option value="">-- Select Equipment --</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <input asp-for="AddEquipmentQuantity" class="form-control" placeholder="Qty" required />
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success">Add</button>
+                        </div>
+                    </form>
+                }
             </div>
         </div>
 
@@ -74,15 +117,25 @@
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             @item.PrerequisiteCourse.CourseName
-                            <form asp-action="RemovePrerequisite" method="post">
+                            @* <form asp-action="RemovePrerequisite" method="post">
                                 <input type="hidden" name="courseId" value="@Model.CourseId" />
                                 <input type="hidden" name="prerequisiteId" value="@item.CoursePrerequisiteId" />
                                 <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                            </form>
+                            </form> *@
+                            @* malak *@
+                            @if (User.IsInRole("TrainingCoordinator"))
+                            {
+                                <form asp-action="RemovePrerequisite" method="post">
+                                    <input type="hidden" name="courseId" value="@Model.CourseId" />
+                                    <input type="hidden" name="prerequisiteId" value="@item.CoursePrerequisiteId" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                </form>
+                                
+                            }
                         </li>
                     }
                 </ul>
-                <form asp-action="AddPrerequisite" method="post" class="row row-cols-lg-auto g-3 align-items-center">
+                @* <form asp-action="AddPrerequisite" method="post" class="row row-cols-lg-auto g-3 align-items-center">
                     <input type="hidden" asp-for="CourseId" />
                     <div class="col-12">
                         <select asp-for="AddPrerequisiteId" asp-items="Model.PrerequisiteCourseList" class="form-select" required>
@@ -92,11 +145,78 @@
                     <div class="col-12">
                         <button type="submit" class="btn btn-success">Add</button>
                     </div>
-                </form>
+                </form> *@
+                @* malak *@
+                @if (User.IsInRole("TrainingCoordinator"))
+                {
+                    <form asp-action="AddPrerequisite" method="post" class="row row-cols-lg-auto g-3 align-items-center">
+                        <input type="hidden" asp-for="CourseId" />
+                        <div class="col-12">
+                            <select asp-for="AddPrerequisiteId" asp-items="Model.PrerequisiteCourseList" class="form-select" required>
+                                <option value="">-- Select Course --</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success">Add</button>
+                        </div>
+                    </form>
+                    
+                }
             </div>
         </div>
     </div>
 </div>
+@* added by malak *@
+@if (User.IsInRole("Trainee"))
+{
+    <div class="card mt-4">
+        <div class="card-header bg-dark text-white">
+            Available Sessions
+        </div>
+
+        <div class="card-body">
+            @if (Model.AvailableSessions.Any())
+            {
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Instructor</th>
+                            <th>Location</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Capacity</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var session in Model.AvailableSessions)
+                        {
+                            <tr>
+                                <td>@session.InstructorName</td>
+                                <td>@session.ClassroomLocation</td>
+                                <td>@session.StartDateTime.ToString("g")</td>
+                                <td>@session.EndDateTime.ToString("g")</td>
+                                <td>@session.Capacity</td>
+                                <td>
+                                    <form asp-controller="Enrollments" asp-action="EnrollInSession" method="post" class="d-inline">
+                                        <input type="hidden" name="sessionId" value="@session.SessionId" />
+                                        <button type="submit" class="btn btn-success btn-sm">Enroll</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-info mb-0">
+                    No available sessions for this course yet.
+                </div>
+            }
+        </div>
+    </div>
+}
 
 <div class="row mt-4">
     <div class="col-12">
@@ -180,90 +300,90 @@
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@latest/dist/browser/signalr.min.js"></script>
 
     <script>
-    (function () {
-        "use strict";
+        (function () {
+            "use strict";
 
-        // courseId is embedded by Razor at render time — safe, integer only.
-        var courseId = @Model.CourseId;
-        var badge    = document.getElementById("signalr-badge");
+            // courseId is embedded by Razor at render time — safe, integer only.
+            var courseId = @Model.CourseId;
+            var badge    = document.getElementById("signalr-badge");
 
-        //set badge text and Bootstrap colour class
-        function setBadge(text, colourClass) {
-            badge.textContent = text;
-            badge.className   = "badge ms-auto " + colourClass;
-        }
+            //set badge text and Bootstrap colour class
+            function setBadge(text, colourClass) {
+                badge.textContent = text;
+                badge.className   = "badge ms-auto " + colourClass;
+            }
 
-        // Build a persistent connection to the enrollment hub
-        var connection = new signalR.HubConnectionBuilder()
-            .withUrl("/hubs/enrollment")
-            .withAutomaticReconnect()   // retries on transient network drops
-            .build();
+            // Build a persistent connection to the enrollment hub
+            var connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/enrollment")
+                .withAutomaticReconnect()   // retries on transient network drops
+                .build();
 
-        //called whenever enrollment counts change for any session in this course
-        connection.on("UpdateEnrollmentCounts", function (sessions) {
-            sessions.forEach(function (s) {
-                var pct = s.capacity > 0
-                    ? Math.round(s.enrolledCount / s.capacity * 100)
-                    : 0;
+            //called whenever enrollment counts change for any session in this course
+            connection.on("UpdateEnrollmentCounts", function (sessions) {
+                sessions.forEach(function (s) {
+                    var pct = s.capacity > 0
+                        ? Math.round(s.enrolledCount / s.capacity * 100)
+                        : 0;
 
-                var barColour  = s.isFull ? "bg-danger"
-                               : s.remainingSpots <= 3 ? "bg-warning"
-                               : "bg-success";
+                    var barColour  = s.isFull ? "bg-danger"
+                                   : s.remainingSpots <= 3 ? "bg-warning"
+                                   : "bg-success";
 
-                var badgeClass = s.isFull ? "badge fs-6 bg-danger"
-                               : s.remainingSpots <= 3 ? "badge fs-6 bg-warning text-dark"
-                               : "badge fs-6 bg-success";
+                    var badgeClass = s.isFull ? "badge fs-6 bg-danger"
+                                   : s.remainingSpots <= 3 ? "badge fs-6 bg-warning text-dark"
+                                   : "badge fs-6 bg-success";
 
-                // Enrolled count
-                var enrolledEl = document.getElementById("enrolled-" + s.sessionId);
-                if (enrolledEl) enrolledEl.textContent = s.enrolledCount;
+                    // Enrolled count
+                    var enrolledEl = document.getElementById("enrolled-" + s.sessionId);
+                    if (enrolledEl) enrolledEl.textContent = s.enrolledCount;
 
-                // Remaining spots badge
-                var remainEl = document.getElementById("remaining-" + s.sessionId);
-                if (remainEl) {
-                    remainEl.textContent = s.isFull ? "Full" : s.remainingSpots;
-                    remainEl.className   = badgeClass;
-                }
+                    // Remaining spots badge
+                    var remainEl = document.getElementById("remaining-" + s.sessionId);
+                    if (remainEl) {
+                        remainEl.textContent = s.isFull ? "Full" : s.remainingSpots;
+                        remainEl.className   = badgeClass;
+                    }
 
-                // Progress bar width + colour
-                var progressEl = document.getElementById("progress-" + s.sessionId);
-                if (progressEl) {
-                    progressEl.style.width    = pct + "%";
-                    progressEl.className      = "progress-bar " + barColour;
-                    progressEl.setAttribute("aria-valuenow", s.enrolledCount);
-                }
+                    // Progress bar width + colour
+                    var progressEl = document.getElementById("progress-" + s.sessionId);
+                    if (progressEl) {
+                        progressEl.style.width    = pct + "%";
+                        progressEl.className      = "progress-bar " + barColour;
+                        progressEl.setAttribute("aria-valuenow", s.enrolledCount);
+                    }
+                });
             });
-        });
 
-        connection.onreconnecting(function () {
-            setBadge("Reconnecting…", "bg-warning text-dark");
-        });
+            connection.onreconnecting(function () {
+                setBadge("Reconnecting…", "bg-warning text-dark");
+            });
 
-        connection.onreconnected(function () {
-            setBadge("Live", "bg-success");
-            // Re-join the group after reconnect — SignalR group membership
-            connection.invoke("JoinCourseGroup", courseId).catch(console.error);
-        });
-
-        connection.onclose(function () {
-            setBadge("Disconnected", "bg-danger");
-        });
-
-        //Start connection and join this course's group
-        connection.start()
-            .then(function () {
+            connection.onreconnected(function () {
                 setBadge("Live", "bg-success");
-                return connection.invoke("JoinCourseGroup", courseId);
-            })
-            .catch(function (err) {
-                console.error("SignalR connection failed:", err);
-                setBadge("Offline", "bg-danger");
+                // Re-join the group after reconnect — SignalR group membership
+                connection.invoke("JoinCourseGroup", courseId).catch(console.error);
             });
 
-        //Leave the group cleanly when the user navigates away
-        window.addEventListener("beforeunload", function () {
-            connection.invoke("LeaveCourseGroup", courseId).catch(function () {});
-        });
-    }());
+            connection.onclose(function () {
+                setBadge("Disconnected", "bg-danger");
+            });
+
+            //Start connection and join this course's group
+            connection.start()
+                .then(function () {
+                    setBadge("Live", "bg-success");
+                    return connection.invoke("JoinCourseGroup", courseId);
+                })
+                .catch(function (err) {
+                    console.error("SignalR connection failed:", err);
+                    setBadge("Offline", "bg-danger");
+                });
+
+            //Leave the group cleanly when the user navigates away
+            window.addEventListener("beforeunload", function () {
+                connection.invoke("LeaveCourseGroup", courseId).catch(function () {});
+            });
+        }());
     </script>
 }

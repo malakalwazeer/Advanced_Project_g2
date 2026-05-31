@@ -15,6 +15,9 @@ public class CourseDetailsViewModel
     public List<CoursePrerequisite> CurrentPrerequisites { get; set; } = new();
     public List<SessionEnrollmentViewModel> Sessions { get; set; } = new();
 
+    //added by malak
+    public List<SessionIndexViewModel> AvailableSessions { get; set; } = new();
+
     // Forms
     public int AddEquipmentId { get; set; }
     public int AddEquipmentQuantity { get; set; }

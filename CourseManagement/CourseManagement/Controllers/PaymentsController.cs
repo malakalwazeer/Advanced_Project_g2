@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "Coordinator,Trainee")]
+//[Authorize(Roles = "Coordinator,Trainee")]
+[Authorize(Roles = "TrainingCoordinator,Trainee")]//malak
 public class PaymentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
@@ -80,6 +81,7 @@ public class PaymentsController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")] //malak
     public IActionResult Create()
     {
         var vm = new PaymentCreateViewModel
@@ -92,6 +94,7 @@ public class PaymentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")] //malak
     public async Task<IActionResult> Create(PaymentCreateViewModel vm)
     {
         if (ModelState.IsValid)
@@ -161,6 +164,7 @@ public class PaymentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")] //malak
     public async Task<IActionResult> Edit(int id, PaymentEditViewModel vm)
     {
         if (id != vm.PaymentId) return NotFound();
@@ -204,6 +208,7 @@ public class PaymentsController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")] //malak
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -236,6 +241,7 @@ public class PaymentsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")] //malak
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var payment = await _context.Payments.FindAsync(id);
