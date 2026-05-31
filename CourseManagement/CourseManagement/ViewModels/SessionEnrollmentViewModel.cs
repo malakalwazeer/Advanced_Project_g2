@@ -1,10 +1,4 @@
 namespace CourseManagement.ViewModels;
-
-/// <summary>
-/// Snapshot of a single session's enrollment status.
-/// Used for the initial server-render AND for the SignalR broadcast payload
-/// (System.Text.Json serialises this to camelCase automatically for the JS client).
-/// </summary>
 public class SessionEnrollmentViewModel
 {
     public int SessionId { get; set; }
@@ -13,7 +7,7 @@ public class SessionEnrollmentViewModel
     public int Capacity { get; set; }
     public int EnrolledCount { get; set; }
 
-    // Computed — included in JSON so the JS client doesn't have to recalculate.
+    // included in JSON so the JS client doesn't have to recalculate.
     public int RemainingSpots => Math.Max(0, Capacity - EnrolledCount);
     public bool IsFull => RemainingSpots == 0;
 

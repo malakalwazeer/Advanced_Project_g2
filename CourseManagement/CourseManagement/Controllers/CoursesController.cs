@@ -58,13 +58,13 @@ namespace CourseManagement.Controllers
 
             var model = new CourseDetailsViewModel
             {
-                CourseId          = course.CourseId,
-                CourseCode        = course.CourseCode,
-                CourseName        = course.CourseName,
-                Description       = course.Description,
-                DurationHours     = course.DurationHours,
-                Capacity          = course.Capacity,
-                CurrentRequirements  = course.CourseReqEquipments.ToList(),
+                CourseId = course.CourseId,
+                CourseCode = course.CourseCode,
+                CourseName = course.CourseName,
+                Description = course.Description,
+                DurationHours = course.DurationHours,
+                Capacity = course.Capacity,
+                CurrentRequirements = course.CourseReqEquipments.ToList(),
                 CurrentPrerequisites = course.CoursePrerequisites.ToList(),
 
                 // SignalR will keep these values current
@@ -73,10 +73,10 @@ namespace CourseManagement.Controllers
                     .OrderBy(s => s.StartDateTime)
                     .Select(s => new SessionEnrollmentViewModel
                     {
-                        SessionId     = s.SessionId,
+                        SessionId = s.SessionId,
                         StartDateTime = s.StartDateTime,
-                        EndDateTime   = s.EndDateTime,
-                        Capacity      = s.Capacity,
+                        EndDateTime = s.EndDateTime,
+                        Capacity = s.Capacity,
                         EnrolledCount = s.Enrollments.Count
                     })
                     .ToList(),
