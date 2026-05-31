@@ -54,7 +54,8 @@ namespace CourseManagementAPI.Services.Validation
 
             var alreadyEnrolled = await _context.Enrollments.AnyAsync(e =>
                 e.TraineeId == dto.TraineeId &&
-                e.SessionId == dto.SessionId
+                e.SessionId == dto.SessionId &&
+    e.EnrollmentStatus.StatusName != "Dropped"
             );
 
             if (alreadyEnrolled)
@@ -63,12 +64,11 @@ namespace CourseManagementAPI.Services.Validation
             }
 
             var currentEnrollmentCount = await _context.Enrollments
-                .Include(e => e.EnrollmentStatus)
-                .CountAsync(e =>
-                    e.SessionId == dto.SessionId &&
-                    e.EnrollmentStatus.StatusName != "Cancelled" &&
-                    e.EnrollmentStatus.StatusName != "Dropped"
-                );
+    .Include(e => e.EnrollmentStatus)
+    .CountAsync(e =>
+        e.SessionId == dto.SessionId &&
+        e.EnrollmentStatus.StatusName != "Dropped"
+    );
 
             if (currentEnrollmentCount >= session.Capacity)
             {

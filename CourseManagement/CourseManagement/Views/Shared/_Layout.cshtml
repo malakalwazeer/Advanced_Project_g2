@@ -25,49 +25,89 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            @if (User.IsInRole("Coordinator"))
-                            {
-                                <a class="nav-link text-dark fw-bold" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
-                            }
-                            else
-                            {
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                            }
-                        </li>
+                        @* changed by malak1 *@
+                        @if (!SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
-                        @if (User.IsInRole("Admin") || User.IsInRole("Coordinator"))
+                        @* changed by malak *@
+                        @if (User.IsInRole("TrainingCoordinator"))
                         {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark fw-bold" asp-controller="Dashboard" asp-action="Index">
+                                    <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                                </a>
+                            </li>
+
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Courses" asp-action="Index">Courses</a>
                             </li>
-                            @* <li class="nav-item"> *@
-                            @*     <a class="nav-link text-dark" asp-controller="CoursePrerequisites" asp-action="Index">Prerequisites</a> *@
-                            @* </li> *@
+
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="CourseSessions" asp-action="Index">Sessions</a>
                             </li>
-                            @* <li class="nav-item"> *@
-                            @*     <a class="nav-link text-dark" asp-controller="CourseReqEquipment" asp-action="Index">Course Requirements</a> *@
-                            @* </li> *@
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Instructors" asp-action="Index">Instructors</a>
+                            </li>
+
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Classrooms" asp-action="Index">Classrooms</a>
                             </li>
-                            @* <li class="nav-item"> *@
-                            @*     <a class="nav-link text-dark" asp-controller="ClassroomEquipment" asp-action="Index">Room Equipment</a> *@
-                            @* </li> *@
+
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Equipment" asp-action="Index">Equipment</a>
+                                <a class="nav-link text-dark" asp-controller="Equipment" asp-action="Index">Equipment</a>
                             </li>
+
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Instructors" asp-action="Index">Instructors</a>
+                                <a class="nav-link text-dark" asp-controller="Enrollments" asp-action="Index">Enrollments</a>
                             </li>
+
                             <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Payments" asp-action="Index">Payments</a>
                             </li>
-                            @* <li class="nav-item"> *@
-                            @* </li> *@
+                        }
+
+                        @if (User.IsInRole("Instructor"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="CourseSessions" asp-action="Index">My Sessions</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Assessments" asp-action="Index">Assessments</a>
+                            </li>
+                        }
+
+                        @if (User.IsInRole("Trainee"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Courses" asp-action="Index">Course Catalog</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Enrollments" asp-action="Index">My Enrollments</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Payments" asp-action="Index">My Payments</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="TraineeCertificationProgress" asp-action="Index">My Progress</a>
+                            </li>
+                        }
+
+                        @if (User.IsInRole("TrainingCoordinator") || User.IsInRole("Instructor") || User.IsInRole("Trainee"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Notifications" asp-action="Index">Notifications</a>
+                            </li>
                         }
                     </ul>
                     <ul class="navbar-nav">

@@ -7,7 +7,12 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>@ViewData["Title"]</h1>
-        <a asp-action="Create" class="btn btn-primary">Schedule New Session</a>
+        @* <a asp-action="Create" class="btn btn-primary">Schedule New Session</a> *@
+        @* malak *@
+        @if (User.IsInRole("TrainingCoordinator"))
+        {
+            <a asp-action="Create" class="btn btn-primary">Schedule New Session</a>
+        }
     </div>
 
     <table class="table table-striped table-hover shadow-sm">
@@ -33,8 +38,24 @@
                     <td>@item.EndDateTime.ToString("g")</td>
                     <td>@item.Capacity</td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.SessionId" class="btn btn-sm btn-warning">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@item.SessionId" class="btn btn-sm btn-danger">Delete</a>
+                        @* <a asp-action="Edit" asp-route-id="@item.SessionId" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@item.SessionId" class="btn btn-sm btn-danger">Delete</a> *@
+
+                    <td>
+                        @if (User.IsInRole("TrainingCoordinator"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.SessionId" class="btn btn-sm btn-warning">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.SessionId" class="btn btn-sm btn-danger">Delete</a>
+                        }
+
+                        @if (User.IsInRole("Trainee"))
+                        {
+                            <form asp-controller="Enrollments" asp-action="EnrollInSession" method="post" class="d-inline">
+                                <input type="hidden" name="sessionId" value="@item.SessionId" />
+                                <button type="submit" class="btn btn-sm btn-success">Enroll</button>
+                            </form>
+                        }
+                    </td>
                     </td>
                 </tr>
             }

@@ -10,7 +10,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CourseManagement.Controllers
 {
-    [Authorize(Roles = "Coordinator")]
+    // [Authorize(Roles = "Coordinator")]
+    //malak
+    [Authorize(Roles = "TrainingCoordinator,Instructor,Trainee")]
     public class CourseSessionsController : Controller
     {
         private readonly CourseManagementDbContext _context;
@@ -43,6 +45,7 @@ namespace CourseManagement.Controllers
             return View(sessions);
         }
 
+        [Authorize(Roles = "TrainingCoordinator")]
         public IActionResult Create()
         {
             PopulateSelectLists();
@@ -51,6 +54,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> Create(SessionCreateViewModel model)
         {
             if (ModelState.IsValid)
@@ -93,6 +97,7 @@ namespace CourseManagement.Controllers
             return View(model);
         }
 
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> Edit(int id)
         {
             var session = await _context.CourseSessions.FindAsync(id);
@@ -115,6 +120,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> Edit(int id, SessionEditViewModel model)
         {
             if (id != model.SessionId) return NotFound();
@@ -142,6 +148,7 @@ namespace CourseManagement.Controllers
             return View(model);
         }
 
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> Delete(int id)
         {
             var session = await _context.CourseSessions
@@ -168,6 +175,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var session = await _context.CourseSessions

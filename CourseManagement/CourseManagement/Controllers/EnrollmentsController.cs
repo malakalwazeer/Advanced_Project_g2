@@ -7,47 +7,102 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "Coordinator,Trainee")]
+//[Authorize(Roles = "Coordinator,Trainee")]
+[Authorize(Roles = "TrainingCoordinator,Trainee")] //malak
 public class EnrollmentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
     private readonly EnrollmentValidationService _enrollmentValidator;
+    private readonly UserManager<ApplicationUser> _userManager;//malak
 
     public EnrollmentsController(
         CourseManagementDbContext context,
-        EnrollmentValidationService enrollmentValidator)
+        EnrollmentValidationService enrollmentValidator,
+        UserManager<ApplicationUser> userManager)
     {
         _context = context;
         _enrollmentValidator = enrollmentValidator;
+        _userManager = userManager;
     }
 
+    //public async Task<IActionResult> Index()
+    //{
+    //    var enrollments = await _context.Enrollments
+    //        .Include(e => e.Trainee)
+    //        .Include(e => e.Session)
+    //            .ThenInclude(s => s.Course)
+    //        .Include(e => e.EnrollmentStatus)
+    //        .AsNoTracking()
+    //        .ToListAsync();
+
+    //    var vm = enrollments.Select(e => new EnrollmentIndexViewModel
+    //    {
+    //        EnrollmentId   = e.EnrollmentId,
+    //        TraineeName    = e.Trainee?.FullName,
+    //        CourseName     = e.Session?.Course?.CourseName,
+    //        SessionStart   = e.Session?.StartDateTime,
+    //        SessionEnd     = e.Session?.EndDateTime,
+    //        EnrollmentDate = e.EnrollmentDate,
+    //        StatusName     = e.EnrollmentStatus?.StatusName
+    //    }).ToList();
+
+    //    return View(vm);
+    //}
+
+
+    //added by malak 
+//    TrainingCoordinator sees all enrollments
+//Trainee sees only own enrollments
     public async Task<IActionResult> Index()
     {
-        var enrollments = await _context.Enrollments
+        var query = _context.Enrollments
             .Include(e => e.Trainee)
             .Include(e => e.Session)
                 .ThenInclude(s => s.Course)
             .Include(e => e.EnrollmentStatus)
             .AsNoTracking()
-            .ToListAsync();
+            .AsQueryable();
+
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var trainee = await _context.Trainees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user.Email);
+
+            if (trainee == null)
+            {
+                return Forbid();
+            }
+
+            query = query.Where(e => e.TraineeId == trainee.TraineeId);
+        }
+
+        var enrollments = await query.ToListAsync();
 
         var vm = enrollments.Select(e => new EnrollmentIndexViewModel
         {
-            EnrollmentId   = e.EnrollmentId,
-            TraineeName    = e.Trainee?.FullName,
-            CourseName     = e.Session?.Course?.CourseName,
-            SessionStart   = e.Session?.StartDateTime,
-            SessionEnd     = e.Session?.EndDateTime,
+            EnrollmentId = e.EnrollmentId,
+            TraineeName = e.Trainee?.FullName,
+            CourseName = e.Session?.Course?.CourseName,
+            SessionStart = e.Session?.StartDateTime,
+            SessionEnd = e.Session?.EndDateTime,
             EnrollmentDate = e.EnrollmentDate,
-            StatusName     = e.EnrollmentStatus?.StatusName
+            StatusName = e.EnrollmentStatus?.StatusName
         }).ToList();
 
         return View(vm);
     }
-
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -96,6 +151,7 @@ public class EnrollmentsController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")]//malak
     public IActionResult Create()
     {
         var vm = new EnrollmentCreateViewModel
@@ -108,6 +164,7 @@ public class EnrollmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")]//malak
     public async Task<IActionResult> Create(EnrollmentCreateViewModel vm)
     {
         if (ModelState.IsValid)
@@ -144,6 +201,7 @@ public class EnrollmentsController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")]//malak
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -167,6 +225,7 @@ public class EnrollmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")]//malak
     public async Task<IActionResult> Edit(int id, EnrollmentEditViewModel vm)
     {
         if (id != vm.EnrollmentId) return NotFound();
@@ -215,6 +274,7 @@ public class EnrollmentsController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")]//malak
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -244,6 +304,7 @@ public class EnrollmentsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")]//malak
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var enrollment = await _context.Enrollments.FindAsync(id);
@@ -278,6 +339,67 @@ public class EnrollmentsController : Controller
             return "This session has reached its maximum capacity.";
 
         return null;
+    }
+
+    //added by malak 
+    //trainee cannot choose another trainee.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Trainee")]
+    public async Task<IActionResult> EnrollInSession(int sessionId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var trainee = await _context.Trainees
+            .FirstOrDefaultAsync(t => t.Email == user.Email);
+
+        if (trainee == null)
+        {
+            return Forbid();
+        }
+
+        var dto = new CreateEnrollmentDto
+        {
+            TraineeId = trainee.TraineeId,
+            SessionId = sessionId
+        };
+
+        var error = await _enrollmentValidator.ValidateCreateAsync(dto);
+
+        if (error != null)
+        {
+            TempData["Error"] = error;
+            return RedirectToAction("Details", "Courses", new
+            {
+                id = await _context.CourseSessions
+                    .Where(s => s.SessionId == sessionId)
+                    .Select(s => s.CourseId)
+                    .FirstOrDefaultAsync()
+            });
+        }
+
+        var status = await _context.EnrollmentStatuses
+            .FirstOrDefaultAsync(s => s.StatusName == "Enrolled")
+            ?? await _context.EnrollmentStatuses.FirstAsync();
+
+        var enrollment = new Enrollment
+        {
+            TraineeId = trainee.TraineeId,
+            SessionId = sessionId,
+            EnrollmentDate = DateOnly.FromDateTime(DateTime.Today),
+            EnrollmentStatusId = status.EnrollmentStatusId
+        };
+
+        _context.Enrollments.Add(enrollment);
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "You have enrolled successfully.";
+        return RedirectToAction("Index", "Enrollments");
     }
 
     private void LoadDropdowns(EnrollmentCreateViewModel vm)

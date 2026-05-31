@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "Coordinator,Trainee")]
+//[Authorize(Roles = "Coordinator,Trainee")]
+[Authorize(Roles = "TrainingCoordinator,Trainee")] //malak
 public class TraineeCertificationProgressController : Controller
 {
     private readonly CourseManagementDbContext _context;
@@ -78,6 +79,7 @@ public class TraineeCertificationProgressController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")]//malak
     public async Task<IActionResult> Edit(int? traineeId, int? certificationId)
     {
         if (traineeId == null || certificationId == null) return NotFound();
@@ -94,6 +96,7 @@ public class TraineeCertificationProgressController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")] //malak
     public async Task<IActionResult> Edit(int traineeId, int certificationId,
         [Bind("TraineeId,CertificationId,AchievedDate,ProgressPercentage")]
         TraineeCertificationProgress progress)
@@ -128,6 +131,7 @@ public class TraineeCertificationProgressController : Controller
         return View(progress);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")] //malak
     public async Task<IActionResult> Delete(int? traineeId, int? certificationId)
     {
         if (traineeId == null || certificationId == null) return NotFound();
@@ -156,6 +160,7 @@ public class TraineeCertificationProgressController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")] //malak
     public async Task<IActionResult> DeleteConfirmed(int traineeId, int certificationId)
     {
         var progress = await _context.TraineeCertificationProgresses

@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers
 {
-    [Authorize(Roles = "Admin,Coordinator")]
+    //[Authorize(Roles = "Admin,Coordinator")]
+    [Authorize(Roles = "TrainingCoordinator,Trainee")] //malak
     public class CoursesController : Controller
     {
         private readonly CourseManagementDbContext _context;
@@ -64,7 +65,25 @@ namespace CourseManagement.Controllers
                 CurrentRequirements = course.CourseReqEquipments.ToList(),
                 CurrentPrerequisites = course.CoursePrerequisites.ToList(),
                 EquipmentList = new SelectList(await _context.Equipments.OrderBy(e => e.EquipmentName).ToListAsync(), "EquipmentId", "EquipmentName"),
-                PrerequisiteCourseList = new SelectList(await _context.Courses.Where(c => c.CourseId != id).OrderBy(c => c.CourseName).ToListAsync(), "CourseId", "CourseName")
+                PrerequisiteCourseList = new SelectList(await _context.Courses.Where(c => c.CourseId != id).OrderBy(c => c.CourseName).ToListAsync(), "CourseId", "CourseName"),
+                AvailableSessions = await _context.CourseSessions
+    .Include(s => s.Instructor)
+    .Include(s => s.Classroom)
+    .Where(s => s.CourseId == id)
+    .Select(s => new SessionIndexViewModel
+    {
+        SessionId = s.SessionId,
+        CourseName = s.Course.CourseName,
+        InstructorName = s.Instructor.FullName,
+        ClassroomLocation = s.Classroom.Location,
+        StartDateTime = s.StartDateTime,
+        EndDateTime = s.EndDateTime,
+        Capacity = s.Capacity
+    })
+    .ToListAsync()
+
+                //malak added available sessions
+
             };
 
             return View(model);
@@ -72,6 +91,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> AddEquipmentRequirement(CourseDetailsViewModel model)
         {
             if (model.AddEquipmentId > 0 && model.AddEquipmentQuantity > 0)
@@ -95,6 +115,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> RemoveEquipmentRequirement(int courseId, int equipmentId)
         {
             var req = await _context.CourseReqEquipments.FindAsync(equipmentId, courseId);
@@ -108,6 +129,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> AddPrerequisite(CourseDetailsViewModel model)
         {
             if (model.AddPrerequisiteId > 0)
@@ -127,6 +149,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> RemovePrerequisite(int courseId, int prerequisiteId)
         {
             var pre = await _context.CoursePrerequisites.FindAsync(courseId, prerequisiteId);
@@ -139,6 +162,7 @@ namespace CourseManagement.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> Create()
         {
             var model = new CourseCreateViewModel
@@ -151,6 +175,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> Create(CourseCreateViewModel model)
         {
             if (ModelState.IsValid)
@@ -191,6 +216,7 @@ namespace CourseManagement.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> Edit(int id)
         {
             var course = await _context.Courses.FindAsync(id);
@@ -214,6 +240,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> Edit(int id, CourseEditViewModel model)
         {
             if (id != model.CourseId) return NotFound();
@@ -240,6 +267,7 @@ namespace CourseManagement.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> Delete(int id)
         {
             var course = await _context.Courses
@@ -262,6 +290,7 @@ namespace CourseManagement.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "TrainingCoordinator")] //malak
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var course = await _context.Courses

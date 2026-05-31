@@ -15,10 +15,11 @@ public static class SeedData
         );
 
         modelBuilder.Entity<EnrollmentStatus>().HasData(
-            new EnrollmentStatus { EnrollmentStatusId = 1, StatusName = "Pending" },
-            new EnrollmentStatus { EnrollmentStatusId = 2, StatusName = "Enrolled" },
-            new EnrollmentStatus { EnrollmentStatusId = 3, StatusName = "Completed" },
-            new EnrollmentStatus { EnrollmentStatusId = 4, StatusName = "Cancelled" }
+            new EnrollmentStatus { EnrollmentStatusId = 1, StatusName = "Enrolled" },
+new EnrollmentStatus { EnrollmentStatusId = 2, StatusName = "Confirmed" },
+new EnrollmentStatus { EnrollmentStatusId = 3, StatusName = "Attending" },
+new EnrollmentStatus { EnrollmentStatusId = 4, StatusName = "Completed" },
+new EnrollmentStatus { EnrollmentStatusId = 5, StatusName = "Dropped" }
         );
 
         modelBuilder.Entity<PaymentStatus>().HasData(

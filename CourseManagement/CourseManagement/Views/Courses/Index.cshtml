@@ -7,7 +7,12 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>@ViewData["Title"]</h1>
-        <a asp-action="Create" class="btn btn-primary">Add New Course</a>
+        @* <a asp-action="Create" class="btn btn-primary">Add New Course</a> *@
+        @* malak *@
+        @if (User.IsInRole("TrainingCoordinator"))
+        {
+            <a asp-action="Create" class="btn btn-primary">Add New Course</a>
+        }
     </div>
 
     <table class="table table-striped table-hover shadow-sm">
@@ -30,8 +35,14 @@
                     <td>@item.Fee.ToString("C")</td>
                     <td>
                         <a asp-action="Details" asp-route-id="@item.CourseId" class="btn btn-sm btn-info">Details</a>
-                        <a asp-action="Edit" asp-route-id="@item.CourseId" class="btn btn-sm btn-warning">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@item.CourseId" class="btn btn-sm btn-danger">Delete</a>
+                        @* <a asp-action="Edit" asp-route-id="@item.CourseId" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@item.CourseId" class="btn btn-sm btn-danger">Delete</a> *@
+                        @* malak *@
+                        @if (User.IsInRole("TrainingCoordinator"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.CourseId" class="btn btn-sm btn-warning">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.CourseId" class="btn btn-sm btn-danger">Delete</a>
+                        }
                     </td>
                 </tr>
             }
