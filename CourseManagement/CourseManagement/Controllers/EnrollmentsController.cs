@@ -272,13 +272,30 @@ public class EnrollmentsController : Controller
                 _context.Update(enrollment);
                 await _context.SaveChangesAsync();
 
-                // Broadcast real-time update to all course-details tabs.
+                // Clients.Group broadcast — updates the live counter on every
+                // Course Details tab that has joined "course-{courseId}".
                 Console.WriteLine($"[SignalR] Edit saved — broadcasting for sessionId={vm.SessionId}");
                 var session = await _context.CourseSessions
+                    .Include(s => s.Course)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(s => s.SessionId == vm.SessionId);
+
                 if (session != null)
+                {
                     await _broadcastService.BroadcastCourseEnrollmentUpdateAsync(session.CourseId);
+
+                    // Clients.User personal notification — delivered only to the
+                    // trainee whose enrollment was just changed, on ALL their open tabs.
+                    // Only fires when the status actually changed (not for date-only edits).
+                    if (existing.EnrollmentStatusId != vm.EnrollmentStatusId && newStatus != null)
+                    {
+                        Console.WriteLine($"[SignalR] Status changed — notifying traineeId={vm.TraineeId}");
+                        await _broadcastService.NotifyTraineeAsync(
+                            vm.TraineeId,
+                            session.Course.CourseName,
+                            newStatus.StatusName);
+                    }
+                }
 
                 TempData["Success"] = "Enrollment updated successfully.";
             }
