@@ -1,3 +1,4 @@
+using CourseManagement.Services;
 using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Dtos;
@@ -18,15 +19,20 @@ public class EnrollmentsController : Controller
     private readonly CourseManagementDbContext _context;
     private readonly EnrollmentValidationService _enrollmentValidator;
     private readonly UserManager<ApplicationUser> _userManager;//malak
+    private readonly EnrollmentBroadcastService _broadcastService;
+
+
 
     public EnrollmentsController(
-        CourseManagementDbContext context,
-        EnrollmentValidationService enrollmentValidator,
-        UserManager<ApplicationUser> userManager)
+    CourseManagementDbContext context,
+    EnrollmentValidationService enrollmentValidator,
+    UserManager<ApplicationUser> userManager,
+    EnrollmentBroadcastService broadcastService)
     {
         _context = context;
         _enrollmentValidator = enrollmentValidator;
         _userManager = userManager;
+        _broadcastService = broadcastService;
     }
 
     //public async Task<IActionResult> Index()
@@ -55,8 +61,8 @@ public class EnrollmentsController : Controller
 
 
     //added by malak 
-//    TrainingCoordinator sees all enrollments
-//Trainee sees only own enrollments
+    //    TrainingCoordinator sees all enrollments
+    //Trainee sees only own enrollments
     public async Task<IActionResult> Index()
     {
         var query = _context.Enrollments
@@ -193,6 +199,16 @@ public class EnrollmentsController : Controller
 
             _context.Add(enrollment);
             await _context.SaveChangesAsync();
+
+            // Resolve the course that owns this session, then push real-time
+            // enrollment counts to every browser tab viewing that course's Details page.
+            var session = await _context.CourseSessions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.SessionId == vm.SessionId);
+
+            if (session != null)
+                await _broadcastService.BroadcastCourseEnrollmentUpdateAsync(session.CourseId);
+
             TempData["Success"] = "Enrollment created successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -397,6 +413,14 @@ public class EnrollmentsController : Controller
 
         _context.Enrollments.Add(enrollment);
         await _context.SaveChangesAsync();
+        var session = await _context.CourseSessions
+    .AsNoTracking()
+    .FirstOrDefaultAsync(s => s.SessionId == sessionId);
+
+        if (session != null)
+        {
+            await _broadcastService.BroadcastCourseEnrollmentUpdateAsync(session.CourseId);
+        }
 
         TempData["Success"] = "You have enrolled successfully.";
         return RedirectToAction("Index", "Enrollments");

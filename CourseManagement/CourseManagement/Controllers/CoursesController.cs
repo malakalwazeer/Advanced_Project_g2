@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using CourseManagement.Services;
 
 namespace CourseManagement.Controllers
 {
@@ -50,10 +51,13 @@ namespace CourseManagement.Controllers
                     .ThenInclude(cp => cp.PrerequisiteCourse)
                 .Include(c => c.CourseReqEquipments)
                     .ThenInclude(cre => cre.Equipment)
+                .Include(c => c.CourseSessions)
+                    .ThenInclude(s => s.Enrollments)
                 .FirstOrDefaultAsync(c => c.CourseId == id);
 
             if (course == null) return NotFound();
 
+            //malak added available sessions
             var model = new CourseDetailsViewModel
             {
                 CourseId = course.CourseId,
@@ -64,9 +68,35 @@ namespace CourseManagement.Controllers
                 Capacity = course.Capacity,
                 CurrentRequirements = course.CourseReqEquipments.ToList(),
                 CurrentPrerequisites = course.CoursePrerequisites.ToList(),
-                EquipmentList = new SelectList(await _context.Equipments.OrderBy(e => e.EquipmentName).ToListAsync(), "EquipmentId", "EquipmentName"),
-                PrerequisiteCourseList = new SelectList(await _context.Courses.Where(c => c.CourseId != id).OrderBy(c => c.CourseName).ToListAsync(), "CourseId", "CourseName"),
+                EquipmentList = new SelectList(
+    await _context.Equipments
+        .OrderBy(e => e.EquipmentName)
+        .ToListAsync(),
+    "EquipmentId",
+    "EquipmentName"),
+
+                PrerequisiteCourseList = new SelectList(
+    await _context.Courses
+        .Where(c => c.CourseId != id)
+        .OrderBy(c => c.CourseName)
+        .ToListAsync(),
+    "CourseId",
+    "CourseName"),
+
+                Sessions = course.CourseSessions
+    .OrderBy(s => s.StartDateTime)
+    .Select(s => new SessionEnrollmentViewModel
+    {
+        SessionId = s.SessionId,
+        StartDateTime = s.StartDateTime,
+        EndDateTime = s.EndDateTime,
+        Capacity = s.Capacity,
+        EnrolledCount = s.Enrollments.Count
+    })
+    .ToList(),
+
                 AvailableSessions = await _context.CourseSessions
+    .Include(s => s.Course)
     .Include(s => s.Instructor)
     .Include(s => s.Classroom)
     .Where(s => s.CourseId == id)
@@ -81,8 +111,6 @@ namespace CourseManagement.Controllers
         Capacity = s.Capacity
     })
     .ToListAsync()
-
-                //malak added available sessions
 
             };
 

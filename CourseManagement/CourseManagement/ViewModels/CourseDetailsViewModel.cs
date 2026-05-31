@@ -13,6 +13,7 @@ public class CourseDetailsViewModel
     public int DurationHours { get; set; }
     public List<CourseReqEquipment> CurrentRequirements { get; set; } = new();
     public List<CoursePrerequisite> CurrentPrerequisites { get; set; } = new();
+    public List<SessionEnrollmentViewModel> Sessions { get; set; } = new();
 
     //added by malak
     public List<SessionIndexViewModel> AvailableSessions { get; set; } = new();
