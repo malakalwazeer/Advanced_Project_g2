@@ -16,6 +16,8 @@ namespace CourseManagement.Controllers;
 [Authorize(Roles = "TrainingCoordinator,Trainee")] //malak
 public class EnrollmentsController : Controller
 {
+    private static readonly string[] ActiveStatuses =
+        ["Enrolled", "Confirmed", "Attending"];
     private readonly CourseManagementDbContext _context;
     private readonly EnrollmentValidationService _enrollmentValidator;
     private readonly UserManager<ApplicationUser> _userManager;//malak
@@ -34,31 +36,6 @@ public class EnrollmentsController : Controller
         _userManager = userManager;
         _broadcastService = broadcastService;
     }
-
-    //public async Task<IActionResult> Index()
-    //{
-    //    var enrollments = await _context.Enrollments
-    //        .Include(e => e.Trainee)
-    //        .Include(e => e.Session)
-    //            .ThenInclude(s => s.Course)
-    //        .Include(e => e.EnrollmentStatus)
-    //        .AsNoTracking()
-    //        .ToListAsync();
-
-    //    var vm = enrollments.Select(e => new EnrollmentIndexViewModel
-    //    {
-    //        EnrollmentId   = e.EnrollmentId,
-    //        TraineeName    = e.Trainee?.FullName,
-    //        CourseName     = e.Session?.Course?.CourseName,
-    //        SessionStart   = e.Session?.StartDateTime,
-    //        SessionEnd     = e.Session?.EndDateTime,
-    //        EnrollmentDate = e.EnrollmentDate,
-    //        StatusName     = e.EnrollmentStatus?.StatusName
-    //    }).ToList();
-
-    //    return View(vm);
-    //}
-
 
     //added by malak 
     //    TrainingCoordinator sees all enrollments
@@ -248,13 +225,31 @@ public class EnrollmentsController : Controller
 
         if (ModelState.IsValid)
         {
-            var existing = await _context.Enrollments.AsNoTracking()
+            // Load existing enrollment WITH its status name so we can detect transitions.
+            var existing = await _context.Enrollments
+                .Include(e => e.EnrollmentStatus)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.EnrollmentId == id);
 
-            if (existing != null &&
-                (existing.TraineeId != vm.TraineeId || existing.SessionId != vm.SessionId))
+            if (existing == null) return NotFound();
+
+            // Resolve the new status name chosen in the form.
+            var newStatus = await _context.EnrollmentStatuses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.EnrollmentStatusId == vm.EnrollmentStatusId);
+
+            bool wasActive  = ActiveStatuses.Contains(existing.EnrollmentStatus?.StatusName ?? "");
+            bool willBeActive = newStatus != null && ActiveStatuses.Contains(newStatus.StatusName);
+            bool sessionOrTraineeChanged = existing.TraineeId != vm.TraineeId
+                                        || existing.SessionId != vm.SessionId;
+
+            if (sessionOrTraineeChanged || (!wasActive && willBeActive))
             {
-                var error = await ValidateEnrollmentEdit(vm.TraineeId, vm.SessionId, excludeEnrollmentId: id);
+                var error = await ValidateEnrollmentEdit(
+                    vm.TraineeId, vm.SessionId,
+                    excludeEnrollmentId: id,
+                    newStatusIsActive: willBeActive);
+
                 if (error != null)
                 {
                     ModelState.AddModelError(string.Empty, error);
@@ -276,6 +271,15 @@ public class EnrollmentsController : Controller
             {
                 _context.Update(enrollment);
                 await _context.SaveChangesAsync();
+
+                // Broadcast real-time update to all course-details tabs.
+                Console.WriteLine($"[SignalR] Edit saved — broadcasting for sessionId={vm.SessionId}");
+                var session = await _context.CourseSessions
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.SessionId == vm.SessionId);
+                if (session != null)
+                    await _broadcastService.BroadcastCourseEnrollmentUpdateAsync(session.CourseId);
+
                 TempData["Success"] = "Enrollment updated successfully.";
             }
             catch (DbUpdateConcurrencyException)
@@ -326,33 +330,65 @@ public class EnrollmentsController : Controller
         var enrollment = await _context.Enrollments.FindAsync(id);
         if (enrollment != null)
         {
+            var sessionId = enrollment.SessionId;
+
             _context.Enrollments.Remove(enrollment);
             await _context.SaveChangesAsync();
+
+            // Broadcast real-time update so open course-details tabs reflect the freed seat.
+            Console.WriteLine($"[SignalR] Delete saved — broadcasting for sessionId={sessionId}");
+            var session = await _context.CourseSessions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.SessionId == sessionId);
+            if (session != null)
+                await _broadcastService.BroadcastCourseEnrollmentUpdateAsync(session.CourseId);
+
             TempData["Success"] = "Enrollment deleted.";
         }
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<string?> ValidateEnrollmentEdit(int traineeId, int sessionId, int excludeEnrollmentId)
+    private async Task<string?> ValidateEnrollmentEdit(
+        int traineeId, int sessionId, int excludeEnrollmentId, bool newStatusIsActive)
     {
-        var duplicate = await _context.Enrollments.AnyAsync(e =>
-            e.TraineeId == traineeId &&
-            e.SessionId == sessionId &&
-            e.EnrollmentId != excludeEnrollmentId);
-
-        if (duplicate)
-            return "This trainee is already enrolled in the selected session.";
-
         var session = await _context.CourseSessions
-            .Include(s => s.Enrollments)
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.SessionId == sessionId);
 
         if (session == null) return "The selected session does not exist.";
 
-        var enrolledCount = session.Enrollments.Count(e => e.EnrollmentId != excludeEnrollmentId);
-        if (enrolledCount >= session.Capacity)
-            return "This session has reached its maximum capacity.";
+        if (newStatusIsActive)
+        {
+            // Block duplicate ACTIVE enrollment for the same trainee + session.
+            var duplicate = await _context.Enrollments.AnyAsync(e =>
+                e.TraineeId == traineeId &&
+                e.SessionId == sessionId &&
+                e.EnrollmentId != excludeEnrollmentId &&
+                ActiveStatuses.Contains(e.EnrollmentStatus.StatusName));
+
+            if (duplicate)
+                return "This trainee already has an active enrollment in the selected session.";
+
+            // Capacity check — count active enrollments excluding the one being edited.
+            var activeCount = await _context.Enrollments
+                .CountAsync(e => e.SessionId == sessionId
+                    && e.EnrollmentId != excludeEnrollmentId
+                    && ActiveStatuses.Contains(e.EnrollmentStatus.StatusName));
+
+            if (activeCount >= session.Capacity)
+                return "This session has reached its maximum capacity.";
+        }
+        else
+        {
+            // For inactive statuses, still prevent a plain duplicate record.
+            var duplicate = await _context.Enrollments.AnyAsync(e =>
+                e.TraineeId == traineeId &&
+                e.SessionId == sessionId &&
+                e.EnrollmentId != excludeEnrollmentId);
+
+            if (duplicate)
+                return "This trainee is already enrolled in the selected session.";
+        }
 
         return null;
     }
