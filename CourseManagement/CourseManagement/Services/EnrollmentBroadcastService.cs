@@ -46,14 +46,41 @@ public class EnrollmentBroadcastService(
     {
         var snapshots = await GetSessionSnapshotsAsync(courseId);
 
-        Console.WriteLine($"[SignalR] Broadcasting EnrollmentUpdated → courseId={courseId} ({snapshots.Count} sessions)");
+        Console.WriteLine($"[SignalR] Clients.Group → course-{courseId} | {snapshots.Count} sessions");
         foreach (var snap in snapshots)
             Console.WriteLine($"[SignalR]   session={snap.SessionId} " +
                 $"active={snap.EnrolledCount}/{snap.Capacity} " +
                 $"remaining={snap.RemainingSpots} isFull={snap.IsFull}");
 
+        // Delivers to everyone who called JoinCourseGroup(courseId).
         await hubContext.Clients
             .Group($"course-{courseId}")
             .SendAsync("EnrollmentUpdated", snapshots);
+    }
+    public async Task NotifyTraineeAsync(int traineeId, string courseName, string newStatus)
+    {
+        var trainee = await db.Trainees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.TraineeId == traineeId);
+
+        if (trainee == null) return;
+
+        var appUser = await db.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == trainee.Email);
+
+        if (appUser == null) return;
+
+        var payload = new
+        {
+            message   = $"Your enrollment in '{courseName}' has been updated to '{newStatus}'.",
+            courseName,
+            status    = newStatus
+        };
+
+        Console.WriteLine($"[SignalR] Clients.User → userId={appUser.Id} | {payload.message}");
+
+        await hubContext.Clients.User(appUser.Id)
+            .SendAsync("YourEnrollmentUpdated", payload);
     }
 }

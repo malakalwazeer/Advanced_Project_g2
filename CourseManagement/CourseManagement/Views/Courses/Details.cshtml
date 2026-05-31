@@ -357,6 +357,23 @@
             });
         });
 
+        connection.on("YourEnrollmentUpdated", function (data) {
+            console.log("[SignalR] YourEnrollmentUpdated received:", data);
+
+            const alertEl = document.createElement("div");
+            alertEl.className = "alert alert-info alert-dismissible fade show mx-3 mt-3";
+            alertEl.setAttribute("role", "alert");
+            alertEl.innerHTML =
+                "<strong>Enrollment Update:</strong> " + data.message +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+
+            document.body.insertBefore(alertEl, document.body.firstChild);
+
+            setTimeout(function () {
+                if (alertEl.parentNode) alertEl.remove();
+            }, 8000);
+        });
+
         // Reconnect lifecycle hooks
         connection.onreconnecting(function (error) {
             console.warn("[SignalR] Reconnecting...", error);
@@ -385,12 +402,11 @@
             document.getElementById("signalr-badge").className   = "badge ms-auto bg-danger";
         });
 
-        //Start the connection, then join the course group
-        console.log("[SignalR] Starting connection...");
+        console.log("[SignalR] Starting connection to /hubs/enrollment ...");
 
         connection.start()
             .then(function () {
-                console.log("[SignalR] Connection established. Invoking JoinCourseGroup(" + courseId + ")...");
+                console.log("[SignalR] Connected. Invoking JoinCourseGroup(" + courseId + ")...");
                 return connection.invoke("JoinCourseGroup", courseId);
             })
             .then(function () {
@@ -400,7 +416,7 @@
                 document.getElementById("signalr-badge").className   = "badge ms-auto bg-success";
             })
             .catch(function (err) {
-                console.error("[SignalR] Startup failed (start or JoinCourseGroup):", err);
+                console.error("[SignalR] Startup failed:", err);
                 document.getElementById("signalr-badge").textContent = "Offline";
                 document.getElementById("signalr-badge").className   = "badge ms-auto bg-danger";
             });
