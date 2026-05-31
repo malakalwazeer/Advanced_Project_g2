@@ -25,6 +25,18 @@ builder.Services.AddControllers()
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReportingApp", policy =>
+    {
+        // Adjust the port below to match your Reporting app's port if it isn't 7055
+        policy.WithOrigins("https://localhost:7245", "http://localhost:5176")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 //registers DbContext
 builder.Services.AddDbContext<CourseManagementDbContext>(options =>
     options.UseSqlServer(
@@ -65,14 +77,14 @@ builder.Services
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role
         };
     });
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -131,6 +143,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowReportingApp");
 
 app.UseAuthentication();
 app.UseAuthorization();
