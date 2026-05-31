@@ -11,8 +11,7 @@ public class EnrollmentBroadcastService(
 {
     private static readonly string[] ActiveStatuses =
         ["Enrolled", "Confirmed", "Attending"];
-
-    public async Task BroadcastCourseEnrollmentUpdateAsync(int courseId)
+    public async Task<List<SessionEnrollmentViewModel>> GetSessionSnapshotsAsync(int courseId)
     {
         // all sessions for this course.
         var sessions = await db.CourseSessions
@@ -23,7 +22,7 @@ public class EnrollmentBroadcastService(
 
         var sessionIds = sessions.Select(s => s.SessionId).ToList();
 
-        // count only active-status enrollments, grouped by session.
+        // count only active-status enrollment count per session.
         // Dropped/Completed are excluded
         var rawCounts = await db.Enrollments
             .Where(e => sessionIds.Contains(e.SessionId)
@@ -34,7 +33,7 @@ public class EnrollmentBroadcastService(
 
         var countsBySession = rawCounts.ToDictionary(x => x.SessionId, x => x.Count);
 
-        var snapshots = sessions.Select(s => new SessionEnrollmentViewModel
+        return sessions.Select(s => new SessionEnrollmentViewModel
         {
             SessionId     = s.SessionId,
             StartDateTime = s.StartDateTime,
@@ -42,6 +41,10 @@ public class EnrollmentBroadcastService(
             Capacity      = s.Capacity,
             EnrolledCount = countsBySession.GetValueOrDefault(s.SessionId, 0)
         }).ToList();
+    }
+    public async Task BroadcastCourseEnrollmentUpdateAsync(int courseId)
+    {
+        var snapshots = await GetSessionSnapshotsAsync(courseId);
 
         Console.WriteLine($"[SignalR] Broadcasting EnrollmentUpdated → courseId={courseId} ({snapshots.Count} sessions)");
         foreach (var snap in snapshots)
