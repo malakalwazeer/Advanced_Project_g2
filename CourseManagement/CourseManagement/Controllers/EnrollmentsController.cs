@@ -1,3 +1,4 @@
+using CourseManagement.Services;
 using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Dtos;
@@ -15,13 +16,16 @@ public class EnrollmentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
     private readonly EnrollmentValidationService _enrollmentValidator;
+    private readonly EnrollmentBroadcastService _broadcastService;
 
     public EnrollmentsController(
         CourseManagementDbContext context,
-        EnrollmentValidationService enrollmentValidator)
+        EnrollmentValidationService enrollmentValidator,
+        EnrollmentBroadcastService broadcastService)
     {
         _context = context;
         _enrollmentValidator = enrollmentValidator;
+        _broadcastService = broadcastService;
     }
 
     public async Task<IActionResult> Index()
@@ -136,6 +140,16 @@ public class EnrollmentsController : Controller
 
             _context.Add(enrollment);
             await _context.SaveChangesAsync();
+
+            // Resolve the course that owns this session, then push real-time
+            // enrollment counts to every browser tab viewing that course's Details page.
+            var session = await _context.CourseSessions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.SessionId == vm.SessionId);
+
+            if (session != null)
+                await _broadcastService.BroadcastCourseEnrollmentUpdateAsync(session.CourseId);
+
             TempData["Success"] = "Enrollment created successfully.";
             return RedirectToAction(nameof(Index));
         }
