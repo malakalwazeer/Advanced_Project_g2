@@ -1,3 +1,5 @@
+using CourseManagement.Hubs;
+using CourseManagement.Services;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
 using Microsoft.AspNetCore.Identity;
@@ -29,6 +31,9 @@ builder.Services.AddScoped<EnrollmentValidationService>();
 builder.Services.AddScoped<PaymentValidationService>();
 builder.Services.AddScoped<AssessmentValidationService>();
 
+builder.Services.AddSignalR();
+builder.Services.AddScoped<EnrollmentBroadcastService>();
+
 builder.Services.AddHttpClient("ApiClient", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"]!);
@@ -48,6 +53,8 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapStaticAssets();
+
+app.MapHub<EnrollmentHub>("/hubs/enrollment");
 
 app.MapControllerRoute(
     name: "default",
