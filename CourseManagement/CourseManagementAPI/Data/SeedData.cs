@@ -60,7 +60,7 @@ new EnrollmentStatus { EnrollmentStatusId = 5, StatusName = "Dropped" }
                 FullName = "Ahmed Ali",
                 Email = "ahmed.ali@example.com",
                 Phone = "+97333112244",
-                Password = "Temp123",
+                Password = "Temp123!",
                 Qualifications = "MSc Computer Science",
                 HireDate = new DateTime(2024, 1, 10)
             },
@@ -70,7 +70,7 @@ new EnrollmentStatus { EnrollmentStatusId = 5, StatusName = "Dropped" }
                 FullName = "Sara Hassan",
                 Email = "sara.hassan@example.com",
                 Phone = "+97333225566",
-                Password = "Temp123",
+                Password = "Temp123!",
                 Qualifications = "BSc Information Technology",
                 HireDate = new DateTime(2024, 2, 15)
             }
@@ -85,7 +85,7 @@ new EnrollmentStatus { EnrollmentStatusId = 5, StatusName = "Dropped" }
                 RegistrationDate = new DateOnly(2026, 5, 1),
                 Email = "noor@example.com",
                 Phone = "+97339998877",
-                Password = "Temp123",
+                Password = "Temp123!",
                 TraineeStatusId = 1
             },
             new Trainee
@@ -96,7 +96,7 @@ new EnrollmentStatus { EnrollmentStatusId = 5, StatusName = "Dropped" }
                 RegistrationDate = new DateOnly(2026, 5, 2),
                 Email = "ali@example.com",
                 Phone = "+97338887766",
-                Password = "Temp123",
+                Password = "Temp123!",
                 TraineeStatusId = 1
             }
         );

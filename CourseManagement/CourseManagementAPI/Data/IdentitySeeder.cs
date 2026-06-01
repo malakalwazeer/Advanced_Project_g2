@@ -37,18 +37,34 @@ namespace CourseManagementAPI.Data
             // 3. Seed Instructor
             await EnsureUserExistsAsync(
                 userManager,
-                "instructor@CourseManagementAPI.local",
-                "Instructor#12345",
-                "Default Instructor",
+                "ahmed.ali@example.com",
+                "Temp123!",
+                "Ahmed Ali",
+                InstructorRole
+            );
+
+            await EnsureUserExistsAsync(
+                userManager,
+                "sara.hassan@example.com",
+                "Temp123!",
+                "Sara Hassan",
                 InstructorRole
             );
 
             // 4. Seed Trainee
             await EnsureUserExistsAsync(
                 userManager,
-                "trainee@CourseManagementAPI.local",
-                "Trainee#12345",
-                "Default Trainee",
+                "noor@example.com",
+                "Temp123!",
+                "Noor Mohammed",
+                TraineeRole
+            );
+
+            await EnsureUserExistsAsync(
+                userManager,
+                "ali@example.com",
+                "Temp123!",
+                "Ali Yusuf",
                 TraineeRole
             );
         }
