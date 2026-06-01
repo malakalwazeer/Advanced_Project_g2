@@ -6,30 +6,51 @@ using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Services.Validation;
 using CourseManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CourseManagement.Controllers
 {
-    // [Authorize(Roles = "Coordinator")]
-    //malak
     [Authorize(Roles = "TrainingCoordinator,Instructor,Trainee")]
     public class CourseSessionsController : Controller
     {
         private readonly CourseManagementDbContext _context;
         private readonly CourseSessionValidationService _validationService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CourseSessionsController(CourseManagementDbContext context, CourseSessionValidationService validationService)
+        public CourseSessionsController(
+            CourseManagementDbContext context,
+            CourseSessionValidationService validationService,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _validationService = validationService;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
         {
-            var sessions = await _context.CourseSessions
+            var query = _context.CourseSessions
                 .Include(s => s.Course)
                 .Include(s => s.Instructor)
                 .Include(s => s.Classroom)
+                .AsQueryable();
+
+            if (User.IsInRole("Instructor"))
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null) return RedirectToAction("Login", "Account");
+
+                var instructor = await _context.Instructors
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(i => i.Email == user.Email);
+
+                if (instructor == null) return Forbid();
+
+                query = query.Where(s => s.InstructorId == instructor.InstructorId);
+            }
+
+            var sessions = await query
                 .Select(s => new SessionIndexViewModel
                 {
                     SessionId = s.SessionId,

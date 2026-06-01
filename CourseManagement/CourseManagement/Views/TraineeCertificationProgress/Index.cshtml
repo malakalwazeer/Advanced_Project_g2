@@ -67,10 +67,13 @@
                                asp-route-traineeId="@item.TraineeId"
                                asp-route-certificationId="@item.CertificationId"
                                class="btn btn-sm btn-outline-info me-1">Details</a>
-                            <a asp-action="Delete"
-                               asp-route-traineeId="@item.TraineeId"
-                               asp-route-certificationId="@item.CertificationId"
-                               class="btn btn-sm btn-outline-danger">Delete</a>
+                            @if (User.IsInRole("TrainingCoordinator"))
+                            {
+                                <a asp-action="Delete"
+                                   asp-route-traineeId="@item.TraineeId"
+                                   asp-route-certificationId="@item.CertificationId"
+                                   class="btn btn-sm btn-outline-danger">Delete</a>
+                            }
                         </td>
                     </tr>
                 }

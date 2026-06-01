@@ -2,39 +2,52 @@ using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-//[Authorize(Roles = "Coordinator,Trainee")]
-[Authorize(Roles = "TrainingCoordinator,Trainee")] //malak
+[Authorize(Roles = "TrainingCoordinator,Trainee")]
 public class TraineeCertificationProgressController : Controller
 {
     private readonly CourseManagementDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public TraineeCertificationProgressController(CourseManagementDbContext context)
+    public TraineeCertificationProgressController(
+        CourseManagementDbContext context,
+        UserManager<ApplicationUser> userManager)
     {
         _context = context;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
     {
-        var progresses = await _context.TraineeCertificationProgresses
+        var query = _context.TraineeCertificationProgresses
             .Include(p => p.Trainee)
             .Include(p => p.Certification)
             .AsNoTracking()
-            .ToListAsync();
+            .AsQueryable();
+
+        if (User.IsInRole("Trainee"))
+        {
+            var trainee = await GetCurrentTraineeAsync();
+            if (trainee == null) return Forbid();
+            query = query.Where(p => p.TraineeId == trainee.TraineeId);
+        }
+
+        var progresses = await query.ToListAsync();
 
         var vm = progresses.Select(p => new TraineeCertificationProgressIndexViewModel
         {
-            TraineeId         = p.TraineeId,
-            CertificationId   = p.CertificationId,
-            TraineeName       = p.Trainee?.FullName,
-            CertificationName = p.Certification?.Name,
+            TraineeId          = p.TraineeId,
+            CertificationId    = p.CertificationId,
+            TraineeName        = p.Trainee?.FullName,
+            CertificationName  = p.Certification?.Name,
             ProgressPercentage = p.ProgressPercentage,
-            AchievedDate      = p.AchievedDate
+            AchievedDate       = p.AchievedDate
         }).ToList();
 
         return View(vm);
@@ -54,6 +67,13 @@ public class TraineeCertificationProgressController : Controller
                 p.TraineeId == traineeId && p.CertificationId == certificationId);
 
         if (p == null) return NotFound();
+
+        if (User.IsInRole("Trainee"))
+        {
+            var trainee = await GetCurrentTraineeAsync();
+            if (trainee == null || p.TraineeId != trainee.TraineeId)
+                return Forbid();
+        }
 
         int requiredCount = await CountRequiredCourses(certificationId.Value);
         int passedCount   = await CountPassedRequiredCourses(traineeId.Value, certificationId.Value);
@@ -178,6 +198,16 @@ public class TraineeCertificationProgressController : Controller
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private async Task<Trainee?> GetCurrentTraineeAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return null;
+
+        return await _context.Trainees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Email == user.Email);
+    }
 
     private async Task RecalculateProgress(TraineeCertificationProgress progress)
     {

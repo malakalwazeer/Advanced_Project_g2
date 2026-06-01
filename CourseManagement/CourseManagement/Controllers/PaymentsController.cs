@@ -4,30 +4,33 @@ using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
 using CourseManagementAPI.Services.Validation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-//[Authorize(Roles = "Coordinator,Trainee")]
-[Authorize(Roles = "TrainingCoordinator,Trainee")]//malak
+[Authorize(Roles = "TrainingCoordinator,Trainee")]
 public class PaymentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
     private readonly PaymentValidationService _paymentValidator;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public PaymentsController(
         CourseManagementDbContext context,
-        PaymentValidationService paymentValidator)
+        PaymentValidationService paymentValidator,
+        UserManager<ApplicationUser> userManager)
     {
         _context = context;
         _paymentValidator = paymentValidator;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
     {
-        var payments = await _context.Payments
+        var query = _context.Payments
             .Include(p => p.Enrollment)
                 .ThenInclude(e => e.Trainee)
             .Include(p => p.Enrollment)
@@ -35,7 +38,23 @@ public class PaymentsController : Controller
                     .ThenInclude(s => s.Course)
             .Include(p => p.PaymentStatus)
             .AsNoTracking()
-            .ToListAsync();
+            .AsQueryable();
+
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
+
+            var trainee = await _context.Trainees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user.Email);
+
+            if (trainee == null) return Forbid();
+
+            query = query.Where(p => p.Enrollment.TraineeId == trainee.TraineeId);
+        }
+
+        var payments = await query.ToListAsync();
 
         var vm = payments.Select(p => new PaymentIndexViewModel
         {
@@ -66,6 +85,19 @@ public class PaymentsController : Controller
             .FirstOrDefaultAsync(p => p.PaymentId == id);
 
         if (p == null) return NotFound();
+
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
+
+            var trainee = await _context.Trainees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user.Email);
+
+            if (trainee == null || p.Enrollment?.TraineeId != trainee.TraineeId)
+                return Forbid();
+        }
 
         var vm = new PaymentDetailsViewModel
         {
@@ -142,6 +174,7 @@ public class PaymentsController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();

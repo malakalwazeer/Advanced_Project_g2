@@ -6,7 +6,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Payments</h2>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
+    @if (User.IsInRole("TrainingCoordinator"))
+    {
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    }
 </div>
 
 @if (TempData["Success"] != null)
@@ -70,8 +73,11 @@
                         </td>
                         <td class="text-center">
                             <a asp-action="Details" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-info me-1">Details</a>
-                            <a asp-action="Edit"    asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
-                            <a asp-action="Delete"  asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-danger">Delete</a>
+                            @if (User.IsInRole("TrainingCoordinator"))
+                            {
+                                <a asp-action="Edit"   asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-danger">Delete</a>
+                            }
                         </td>
                     </tr>
                 }

@@ -39,10 +39,13 @@
                     </dd>
                 </dl>
             </div>
+            @if (User.IsInRole("TrainingCoordinator"))
+            {
             <div class="card-footer d-flex gap-2">
                 <a asp-action="Edit" asp-route-id="@Model.EnrollmentId" class="btn btn-warning btn-sm">Edit</a>
                 <a asp-action="Delete" asp-route-id="@Model.EnrollmentId" class="btn btn-danger btn-sm">Delete</a>
             </div>
+            }
         </div>
     </div>
 

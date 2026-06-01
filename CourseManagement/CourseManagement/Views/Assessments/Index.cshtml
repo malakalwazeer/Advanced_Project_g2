@@ -63,7 +63,10 @@
                         <td class="text-center">
                             <a asp-action="Details" asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-info me-1">Details</a>
                             <a asp-action="Edit"    asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
-                            <a asp-action="Delete"  asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-danger">Delete</a>
+                            @if (User.IsInRole("TrainingCoordinator"))
+                            {
+                                <a asp-action="Delete" asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-danger">Delete</a>
+                            }
                         </td>
                     </tr>
                 }
