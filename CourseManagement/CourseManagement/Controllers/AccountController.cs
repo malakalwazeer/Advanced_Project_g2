@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+
 
 namespace CourseManagement.Controllers;
 
@@ -13,7 +15,6 @@ public class AccountController : Controller
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
-
     private readonly CourseManagementDbContext _context;
 
     public AccountController(
@@ -118,17 +119,25 @@ public class AccountController : Controller
             // 3. Assign the newly registered MVC user as a Trainee
             await _userManager.AddToRoleAsync(user, defaultRole);
             var traineeExists = await _context.Trainees
-    .AnyAsync(t => t.Email == model.Email);
+                .AnyAsync(t => t.Email == model.Email);
 
             if (!traineeExists)
             {
+                var initialStatus = await _context.TraineeStatuses.FirstOrDefaultAsync();
+
+                if (initialStatus == null)
+                {
+                    ModelState.AddModelError(string.Empty, "Registration failed because no Trainee Statuses are configured in the database.");
+                    return View(model);
+                }
+
                 var trainee = new Trainee
                 {
                     FullName = model.DisplayName,
                     Email = model.Email,
                     RegistrationDate = DateOnly.FromDateTime(DateTime.Today),
                     Phone = "Not provided",
-                    TraineeStatusId = 1,
+                    TraineeStatusId = initialStatus.TraineeStatusId,
                     Password = "Managed by ASP.NET Identity"
                 };
 
@@ -192,6 +201,7 @@ public class AccountController : Controller
 
         return RedirectToAction("Index", "Home");
     }
+
     private IActionResult RedirectToLocal(string? returnUrl)
     {
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))

@@ -52,6 +52,7 @@ namespace ReportingCourseManagement.Controllers
                 // Saves values cleanly into session matching ReportApiService's token lookup
                 HttpContext.Session.SetString("JWToken", result.Token);
                 HttpContext.Session.SetString("UserRole", assignedRole);
+                HttpContext.Session.SetString("UserName", loginDto.Email);
 
                 return RedirectToAction("Index", "Reports");
             }
@@ -60,6 +61,7 @@ namespace ReportingCourseManagement.Controllers
             return View(loginDto);
         }
 
+        [HttpPost]
         [HttpGet]
         public IActionResult Logout()
         {
