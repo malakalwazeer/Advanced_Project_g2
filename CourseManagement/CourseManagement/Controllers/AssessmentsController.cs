@@ -4,30 +4,33 @@ using CourseManagementAPI.Dtos;
 using CourseManagementAPI.Models;
 using CourseManagementAPI.Services.Validation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-//[Authorize(Roles = "Coordinator,Instructor")]
-[Authorize(Roles = "TrainingCoordinator,Instructor")]//malak
+[Authorize(Roles = "TrainingCoordinator,Instructor,Trainee")]
 public class AssessmentsController : Controller
 {
     private readonly CourseManagementDbContext _context;
     private readonly AssessmentValidationService _assessmentValidator;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public AssessmentsController(
         CourseManagementDbContext context,
-        AssessmentValidationService assessmentValidator)
+        AssessmentValidationService assessmentValidator,
+        UserManager<ApplicationUser> userManager)
     {
         _context = context;
         _assessmentValidator = assessmentValidator;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
     {
-        var assessments = await _context.Assessments
+        var query = _context.Assessments
             .Include(a => a.Enrollment)
                 .ThenInclude(e => e.Trainee)
             .Include(a => a.Enrollment)
@@ -35,7 +38,26 @@ public class AssessmentsController : Controller
                     .ThenInclude(s => s.Course)
             .Include(a => a.Instructor)
             .AsNoTracking()
-            .ToListAsync();
+            .AsQueryable();
+
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var trainee = await _context.Trainees.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user!.Email);
+            if (trainee == null) return Forbid();
+            query = query.Where(a => a.Enrollment.TraineeId == trainee.TraineeId);
+        }
+        else if (User.IsInRole("Instructor"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var instructor = await _context.Instructors.AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Email == user!.Email);
+            if (instructor == null) return Forbid();
+            query = query.Where(a => a.InstructorId == instructor.InstructorId);
+        }
+
+        var assessments = await query.ToListAsync();
 
         var vm = assessments.Select(a => new AssessmentIndexViewModel
         {
@@ -66,6 +88,23 @@ public class AssessmentsController : Controller
 
         if (a == null) return NotFound();
 
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var trainee = await _context.Trainees.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user!.Email);
+            if (trainee == null || a.Enrollment?.TraineeId != trainee.TraineeId)
+                return Forbid();
+        }
+        else if (User.IsInRole("Instructor"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var instructor = await _context.Instructors.AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Email == user!.Email);
+            if (instructor == null || a.InstructorId != instructor.InstructorId)
+                return Forbid();
+        }
+
         var vm = new AssessmentDetailsViewModel
         {
             AssessmentId   = a.AssessmentId,
@@ -80,6 +119,7 @@ public class AssessmentsController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public IActionResult Create()
     {
         var vm = new AssessmentCreateViewModel();
@@ -89,10 +129,18 @@ public class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public async Task<IActionResult> Create(AssessmentCreateViewModel vm)
     {
         if (vm.Result.HasValue && vm.Result != 0 && vm.Result != 1)
             ModelState.AddModelError(string.Empty, "Result must be 0 (Fail) or 1 (Pass).");
+
+        if (User.IsInRole("Instructor") && !User.IsInRole("TrainingCoordinator"))
+        {
+            var scopeError = await ValidateInstructorScope(vm.EnrollmentId, vm.InstructorId);
+            if (scopeError != null)
+                ModelState.AddModelError(string.Empty, scopeError);
+        }
 
         if (ModelState.IsValid)
         {
@@ -133,6 +181,7 @@ public class AssessmentsController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -140,6 +189,15 @@ public class AssessmentsController : Controller
         var assessment = await _context.Assessments.AsNoTracking()
             .FirstOrDefaultAsync(a => a.AssessmentId == id);
         if (assessment == null) return NotFound();
+
+        if (User.IsInRole("Instructor") && !User.IsInRole("TrainingCoordinator"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var instructor = await _context.Instructors.AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Email == user!.Email);
+            if (instructor == null || assessment.InstructorId != instructor.InstructorId)
+                return Forbid();
+        }
 
         var vm = new AssessmentEditViewModel
         {
@@ -156,12 +214,20 @@ public class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public async Task<IActionResult> Edit(int id, AssessmentEditViewModel vm)
     {
         if (id != vm.AssessmentId) return NotFound();
 
         if (vm.Result.HasValue && vm.Result != 0 && vm.Result != 1)
             ModelState.AddModelError(string.Empty, "Result must be 0 (Fail) or 1 (Pass).");
+
+        if (User.IsInRole("Instructor") && !User.IsInRole("TrainingCoordinator"))
+        {
+            var scopeError = await ValidateInstructorScope(vm.EnrollmentId, vm.InstructorId);
+            if (scopeError != null)
+                ModelState.AddModelError(string.Empty, scopeError);
+        }
 
         if (ModelState.IsValid)
         {
@@ -195,6 +261,7 @@ public class AssessmentsController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -211,6 +278,15 @@ public class AssessmentsController : Controller
 
         if (a == null) return NotFound();
 
+        if (User.IsInRole("Instructor") && !User.IsInRole("TrainingCoordinator"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var instructor = await _context.Instructors.AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Email == user!.Email);
+            if (instructor == null || a.InstructorId != instructor.InstructorId)
+                return Forbid();
+        }
+
         var vm = new AssessmentDeleteViewModel
         {
             AssessmentId   = a.AssessmentId,
@@ -226,11 +302,25 @@ public class AssessmentsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var assessment = await _context.Assessments.FindAsync(id);
+        var assessment = await _context.Assessments
+            .Include(a => a.Enrollment)
+                .ThenInclude(e => e.Session)
+            .FirstOrDefaultAsync(a => a.AssessmentId == id);
+
         if (assessment != null)
         {
+            if (User.IsInRole("Instructor") && !User.IsInRole("TrainingCoordinator"))
+            {
+                var user = await _userManager.GetUserAsync(User);
+                var instructor = await _context.Instructors.AsNoTracking()
+                    .FirstOrDefaultAsync(i => i.Email == user!.Email);
+                if (instructor == null || assessment.InstructorId != instructor.InstructorId)
+                    return Forbid();
+            }
+
             int enrollmentId = assessment.EnrollmentId;
 
             _context.Assessments.Remove(assessment);
@@ -244,6 +334,31 @@ public class AssessmentsController : Controller
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private async Task<string?> ValidateInstructorScope(int enrollmentId, int? instructorId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        var instructor = await _context.Instructors.AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Email == user!.Email);
+        if (instructor == null)
+            return "Your instructor profile was not found.";
+
+        if (instructorId.HasValue && instructorId != instructor.InstructorId)
+            return "You can only record assessments under your own instructor profile.";
+
+        var enrollment = await _context.Enrollments
+            .Include(e => e.Session)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId);
+
+        if (enrollment == null)
+            return "Enrollment not found.";
+
+        if (enrollment.Session.InstructorId != instructor.InstructorId)
+            return "You can only record assessments for sessions assigned to you.";
+
+        return null;
+    }
 
     private async Task UpdateCertificationProgressAsync(int enrollmentId)
     {

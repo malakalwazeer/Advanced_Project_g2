@@ -106,6 +106,15 @@ public class EnrollmentsController : Controller
 
         if (e == null) return NotFound();
 
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var trainee = await _context.Trainees.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user!.Email);
+            if (trainee == null || e.TraineeId != trainee.TraineeId)
+                return Forbid();
+        }
+
         var vm = new EnrollmentDetailsViewModel
         {
             EnrollmentId   = e.EnrollmentId,
