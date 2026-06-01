@@ -9,35 +9,113 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Course Management System - Portal Authentication</title>
+    <title>Reporting Portal - Sign In</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        :root {
+            --brand-navy: #16335b;
+            --brand-navy-dark: #0f2542;
+            --brand-border: #e2e5ea;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .login-card {
+            border: 1px solid var(--brand-border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .login-card-header {
+            background: var(--brand-navy);
+            color: #fff;
+            padding: 1.75rem 1.5rem 1.5rem;
+            text-align: center;
+        }
+
+            .login-card-header .brand {
+                font-weight: 700;
+                font-size: 1.15rem;
+                letter-spacing: .01em;
+            }
+
+            .login-card-header .subtitle {
+                color: #c7d2e4;
+                font-size: .85rem;
+                margin-top: .25rem;
+            }
+
+        .login-card .form-label {
+            font-weight: 600;
+            color: #1f2933;
+            font-size: .88rem;
+        }
+
+        .login-card .form-control {
+            border-radius: 4px;
+            border-color: var(--brand-border);
+            padding: .55rem .75rem;
+        }
+
+            .login-card .form-control:focus {
+                border-color: var(--brand-navy);
+                box-shadow: 0 0 0 .15rem rgba(22, 51, 91, .2);
+            }
+
+        .btn-login {
+            background: var(--brand-navy);
+            border-color: var(--brand-navy);
+            color: #fff;
+            font-weight: 500;
+        }
+
+            .btn-login:hover {
+                background: var(--brand-navy-dark);
+                border-color: var(--brand-navy-dark);
+                color: #fff;
+            }
+
+        .login-footnote {
+            color: #6b7280;
+            font-size: .8rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
-<body class="bg-secondary bg-opacity-10">
+<body>
     <div class="container">
         <div class="row justify-content-center align-items-center min-vh-100">
             <div class="col-10 col-sm-8 col-md-6 col-lg-4">
-                <div class="card border-0 shadow-lg">
-                    <div class="card-header bg-dark text-white p-4 text-center">
-                        <h5 class="mb-0 text-uppercase tracking-wide">Reporting Dashboard Login</h5>
+                <div class="login-card shadow-sm">
+                    <div class="login-card-header">
+                        <div class="brand">Reporting Portal</div>
+                        <div class="subtitle">Training &amp; Certification Platform</div>
                     </div>
                     <div class="card-body p-4">
+                        <p class="text-muted small mb-4">Sign in with your Training Coordinator account to view operational reports.</p>
                         <form asp-action="Login" method="post">
                             <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
 
                             <div class="mb-3">
-                                <label asp-for="Email" class="form-label font-monospace small text-muted">Email Address</label>
-                                <input asp-for="Email" class="form-control" type="email" placeholder="name@example.local" required />
+                                <label asp-for="Email" class="form-label">Email Address</label>
+                                <input asp-for="Email" class="form-control" type="email" placeholder="name@example.com" required />
                             </div>
 
                             <div class="mb-3">
-                                <label asp-for="Password" class="form-label font-monospace small text-muted">System Password</label>
-                                <input asp-for="Password" class="form-control" type="password" placeholder="••••••••" required />
+                                <label asp-for="Password" class="form-label">Password</label>
+                                <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password" required />
                             </div>
 
-                            <button type="submit" class="btn btn-dark w-100 py-2 mt-2">Authenticate Session</button>
+                            <button type="submit" class="btn btn-login w-100 py-2 mt-2">Sign In</button>
                         </form>
                     </div>
                 </div>
+                <p class="login-footnote">Authorized personnel only.</p>
             </div>
         </div>
     </div>
