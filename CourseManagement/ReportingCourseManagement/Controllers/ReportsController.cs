@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ReportingCourseManagement.Services;
 using Microsoft.AspNetCore.Http;
+using ReportingCourseManagement.ViewModels;
+using ReportingCourseManagement.Dtos;
 
 namespace ReportingCourseManagement.Controllers
 {
@@ -22,7 +24,7 @@ namespace ReportingCourseManagement.Controllers
             return !string.IsNullOrEmpty(token) && role == "TrainingCoordinator";
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             if (!IsAuthorized())
             {
@@ -30,7 +32,16 @@ namespace ReportingCourseManagement.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            return View();
+            var model = new ReportsDashboardViewModel
+            {
+                EnrollmentByCourse = await _reportApiService.GetEnrollmentByCourseAsync(),
+                EnrollmentByCategory = await _reportApiService.GetEnrollmentByCategoryAsync(),
+                InstructorWorkload = await _reportApiService.GetInstructorWorkloadAsync(),
+                RevenueSummary = await _reportApiService.GetRevenueSummaryAsync() ?? new RevenueSummaryReportDto(),
+                CertificationCompletion = await _reportApiService.GetCertificationCompletionAsync()
+            };
+
+            return View(model);
         }
 
         public async Task<IActionResult> EnrollmentByCourse()

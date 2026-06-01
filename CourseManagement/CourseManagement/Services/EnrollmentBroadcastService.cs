@@ -5,39 +5,82 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Services;
-
-/// Reads the latest enrollment counts from the database after an enrollment
-/// change, then pushes the update to every browser tab that is currently
-/// viewing that course's Details page.
-/// Registered as Scoped so it can safely consume the Scoped DbContext.
-
 public class EnrollmentBroadcastService(
     IHubContext<EnrollmentHub> hubContext,
     CourseManagementDbContext db)
 {
-    /// Fetches fresh enrollment counts for every session
-    /// and broadcasts them to all clients in the course's SignalR group.
-    ///
-    /// Called after a successful enrollment create (or delete) so connected
-    /// clients see the change within milliseconds.
-    public async Task BroadcastCourseEnrollmentUpdateAsync(int courseId)
+    private static readonly string[] ActiveStatuses =
+        ["Enrolled", "Confirmed", "Attending"];
+    public async Task<List<SessionEnrollmentViewModel>> GetSessionSnapshotsAsync(int courseId)
     {
+        // all sessions for this course.
         var sessions = await db.CourseSessions
             .Where(s => s.CourseId == courseId)
-            .Select(s => new SessionEnrollmentViewModel
-            {
-                SessionId     = s.SessionId,
-                StartDateTime = s.StartDateTime,
-                EndDateTime   = s.EndDateTime,
-                Capacity      = s.Capacity,
-                EnrolledCount = s.Enrollments.Count()
-            })
             .OrderBy(s => s.StartDateTime)
+            .Select(s => new { s.SessionId, s.StartDateTime, s.EndDateTime, s.Capacity })
             .ToListAsync();
 
-        // "UpdateEnrollmentCounts" must match the connection.on(...) name in the JS client.
+        var sessionIds = sessions.Select(s => s.SessionId).ToList();
+
+        // count only active-status enrollment count per session.
+        // Dropped/Completed are excluded
+        var rawCounts = await db.Enrollments
+            .Where(e => sessionIds.Contains(e.SessionId)
+                && ActiveStatuses.Contains(e.EnrollmentStatus.StatusName))
+            .GroupBy(e => e.SessionId)
+            .Select(g => new { SessionId = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var countsBySession = rawCounts.ToDictionary(x => x.SessionId, x => x.Count);
+
+        return sessions.Select(s => new SessionEnrollmentViewModel
+        {
+            SessionId     = s.SessionId,
+            StartDateTime = s.StartDateTime,
+            EndDateTime   = s.EndDateTime,
+            Capacity      = s.Capacity,
+            EnrolledCount = countsBySession.GetValueOrDefault(s.SessionId, 0)
+        }).ToList();
+    }
+    public async Task BroadcastCourseEnrollmentUpdateAsync(int courseId)
+    {
+        var snapshots = await GetSessionSnapshotsAsync(courseId);
+
+        Console.WriteLine($"[SignalR] Clients.Group → course-{courseId} | {snapshots.Count} sessions");
+        foreach (var snap in snapshots)
+            Console.WriteLine($"[SignalR]   session={snap.SessionId} " +
+                $"active={snap.EnrolledCount}/{snap.Capacity} " +
+                $"remaining={snap.RemainingSpots} isFull={snap.IsFull}");
+
+        // Delivers to everyone who called JoinCourseGroup(courseId).
         await hubContext.Clients
-            .Group(EnrollmentHub.GroupName(courseId))
-            .SendAsync("UpdateEnrollmentCounts", sessions);
+            .Group($"course-{courseId}")
+            .SendAsync("EnrollmentUpdated", snapshots);
+    }
+    public async Task NotifyTraineeAsync(int traineeId, string courseName, string newStatus)
+    {
+        var trainee = await db.Trainees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.TraineeId == traineeId);
+
+        if (trainee == null) return;
+
+        var appUser = await db.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == trainee.Email);
+
+        if (appUser == null) return;
+
+        var payload = new
+        {
+            message   = $"Your enrollment in '{courseName}' has been updated to '{newStatus}'.",
+            courseName,
+            status    = newStatus
+        };
+
+        Console.WriteLine($"[SignalR] Clients.User → userId={appUser.Id} | {payload.message}");
+
+        await hubContext.Clients.User(appUser.Id)
+            .SendAsync("YourEnrollmentUpdated", payload);
     }
 }

@@ -7,13 +7,11 @@ namespace CourseManagementAPI.Services.Validation
 {
     public class EnrollmentValidationService
     {
-        //this class validates:
-        //1. Trainee exists
-        //2. Session exists
-        //3. Trainee is active
-        //4. Session is not full
-        //5. Trainee is not already enrolled in the same session
-        //6. Trainee completed the prerequisite course, if the course has one
+        //Added by Mariam 
+        // Statuses that occupy a seat. Completed and Dropped free the seat.
+        // Used for both duplicate-enrollment checks and capacity enforcement.
+        private static readonly string[] ActiveStatuses =
+            ["Enrolled", "Confirmed", "Attending"];
 
         private readonly CourseManagementDbContext _context;
 
@@ -52,25 +50,28 @@ namespace CourseManagementAPI.Services.Validation
                 return "Cannot enroll in a session that has already started or finished.";
             }
 
+            //Added by Mariam  
+            // Duplicate check: trainee already has an ACTIVE enrollment for this session.
+            // Dropped and Completed enrollments are ignored
             var alreadyEnrolled = await _context.Enrollments.AnyAsync(e =>
                 e.TraineeId == dto.TraineeId &&
                 e.SessionId == dto.SessionId &&
-    e.EnrollmentStatus.StatusName != "Dropped"
-            );
+                ActiveStatuses.Contains(e.EnrollmentStatus.StatusName));
 
             if (alreadyEnrolled)
             {
                 return "Trainee is already enrolled in this session.";
             }
 
-            var currentEnrollmentCount = await _context.Enrollments
-    .Include(e => e.EnrollmentStatus)
-    .CountAsync(e =>
-        e.SessionId == dto.SessionId &&
-        e.EnrollmentStatus.StatusName != "Dropped"
-    );
+            //Added by Mariam  
+            // Capacity check: count only active-status enrollments.
+            // Completed and Dropped records do NOT consume a seat.
+            var activeCount = await _context.Enrollments
+                .CountAsync(e =>
+                    e.SessionId == dto.SessionId &&
+                    ActiveStatuses.Contains(e.EnrollmentStatus.StatusName));
 
-            if (currentEnrollmentCount >= session.Capacity)
+            if (activeCount >= session.Capacity)
             {
                 return "This course session is full. No available seats.";
             }
