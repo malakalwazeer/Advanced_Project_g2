@@ -23,19 +23,32 @@ public class InstructorsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? searchString)
     {
-        var instructors = await _context.Instructors
-            .AsNoTracking()
+        var query = _context.Instructors.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var term = searchString.ToLower();
+            query = query.Where(i =>
+                i.FullName.ToLower().Contains(term) ||
+                i.Email.ToLower().Contains(term) ||
+                (i.Qualifications != null && i.Qualifications.ToLower().Contains(term)));
+        }
+
+        var instructors = await query
             .Select(i => new InstructorIndexViewModel
             {
-                InstructorId = i.InstructorId,
-                FullName = i.FullName,
-                Email = i.Email,
-                Phone = i.Phone ?? string.Empty,
+                InstructorId   = i.InstructorId,
+                FullName       = i.FullName,
+                Email          = i.Email,
+                Phone          = i.Phone ?? string.Empty,
                 Qualifications = i.Qualifications
             })
             .ToListAsync();
+
+        ViewBag.SearchString = searchString;
+
         return View(instructors);
     }
 

@@ -19,19 +19,32 @@ public class ClassroomsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? searchString, bool? isActive)
     {
-        var classrooms = await _context.Classrooms
-            
+        var query = _context.Classrooms.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var term = searchString.ToLower();
+            query = query.Where(c => c.Location.ToLower().Contains(term));
+        }
+
+        if (isActive.HasValue)
+            query = query.Where(c => c.IsActive == isActive.Value);
+
+        var classrooms = await query
             .OrderBy(c => c.Location)
             .Select(c => new ClassroomIndexViewModel
             {
                 ClassroomId = c.ClassroomId,
-                Location = c.Location,
-                Capacity = c.Capacity,
-                IsActive = c.IsActive
+                Location    = c.Location,
+                Capacity    = c.Capacity,
+                IsActive    = c.IsActive
             })
             .ToListAsync();
+
+        ViewBag.SearchString = searchString;
+        ViewBag.IsActive = isActive;
 
         return View(classrooms);
     }

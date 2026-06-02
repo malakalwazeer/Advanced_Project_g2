@@ -23,7 +23,7 @@ public class TraineeCertificationProgressController : Controller
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? searchString, bool? achievedOnly)
     {
         var query = _context.TraineeCertificationProgresses
             .Include(p => p.Trainee)
@@ -31,6 +31,7 @@ public class TraineeCertificationProgressController : Controller
             .AsNoTracking()
             .AsQueryable();
 
+        // Role-based restriction applied first so search cannot bypass it
         if (User.IsInRole("Trainee"))
         {
             var user = await _userManager.GetUserAsync(User);
@@ -40,17 +41,32 @@ public class TraineeCertificationProgressController : Controller
             query = query.Where(p => p.TraineeId == trainee.TraineeId);
         }
 
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var term = searchString.ToLower();
+            query = query.Where(p =>
+                p.Trainee.FullName.ToLower().Contains(term) ||
+                p.Certification.Name.ToLower().Contains(term));
+        }
+
+        // Achieved = certification fully completed (AchievedDate is set)
+        if (achievedOnly == true)
+            query = query.Where(p => p.AchievedDate != null);
+
         var progresses = await query.ToListAsync();
 
         var vm = progresses.Select(p => new TraineeCertificationProgressIndexViewModel
         {
-            TraineeId         = p.TraineeId,
-            CertificationId   = p.CertificationId,
-            TraineeName       = p.Trainee?.FullName,
-            CertificationName = p.Certification?.Name,
+            TraineeId          = p.TraineeId,
+            CertificationId    = p.CertificationId,
+            TraineeName        = p.Trainee?.FullName,
+            CertificationName  = p.Certification?.Name,
             ProgressPercentage = p.ProgressPercentage,
-            AchievedDate      = p.AchievedDate
+            AchievedDate       = p.AchievedDate
         }).ToList();
+
+        ViewBag.SearchString = searchString;
+        ViewBag.AchievedOnly = achievedOnly;
 
         return View(vm);
     }

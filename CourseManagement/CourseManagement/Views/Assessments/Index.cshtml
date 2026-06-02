@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Assessments";
+    string? currentSearch = ViewBag.SearchString as string;
+    int?    currentResult = ViewBag.ResultFilter as int?;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -28,56 +30,85 @@
     </div>
 }
 
-<div class="card shadow-sm">
-    <div class="card-body p-0">
-        <table class="table table-hover table-striped mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th>Trainee</th>
-                    <th>Course</th>
-                    <th>Instructor</th>
-                    <th class="text-center">Score</th>
-                    <th class="text-center">Result</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@item.TraineeName</td>
-                        <td>@item.CourseName</td>
-                        <td>@(item.InstructorName ?? "—")</td>
-                        <td class="text-center">@(item.Score.HasValue ? item.Score.ToString() : "—")</td>
-                        <td class="text-center">
-                            @if (item.Result == 1)
-                            {
-                                <span class="badge bg-success">Pass</span>
-                            }
-                            else if (item.Result == 0)
-                            {
-                                <span class="badge bg-danger">Fail</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-light text-muted border">Not Graded</span>
-                            }
-                        </td>
-                        <td class="text-center">
-                            <a asp-action="Details" asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-info me-1">Details</a>
-                            @if (User.IsInRole("TrainingCoordinator") || User.IsInRole("Instructor"))
-                            {
-                                <a asp-action="Edit"   asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
-                                <a asp-action="Delete" asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-danger">Delete</a>
-                            }
-                        </td>
-                    </tr>
-                }
-                @if (!Model.Any())
-                {
-                    <tr><td colspan="6" class="text-center text-muted py-4">No assessments found.</td></tr>
-                }
-            </tbody>
-        </table>
+<form asp-action="Index" method="get" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-4">
+        <label class="form-label">Search</label>
+        <input type="text"
+               name="searchString"
+               value="@currentSearch"
+               class="form-control"
+               placeholder="Trainee, course or instructor..." />
     </div>
-</div>
+
+    <div class="col-md-3">
+        <label class="form-label">Result</label>
+        <select name="resultFilter" class="form-select">
+            <option value="">All Results</option>
+            <option value="1"  selected="@(currentResult == 1)">Pass</option>
+            <option value="0"  selected="@(currentResult == 0)">Fail</option>
+            <option value="-1" selected="@(currentResult == -1)">Not Graded</option>
+        </select>
+    </div>
+
+    <div class="col-md-5 d-flex gap-2 align-items-end">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No matching records were found.</div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Trainee</th>
+                        <th>Course</th>
+                        <th>Instructor</th>
+                        <th class="text-center">Score</th>
+                        <th class="text-center">Result</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.TraineeName</td>
+                            <td>@item.CourseName</td>
+                            <td>@(item.InstructorName ?? "—")</td>
+                            <td class="text-center">@(item.Score.HasValue ? item.Score.ToString() : "—")</td>
+                            <td class="text-center">
+                                @if (item.Result == 1)
+                                {
+                                    <span class="badge bg-success">Pass</span>
+                                }
+                                else if (item.Result == 0)
+                                {
+                                    <span class="badge bg-danger">Fail</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted border">Not Graded</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a asp-action="Details" asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-info me-1">Details</a>
+                                @if (User.IsInRole("TrainingCoordinator") || User.IsInRole("Instructor"))
+                                {
+                                    <a asp-action="Edit"   asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@item.AssessmentId" class="btn btn-sm btn-outline-danger">Delete</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

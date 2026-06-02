@@ -81,6 +81,7 @@ a {
         .navbar .nav-link.active {
             color: var(--brand-navy) !important;
             border-bottom-color: var(--brand-navy);
+            text-decoration: none;
         }
 
     .navbar .navbar-text {

@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Certification Progress";
+    string? currentSearch   = ViewBag.SearchString as string;
+    bool    currentAchieved = ViewBag.AchievedOnly == true;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -16,76 +18,102 @@
     </div>
 }
 
-<div class="card shadow-sm">
-    <div class="card-body p-0">
-        <table class="table table-hover table-striped mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th>Trainee</th>
-                    <th>Certification</th>
-                    <th style="min-width:200px;">Progress</th>
-                    <th class="text-center">Achieved Date</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
+<form asp-action="Index" method="get" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-5">
+        <label class="form-label">Search</label>
+        <input type="text"
+               name="searchString"
+               value="@currentSearch"
+               class="form-control"
+               placeholder="Trainee name or certification title..." />
+    </div>
+
+    <div class="col-md-3 d-flex align-items-end pb-1">
+        <div class="form-check">
+            <input class="form-check-input"
+                   type="checkbox"
+                   name="achievedOnly"
+                   value="true"
+                   id="achievedOnly"
+                   checked="@currentAchieved" />
+            <label class="form-check-label" for="achievedOnly">Achieved Only</label>
+        </div>
+    </div>
+
+    <div class="col-md-4 d-flex gap-2 align-items-end">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No matching records were found.</div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-dark">
                     <tr>
-                        <td>@item.TraineeName</td>
-                        <td>@item.CertificationName</td>
-                        <td>
-                            @{
-                                var pctStr = item.ProgressPercentage.ToString("F1",
-                                    System.Globalization.CultureInfo.InvariantCulture);
-                                var barClass = item.ProgressPercentage >= 100 ? "bg-success"
-                                             : item.ProgressPercentage >= 50  ? "bg-info"
-                                             : "bg-warning";
-                            }
-                            <div class="progress" style="height:18px;">
-                                <div class="progress-bar @barClass"
-                                     role="progressbar"
-                                     style="width:@pctStr%"
-                                     aria-valuenow="@pctStr"
-                                     aria-valuemin="0" aria-valuemax="100">
-                                    @pctStr%
+                        <th>Trainee</th>
+                        <th>Certification</th>
+                        <th style="min-width:200px;">Progress</th>
+                        <th class="text-center">Achieved Date</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.TraineeName</td>
+                            <td>@item.CertificationName</td>
+                            <td>
+                                @{
+                                    var pctStr   = item.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                                    var barClass = item.ProgressPercentage >= 100 ? "bg-success"
+                                                 : item.ProgressPercentage >= 50  ? "bg-info"
+                                                 : "bg-warning";
+                                }
+                                <div class="progress" style="height:18px;">
+                                    <div class="progress-bar @barClass"
+                                         role="progressbar"
+                                         style="width:@pctStr%"
+                                         aria-valuenow="@pctStr"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        @pctStr%
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            @if (item.AchievedDate.HasValue)
-                            {
-                                <span class="badge bg-success">@(item.AchievedDate.Value.ToString("yyyy-MM-dd"))</span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">—</span>
-                            }
-                        </td>
-                        <td class="text-center">
-                            <a asp-action="Details"
-                               asp-route-traineeId="@item.TraineeId"
-                               asp-route-certificationId="@item.CertificationId"
-                               class="btn btn-sm btn-outline-info me-1">Details</a>
-                            @if (User.IsInRole("TrainingCoordinator"))
-                            {
-                                <a asp-action="Delete"
+                            </td>
+                            <td class="text-center">
+                                @if (item.AchievedDate.HasValue)
+                                {
+                                    <span class="badge bg-success">@(item.AchievedDate.Value.ToString("yyyy-MM-dd"))</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a asp-action="Details"
                                    asp-route-traineeId="@item.TraineeId"
                                    asp-route-certificationId="@item.CertificationId"
-                                   class="btn btn-sm btn-outline-danger">Delete</a>
-                            }
-                        </td>
-                    </tr>
-                }
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="5" class="text-center text-muted py-4">
-                            No records yet. Progress is updated automatically when assessments are saved.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                                   class="btn btn-sm btn-outline-info me-1">Details</a>
+                                @if (User.IsInRole("TrainingCoordinator"))
+                                {
+                                    <a asp-action="Delete"
+                                       asp-route-traineeId="@item.TraineeId"
+                                       asp-route-certificationId="@item.CertificationId"
+                                       class="btn btn-sm btn-outline-danger">Delete</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+}

@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Instructor Directory";
+    string? currentSearch = ViewBag.SearchString as string;
 }
 
 <div class="container mt-4">
@@ -10,29 +11,52 @@
         <a asp-action="Create" class="btn btn-primary">Add New Instructor</a>
     </div>
 
-    <table class="table table-striped table-hover shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Qualifications</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+    <form asp-action="Index" method="get" class="row g-3 mb-4 align-items-end">
+        <div class="col-md-7">
+            <label class="form-label">Search</label>
+            <input type="text"
+                   name="searchString"
+                   value="@currentSearch"
+                   class="form-control"
+                   placeholder="Name, email or qualifications..." />
+        </div>
+
+        <div class="col-md-5 d-flex gap-2 align-items-end">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+        </div>
+    </form>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No matching records were found.</div>
+    }
+    else
+    {
+        <table class="table table-striped table-hover shadow-sm">
+            <thead class="table-dark">
                 <tr>
-                    <td>@item.FullName</td>
-                    <td>@item.Email</td>
-                    <td>@item.Qualifications</td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@item.InstructorId" class="btn btn-sm btn-info">Details</a>
-                        <a asp-action="Edit" asp-route-id="@item.InstructorId" class="btn btn-sm btn-warning">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@item.InstructorId" class="btn btn-sm btn-danger">Delete</a>
-                    </td>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Qualifications</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.FullName</td>
+                        <td>@item.Email</td>
+                        <td>@item.Qualifications</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.InstructorId" class="btn btn-sm btn-info">Details</a>
+                            <a asp-action="Edit"    asp-route-id="@item.InstructorId" class="btn btn-sm btn-warning">Edit</a>
+                            <a asp-action="Delete"  asp-route-id="@item.InstructorId" class="btn btn-sm btn-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </div>
