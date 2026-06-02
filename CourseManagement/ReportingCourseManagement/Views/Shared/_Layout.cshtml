@@ -27,7 +27,8 @@
                 </button>
                 <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        @if (isAuthenticated) {
+                        @if (isAuthenticated)
+                        {
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Reports" asp-action="Index">Reports Dashboard</a>
                             </li>
@@ -45,20 +46,6 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Reports" asp-action="CertificationCompletion">Certification Completion</a>
-                            </li>
-                        }
-                    </ul>
-                    <ul class="navbar-nav">
-                        @if (isAuthenticated) {
-                            <li class="nav-item">
-                                <span class="navbar-text me-2">@(userRole ?? "Training Coordinator")</span>
-                            </li>
-                            <li class="nav-item">
-                                <a class="btn btn-sm btn-outline-primary" asp-controller="Account" asp-action="Logout">Logout</a>
-                            </li>
-                        } else {
-                            <li class="nav-item">
-                                <a class="btn btn-sm btn-primary" asp-controller="Account" asp-action="Login">Login</a>
                             </li>
                         }
                     </ul>

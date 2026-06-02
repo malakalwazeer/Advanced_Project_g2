@@ -2,28 +2,54 @@ using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-[Authorize(Roles = "Coordinator")]
+[Authorize(Roles = "TrainingCoordinator,Trainee,Instructor")]
 public class TraineesController : Controller
 {
     private readonly CourseManagementDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public TraineesController(CourseManagementDbContext context)
+    public TraineesController(
+        CourseManagementDbContext context,
+        UserManager<ApplicationUser> userManager)
     {
         _context = context;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
     {
-        var trainees = await _context.Trainees
+        if (User.IsInRole("Trainee"))
+            return Forbid();
+
+        IQueryable<Trainee> query = _context.Trainees
             .Include(t => t.TraineeStatus)
-            .AsNoTracking()
-            .ToListAsync();
+            .AsNoTracking();
+
+        if (User.IsInRole("Instructor"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var instructor = await _context.Instructors.AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Email == user!.Email);
+            if (instructor == null) return Forbid();
+
+            var traineeIds = await _context.Enrollments
+                .Include(e => e.Session)
+                .Where(e => e.Session.InstructorId == instructor.InstructorId)
+                .Select(e => e.TraineeId)
+                .Distinct()
+                .ToListAsync();
+
+            query = query.Where(t => traineeIds.Contains(t.TraineeId));
+        }
+
+        var trainees = await query.ToListAsync();
 
         var vm = trainees.Select(t => new TraineeIndexViewModel
         {
@@ -42,6 +68,27 @@ public class TraineesController : Controller
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
+
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var ownTrainee = await _context.Trainees.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user!.Email);
+            if (ownTrainee == null || ownTrainee.TraineeId != id)
+                return Forbid();
+        }
+        else if (User.IsInRole("Instructor"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var instructor = await _context.Instructors.AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Email == user!.Email);
+            if (instructor == null) return Forbid();
+
+            var isAssigned = await _context.Enrollments
+                .Include(e => e.Session)
+                .AnyAsync(e => e.TraineeId == id && e.Session.InstructorId == instructor.InstructorId);
+            if (!isAssigned) return Forbid();
+        }
 
         var t = await _context.Trainees
             .Include(t => t.TraineeStatus)
@@ -85,6 +132,7 @@ public class TraineesController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")]
     public IActionResult Create()
     {
         var vm = new TraineeCreateViewModel
@@ -97,6 +145,7 @@ public class TraineesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Create(TraineeCreateViewModel vm)
     {
         if (ModelState.IsValid)
@@ -122,6 +171,7 @@ public class TraineesController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -148,6 +198,7 @@ public class TraineesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Edit(int id, TraineeEditViewModel vm)
     {
         if (id != vm.TraineeId) return NotFound();
@@ -184,6 +235,7 @@ public class TraineesController : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -210,6 +262,7 @@ public class TraineesController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var trainee = await _context.Trainees.FindAsync(id);

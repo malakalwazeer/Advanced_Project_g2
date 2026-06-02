@@ -2,25 +2,29 @@
 
 @{
     var username = Context.Session.GetString("UserName");
+    var userRole = Context.Session.GetString("UserRole") ?? "Training Coordinator";
     var isLoggedIn = !string.IsNullOrEmpty(Context.Session.GetString("JWToken"));
 }
 
-<ul class="navbar-nav">
+<ul class="navbar-nav align-items-center">
     @if (isLoggedIn)
     {
+        <li class="nav-item me-2">
+            <span class="badge bg-light text-dark border">@userRole</span>
+        </li>
         <li class="nav-item">
-            <span class="nav-link text-dark">Hello, @username!</span>
+            <span class="nav-link text-dark me-2">Hello, <strong>@username</strong>!</span>
         </li>
         <li class="nav-item">
             <form class="form-inline" asp-controller="Account" asp-action="Logout" method="post">
-                <button type="submit" class="nav-link btn btn-link text-dark border-0 bg-transparent">Logout</button>
+                <button type="submit" class="btn btn-sm btn-outline-danger">Logout</button>
             </form>
         </li>
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+            <a class="btn btn-sm btn-primary" asp-controller="Account" asp-action="Login">Login</a>
         </li>
     }
 </ul>
