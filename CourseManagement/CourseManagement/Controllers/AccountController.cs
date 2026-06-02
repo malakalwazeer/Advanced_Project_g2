@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 
-
 namespace CourseManagement.Controllers;
 
 public class AccountController : Controller
@@ -51,11 +50,6 @@ public class AccountController : Controller
             model.Password,
             model.RememberMe,
             lockoutOnFailure: false);
-
-        //if (result.Succeeded)
-        //{
-        //    return RedirectToLocal(model.ReturnUrl);
-        //}
 
         if (result.Succeeded)
         {
@@ -135,8 +129,9 @@ public class AccountController : Controller
                 {
                     FullName = model.DisplayName,
                     Email = model.Email,
+                    OrganizationName = model.OrganizationName,
+                    Phone = model.CountryCode + model.Phone,
                     RegistrationDate = DateOnly.FromDateTime(DateTime.Today),
-                    Phone = "Not provided",
                     TraineeStatusId = initialStatus.TraineeStatusId,
                     Password = "Managed by ASP.NET Identity"
                 };
@@ -145,10 +140,6 @@ public class AccountController : Controller
                 await _context.SaveChangesAsync();
             }
 
-            //await _signInManager.SignInAsync(user, isPersistent: false);
-            //return RedirectToAction("Index", "Home");
-
-            //malak
             await _signInManager.SignInAsync(user, isPersistent: false);
             return await RedirectByRoleAsync(user);
         }
@@ -176,7 +167,6 @@ public class AccountController : Controller
         return View();
     }
 
-    //malak
     private async Task<IActionResult> RedirectByRoleAsync(ApplicationUser user, string? returnUrl = null)
     {
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
