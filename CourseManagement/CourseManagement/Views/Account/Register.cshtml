@@ -1,3 +1,4 @@
+﻿
 @model RegisterViewModel
 
 @{
@@ -24,6 +25,32 @@
             </div>
 
             <div class="mb-3">
+                <label asp-for="OrganizationName" class="form-label"></label>
+                <input asp-for="OrganizationName" class="form-control" placeholder="Optional" />
+                <span asp-validation-for="OrganizationName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Phone" class="form-label"></label>
+                <div class="input-group">
+                    <select asp-for="CountryCode" class="form-select border-end-0" style="max-width: 115px;">
+                        <option value="+973" selected>🇧🇭 +973</option>
+                        <option value="+966">🇸🇦 +966</option>
+                        <option value="+971">🇦🇪 +971</option>
+                        <option value="+965">🇰🇼 +965</option>
+                        <option value="+968">🇴🇲 +968</option>
+                        <option value="+974">🇶🇦 +974</option>
+                    </select>
+                    <input asp-for="Phone"
+                           class="form-control"
+                           type="tel"
+                           maxlength="9"
+                           placeholder="Mobile number" />
+                </div>
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
                 <label asp-for="Password" class="form-label"></label>
                 <input asp-for="Password" class="form-control" autocomplete="new-password" />
                 <span asp-validation-for="Password" class="text-danger"></span>
@@ -45,5 +72,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

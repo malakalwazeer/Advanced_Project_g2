@@ -1,0 +1,81 @@
+﻿@model CourseManagement.ViewModels.ProfileSettingsViewModel
+@{
+    ViewData["Title"] = "Profile Settings";
+}
+
+<div class="container my-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="bi bi-person-gear me-2"></i>Account Management</h2>
+            <hr />
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body text-center py-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-person h2 mb-0"></i>
+                    </div>
+                    <h4 class="card-title text-truncate mb-1">@Model.DisplayName</h4>
+                    <span class="badge bg-secondary mb-3">@Model.ActiveRole</span>
+
+                    <div class="text-start border-top pt-3 mt-2">
+                        <small class="text-muted d-block">Email Address</small>
+                        <span class="text-dark fw-semibold">@Model.Email</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white fw-bold">
+                    <i class="bi bi-shield-lock me-2"></i>Change Password
+                </div>
+                <div class="card-body p-4">
+                    <form asp-controller="Profile" asp-action="Settings" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="OldPassword" class="form-label fw-semibold"></label>
+                            <input asp-for="OldPassword" class="form-control" placeholder="Enter current password" />
+                            <span asp-validation-for="OldPassword" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="NewPassword" class="form-label fw-semibold"></label>
+                            <input asp-for="NewPassword" class="form-control" placeholder="Create brand new password" />
+                            <span asp-validation-for="NewPassword" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ConfirmNewPassword" class="form-label fw-semibold"></label>
+                            <input asp-for="ConfirmNewPassword" class="form-control" placeholder="Verify brand new password" />
+                            <span asp-validation-for="ConfirmNewPassword" class="text-danger small"></span>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-save me-2"></i>Update Password
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

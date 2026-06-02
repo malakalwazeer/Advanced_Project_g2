@@ -25,7 +25,6 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        @* changed by malak1 *@
                         @if (!SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
@@ -40,7 +39,6 @@
                                 <i class="bi bi-patch-check me-1"></i>Verify Certification
                             </a>
                         </li>
-                        @* changed by malak *@
                         @if (User.IsInRole("TrainingCoordinator"))
                         {
                             <li class="nav-item">
@@ -48,31 +46,24 @@
                                     <i class="bi bi-speedometer2 me-1"></i>Dashboard
                                 </a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Courses" asp-action="Index">Courses</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="CourseSessions" asp-action="Index">Sessions</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Instructors" asp-action="Index">Instructors</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Classrooms" asp-action="Index">Classrooms</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Equipment" asp-action="Index">Equipment</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Enrollments" asp-action="Index">Enrollments</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Payments" asp-action="Index">Payments</a>
                             </li>
@@ -83,7 +74,6 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="CourseSessions" asp-action="Index">My Sessions</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Assessments" asp-action="Index">Assessments</a>
                             </li>
@@ -94,15 +84,12 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Courses" asp-action="Index">Course Catalog</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Enrollments" asp-action="Index">My Enrollments</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Payments" asp-action="Index">My Payments</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="TraineeCertificationProgress" asp-action="Index">My Progress</a>
                             </li>
@@ -115,18 +102,32 @@
                             </li>
                         }
                     </ul>
+
                     <ul class="navbar-nav">
                         @if (SignInManager.IsSignedIn(User))
                         {
                             var user = await UserManager.GetUserAsync(User);
                             var displayName = user?.DisplayName ?? User.Identity?.Name;
-                            <li class="nav-item">
-                                <span class="navbar-text text-dark me-2">Welcome, @displayName</span>
-                            </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-link nav-link text-dark">Logout</button>
-                                </form>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Welcome, @displayName
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Profile" asp-action="Settings">
+                                            <i class="bi bi-person-gear me-2"></i>Profile Settings
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            <button type="submit" class="dropdown-item btn btn-link text-dark text-start w-100">
+                                                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
                             </li>
                         }
                         else
@@ -143,6 +144,7 @@
             </div>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -154,6 +156,7 @@
             &copy; 2026 - CourseManagement - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

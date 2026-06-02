@@ -2,48 +2,122 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center py-5">
-    <h1 class="display-4 mb-3">Welcome to CourseManagement</h1>
-    <p class="lead text-muted mb-4">Manage courses, enrollments, and professional certifications in one place.</p>
-</div>
+<div class="container py-5">
 
-<div class="row justify-content-center g-4 mb-5">
-    <div class="col-md-5">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body d-flex flex-column p-4">
-                <div class="mb-3">
-                    <i class="bi bi-patch-check-fill fs-2 text-primary"></i>
+    <div class="text-center mb-5">
+
+        <h1 class="display-5 mb-3">
+            Training & Certification Platform
+        </h1>
+
+        <p class="lead text-secondary">
+            A centralized platform for managing training courses, instructor schedules,
+            enrollments, certifications, and trainee progress.
+        </p>
+
+        <div class="mt-4">
+            <a asp-controller="PublicCertificationLookup" asp-action="Index" class="btn btn-primary btn-lg px-4">
+                <i class="bi bi-patch-check me-2"></i>Verify a Certificate
+            </a>
+            <p class="text-muted mt-2 small">No account required — anyone can verify a certificate instantly.</p>
+        </div>
+
+    </div>
+
+    <!-- Statistics -->
+
+    <div class="row g-4 mb-5">
+
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="card-title text-secondary">
+                        Courses
+                    </div>
+
+                    <h2>24</h2>
+
+                    <p class="text-muted mb-0">
+                        Training courses available across multiple subjects.
+                    </p>
                 </div>
-                <h5 class="card-title">Verify a Certificate</h5>
-                <p class="card-text text-muted flex-grow-1">
-                    Instantly verify the authenticity of any certification issued through this platform.
-                    No account required — open to the public.
-                </p>
-                <a asp-controller="PublicCertificationLookup"
-                   asp-action="Index"
-                   class="btn btn-primary mt-3 align-self-start">
-                    <i class="bi bi-search me-1"></i>Verify Certification
-                </a>
             </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="card-title text-secondary">
+                        Trainees
+                    </div>
+
+                    <h2>148</h2>
+
+                    <p class="text-muted mb-0">
+                        Active learners enrolled in our programs.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <div class="card-title text-secondary">
+                        Certificates
+                    </div>
+
+                    <h2>73</h2>
+
+                    <p class="text-muted mb-0">
+                        Certificates successfully awarded to trainees.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Public Certification Portal -->
+
+    <div class="card mb-4 border-primary">
+        <div class="card-body d-flex flex-column flex-md-row align-items-md-center gap-3">
+            <div class="flex-grow-1">
+                <h5 class="card-title mb-1">
+                    <i class="bi bi-patch-check-fill text-primary me-2"></i>Public Certification Portal
+                </h5>
+                <p class="card-text text-muted mb-0">
+                    Need to verify a certificate? Enter a trainee ID and certificate reference number
+                    to instantly check its validity — no account or login needed.
+                </p>
+            </div>
+            <a asp-controller="PublicCertificationLookup" asp-action="Index" class="btn btn-outline-primary flex-shrink-0">
+                Verify Certification
+            </a>
         </div>
     </div>
 
-    <div class="col-md-5">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body d-flex flex-column p-4">
-                <div class="mb-3">
-                    <i class="bi bi-mortarboard-fill fs-2" style="color: var(--brand-navy);"></i>
-                </div>
-                <h5 class="card-title">Browse Courses</h5>
-                <p class="card-text text-muted flex-grow-1">
-                    Explore our full catalog of training courses, sessions, and professional development programs.
-                </p>
-                <a asp-controller="Account"
-                   asp-action="Login"
-                   class="btn btn-outline-secondary mt-3 align-self-start">
-                    <i class="bi bi-box-arrow-in-right me-1"></i>Sign In to Enroll
-                </a>
-            </div>
+    <!-- About -->
+
+    <div class="card mb-4">
+        <div class="card-header">
+            About the Platform
+        </div>
+
+        <div class="card-body">
+
+            <p>
+                This platform helps training providers manage courses,
+                instructors, classrooms, enrollments, assessments,
+                certifications, and trainee records through a single system.
+            </p>
+
+            <p class="mb-0">
+                Users can track learning progress, manage training schedules,
+                and verify certifications through dedicated platform services.
+            </p>
+
         </div>
     </div>
+
 </div>
