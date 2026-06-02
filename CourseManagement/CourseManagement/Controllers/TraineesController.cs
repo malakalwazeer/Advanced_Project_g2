@@ -23,7 +23,7 @@ public class TraineesController : Controller
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? searchString, int? statusId)
     {
         if (User.IsInRole("Trainee"))
             return Forbid();
@@ -32,6 +32,7 @@ public class TraineesController : Controller
             .Include(t => t.TraineeStatus)
             .AsNoTracking();
 
+        // Role-based restriction: Instructors see only their enrolled trainees
         if (User.IsInRole("Instructor"))
         {
             var user = await _userManager.GetUserAsync(User);
@@ -49,6 +50,18 @@ public class TraineesController : Controller
             query = query.Where(t => traineeIds.Contains(t.TraineeId));
         }
 
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var term = searchString.ToLower();
+            query = query.Where(t =>
+                t.FullName.ToLower().Contains(term) ||
+                t.Email.ToLower().Contains(term) ||
+                (t.OrganizationName != null && t.OrganizationName.ToLower().Contains(term)));
+        }
+
+        if (statusId.HasValue)
+            query = query.Where(t => t.TraineeStatusId == statusId.Value);
+
         var trainees = await query.ToListAsync();
 
         var vm = trainees.Select(t => new TraineeIndexViewModel
@@ -61,6 +74,14 @@ public class TraineesController : Controller
             Phone            = t.Phone,
             StatusName       = t.TraineeStatus?.StatusName
         }).ToList();
+
+        ViewBag.SearchString = searchString;
+        ViewBag.StatusId     = statusId;
+        ViewBag.Statuses     = new SelectList(
+            await _context.TraineeStatuses.AsNoTracking()
+                .OrderBy(s => s.StatusName)
+                .ToListAsync(),
+            "TraineeStatusId", "StatusName", statusId);
 
         return View(vm);
     }

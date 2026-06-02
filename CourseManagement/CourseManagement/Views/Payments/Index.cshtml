@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Payments";
+    string? currentSearch = ViewBag.SearchString as string;
+    int?    currentStatus = ViewBag.PaymentStatusId as int?;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -28,64 +30,92 @@
     </div>
 }
 
-<div class="card shadow-sm">
-    <div class="card-body p-0">
-        <table class="table table-hover table-striped mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th>Trainee</th>
-                    <th>Course</th>
-                    <th>Amount Paid</th>
-                    <th>Payment Date</th>
-                    <th>Balance Remaining</th>
-                    <th>Status</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@item.TraineeName</td>
-                        <td>@item.CourseName</td>
-                        <td>@(item.AmountPaid.ToString("N2", System.Globalization.CultureInfo.InvariantCulture))</td>
-                        <td>@(item.PaymentDate.ToString("yyyy-MM-dd"))</td>
-                        <td>
-                            @if (item.BalanceRemaining == 0)
-                            {
-                                <span class="text-success fw-semibold">Settled</span>
-                            }
-                            else
-                            {
-                                @(item.BalanceRemaining.HasValue ? item.BalanceRemaining.Value.ToString("N2", System.Globalization.CultureInfo.InvariantCulture) : "—")
-                            }
-                        </td>
-                        <td>
-                            @{
-                                var badgeClass = item.StatusName switch
-                                {
-                                    "Paid"    => "bg-success",
-                                    "Partial" => "bg-warning text-dark",
-                                    _         => "bg-secondary"
-                                };
-                            }
-                            <span class="badge @badgeClass">@item.StatusName</span>
-                        </td>
-                        <td class="text-center">
-                            <a asp-action="Details" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-info me-1">Details</a>
-                            @if (User.IsInRole("TrainingCoordinator"))
-                            {
-                                <a asp-action="Edit"   asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
-                                <a asp-action="Delete" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-danger">Delete</a>
-                            }
-                        </td>
-                    </tr>
-                }
-                @if (!Model.Any())
-                {
-                    <tr><td colspan="7" class="text-center text-muted py-4">No payments found.</td></tr>
-                }
-            </tbody>
-        </table>
+<form asp-action="Index" method="get" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-4">
+        <label class="form-label">Search</label>
+        <input type="text"
+               name="searchString"
+               value="@currentSearch"
+               class="form-control"
+               placeholder="Trainee name or course title..." />
     </div>
-</div>
+
+    <div class="col-md-3">
+        <label class="form-label">Payment Status</label>
+        <select name="paymentStatusId" asp-items="@ViewBag.PaymentStatuses" class="form-select">
+            <option value="">All Statuses</option>
+        </select>
+    </div>
+
+    <div class="col-md-5 d-flex gap-2 align-items-end">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No matching records were found.</div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Trainee</th>
+                        <th>Course</th>
+                        <th>Amount Paid</th>
+                        <th>Payment Date</th>
+                        <th>Balance Remaining</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.TraineeName</td>
+                            <td>@item.CourseName</td>
+                            <td>@(item.AmountPaid.ToString("N2", System.Globalization.CultureInfo.InvariantCulture))</td>
+                            <td>@(item.PaymentDate.ToString("yyyy-MM-dd"))</td>
+                            <td>
+                                @if (item.BalanceRemaining == 0)
+                                {
+                                    <span class="text-success fw-semibold">Settled</span>
+                                }
+                                else
+                                {
+                                    @(item.BalanceRemaining.HasValue
+                                        ? item.BalanceRemaining.Value.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)
+                                        : "—")
+                                }
+                            </td>
+                            <td>
+                                @{
+                                    var badgeClass = item.StatusName switch
+                                    {
+                                        "Paid"    => "bg-success",
+                                        "Partial" => "bg-warning text-dark",
+                                        _         => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @badgeClass">@item.StatusName</span>
+                            </td>
+                            <td class="text-center">
+                                <a asp-action="Details" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-info me-1">Details</a>
+                                @if (User.IsInRole("TrainingCoordinator"))
+                                {
+                                    <a asp-action="Edit"   asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-warning me-1">Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-danger">Delete</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

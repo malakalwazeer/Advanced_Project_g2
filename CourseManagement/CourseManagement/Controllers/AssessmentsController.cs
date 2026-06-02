@@ -30,7 +30,7 @@ public class AssessmentsController : Controller
 
     // ─── Index ────────────────────────────────────────────────────────────────
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? searchString, int? resultFilter)
     {
         var query = _context.Assessments
             .Include(a => a.Enrollment)
@@ -42,6 +42,7 @@ public class AssessmentsController : Controller
             .AsNoTracking()
             .AsQueryable();
 
+        // Role-based restriction applied first so search cannot bypass it
         if (User.IsInRole("Trainee"))
         {
             var user = await _userManager.GetUserAsync(User);
@@ -56,8 +57,25 @@ public class AssessmentsController : Controller
             var instructor = await _context.Instructors.AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Email == user!.Email);
             if (instructor == null) return Forbid();
-            // Instructor sees all assessments tied to sessions assigned to them
             query = query.Where(a => a.Enrollment.Session.InstructorId == instructor.InstructorId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var term = searchString.ToLower();
+            query = query.Where(a =>
+                a.Enrollment.Trainee.FullName.ToLower().Contains(term) ||
+                a.Enrollment.Session.Course.CourseName.ToLower().Contains(term) ||
+                a.Instructor.FullName.ToLower().Contains(term));
+        }
+
+        // resultFilter: 1 = Pass, 0 = Fail, -1 = Not Graded (null result)
+        if (resultFilter.HasValue)
+        {
+            if (resultFilter.Value == -1)
+                query = query.Where(a => a.Result == null);
+            else
+                query = query.Where(a => a.Result == resultFilter.Value);
         }
 
         var assessments = await query.ToListAsync();
@@ -71,6 +89,9 @@ public class AssessmentsController : Controller
             Score          = a.Score,
             Result         = a.Result
         }).ToList();
+
+        ViewBag.SearchString  = searchString;
+        ViewBag.ResultFilter  = resultFilter;
 
         return View(vm);
     }

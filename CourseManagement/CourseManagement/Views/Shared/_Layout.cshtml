@@ -118,9 +118,6 @@
                     <ul class="navbar-nav">
                         @if (SignInManager.IsSignedIn(User))
                         {
-                            <li class="nav-item">
-                                <partial name="_NotificationPartial" />
-                            </li>
                             var user = await UserManager.GetUserAsync(User);
                             var displayName = user?.DisplayName ?? User.Identity?.Name;
                             <li class="nav-item">

@@ -25,7 +25,7 @@ public class PaymentsController : Controller
         _paymentValidator = paymentValidator;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? searchString, int? paymentStatusId)
     {
         var query = _context.Payments
             .Include(p => p.Enrollment)
@@ -34,17 +34,29 @@ public class PaymentsController : Controller
                 .ThenInclude(e => e.Session)
                     .ThenInclude(s => s.Course)
             .Include(p => p.PaymentStatus)
-            .AsNoTracking();
+            .AsNoTracking()
+            .AsQueryable();
 
+        // Role-based restriction applied first so search cannot bypass it
         if (User.IsInRole("Trainee"))
         {
             var userEmail = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity!.Name;
             var trainee = await _context.Trainees.AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Email == userEmail);
             if (trainee == null) return Forbid();
-
             query = query.Where(p => p.Enrollment.TraineeId == trainee.TraineeId);
         }
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var term = searchString.ToLower();
+            query = query.Where(p =>
+                p.Enrollment.Trainee.FullName.ToLower().Contains(term) ||
+                p.Enrollment.Session.Course.CourseName.ToLower().Contains(term));
+        }
+
+        if (paymentStatusId.HasValue)
+            query = query.Where(p => p.PaymentStatusId == paymentStatusId.Value);
 
         var payments = await query.ToListAsync();
 
@@ -58,6 +70,14 @@ public class PaymentsController : Controller
             BalanceRemaining = p.BalanceRemaining,
             StatusName       = p.PaymentStatus?.StatusName
         }).ToList();
+
+        ViewBag.SearchString = searchString;
+        ViewBag.PaymentStatusId = paymentStatusId;
+        ViewBag.PaymentStatuses = new SelectList(
+            await _context.PaymentStatuses.AsNoTracking()
+                .OrderBy(s => s.StatusName)
+                .ToListAsync(),
+            "PaymentStatusId", "StatusName", paymentStatusId);
 
         return View(vm);
     }

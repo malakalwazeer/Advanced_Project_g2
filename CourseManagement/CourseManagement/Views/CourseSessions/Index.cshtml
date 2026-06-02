@@ -2,9 +2,9 @@
 
 @{
     ViewData["Title"] = "Course Sessions";
-    string? currentSearch      = ViewBag.SearchString as string;
-    string? currentTimeFilter  = ViewBag.TimeFilter as string;
-    bool    currentAvailable   = ViewBag.AvailableOnly == true;
+    string? currentSearch     = ViewBag.SearchString as string;
+    string? currentTimeFilter = ViewBag.TimeFilter as string;
+    bool    currentAvailable  = ViewBag.AvailableOnly == true;
 }
 
 <div class="container mt-4">
@@ -16,24 +16,26 @@
         }
     </div>
 
-    <form asp-action="Index" method="get" class="row g-3 mb-4">
+    <form asp-action="Index" method="get" class="row g-3 mb-4 align-items-end">
         <div class="col-md-4">
+            <label class="form-label">Search</label>
             <input type="text"
                    name="searchString"
                    value="@currentSearch"
                    class="form-control"
-                   placeholder="Search by course or instructor..." />
+                   placeholder="Course title or instructor name..." />
         </div>
 
         <div class="col-md-3">
+            <label class="form-label">Time</label>
             <select name="timeFilter" class="form-select">
                 <option value="">All Times</option>
                 <option value="upcoming" selected="@(currentTimeFilter == "upcoming")">Upcoming</option>
-                <option value="past" selected="@(currentTimeFilter == "past")">Past</option>
+                <option value="past"     selected="@(currentTimeFilter == "past")">Past</option>
             </select>
         </div>
 
-        <div class="col-md-2 d-flex align-items-center">
+        <div class="col-md-2 d-flex align-items-end pb-1">
             <div class="form-check">
                 <input class="form-check-input"
                        type="checkbox"
@@ -45,7 +47,7 @@
             </div>
         </div>
 
-        <div class="col-md-3 d-flex gap-2">
+        <div class="col-md-3 d-flex gap-2 align-items-end">
             <button type="submit" class="btn btn-primary">Search</button>
             <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
         </div>
@@ -82,10 +84,9 @@
                         <td>
                             @if (User.IsInRole("TrainingCoordinator"))
                             {
-                                <a asp-action="Edit" asp-route-id="@item.SessionId" class="btn btn-sm btn-warning">Edit</a>
+                                <a asp-action="Edit"   asp-route-id="@item.SessionId" class="btn btn-sm btn-warning">Edit</a>
                                 <a asp-action="Delete" asp-route-id="@item.SessionId" class="btn btn-sm btn-danger">Delete</a>
                             }
-
                             @if (User.IsInRole("Trainee"))
                             {
                                 <form asp-controller="Enrollments" asp-action="EnrollInSession" method="post" class="d-inline">

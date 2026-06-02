@@ -18,16 +18,29 @@ namespace CourseManagement.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchString)
         {
-            var equipment = await _context.Equipments
+            var query = _context.Equipments.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                var term = searchString.ToLower();
+                query = query.Where(e =>
+                    e.EquipmentName.ToLower().Contains(term) ||
+                    (e.Description != null && e.Description.ToLower().Contains(term)));
+            }
+
+            var equipment = await query
                 .Select(e => new EquipmentIndexViewModel
                 {
-                    EquipmentId = e.EquipmentId,
+                    EquipmentId   = e.EquipmentId,
                     EquipmentName = e.EquipmentName,
-                    Description = e.Description
+                    Description   = e.Description
                 })
                 .ToListAsync();
+
+            ViewBag.SearchString = searchString;
+
             return View(equipment);
         }
 

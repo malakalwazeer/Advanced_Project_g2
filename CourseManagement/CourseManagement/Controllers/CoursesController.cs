@@ -30,19 +30,42 @@ namespace CourseManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchString, int? categoryId)
         {
-            var courses = await _context.Courses
+            var query = _context.Courses
                 .Include(c => c.Category)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                var term = searchString.ToLower();
+                query = query.Where(c =>
+                    c.CourseName.ToLower().Contains(term) ||
+                    c.CourseCode.ToLower().Contains(term) ||
+                    (c.Description != null && c.Description.ToLower().Contains(term)));
+            }
+
+            if (categoryId.HasValue)
+                query = query.Where(c => c.CategoryId == categoryId.Value);
+
+            var courses = await query
                 .Select(c => new CourseIndexViewModel
                 {
-                    CourseId = c.CourseId,
-                    CourseCode = c.CourseCode,
-                    Title = c.CourseName,
+                    CourseId     = c.CourseId,
+                    CourseCode   = c.CourseCode,
+                    Title        = c.CourseName,
                     CategoryName = c.Category.CategoryName,
-                    Fee = c.EnrollmentFee
+                    Fee          = c.EnrollmentFee
                 })
                 .ToListAsync();
+
+            ViewBag.SearchString = searchString;
+            ViewBag.CategoryId   = categoryId;
+            ViewBag.Categories   = new SelectList(
+                await _context.CourseCategories.AsNoTracking()
+                    .OrderBy(c => c.CategoryName)
+                    .ToListAsync(),
+                "CategoryId", "CategoryName", categoryId);
 
             return View(courses);
         }
