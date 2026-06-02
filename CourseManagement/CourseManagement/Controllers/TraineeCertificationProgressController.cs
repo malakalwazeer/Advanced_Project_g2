@@ -2,30 +2,45 @@ using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseManagement.Controllers;
 
-//[Authorize(Roles = "Coordinator,Trainee")]
-[Authorize(Roles = "TrainingCoordinator,Trainee")] //malak
+[Authorize(Roles = "TrainingCoordinator,Trainee")]
 public class TraineeCertificationProgressController : Controller
 {
     private readonly CourseManagementDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public TraineeCertificationProgressController(CourseManagementDbContext context)
+    public TraineeCertificationProgressController(
+        CourseManagementDbContext context,
+        UserManager<ApplicationUser> userManager)
     {
         _context = context;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
     {
-        var progresses = await _context.TraineeCertificationProgresses
+        var query = _context.TraineeCertificationProgresses
             .Include(p => p.Trainee)
             .Include(p => p.Certification)
             .AsNoTracking()
-            .ToListAsync();
+            .AsQueryable();
+
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var trainee = await _context.Trainees.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user!.Email);
+            if (trainee == null) return Forbid();
+            query = query.Where(p => p.TraineeId == trainee.TraineeId);
+        }
+
+        var progresses = await query.ToListAsync();
 
         var vm = progresses.Select(p => new TraineeCertificationProgressIndexViewModel
         {
@@ -43,6 +58,15 @@ public class TraineeCertificationProgressController : Controller
     public async Task<IActionResult> Details(int? traineeId, int? certificationId)
     {
         if (traineeId == null || certificationId == null) return NotFound();
+
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var ownTrainee = await _context.Trainees.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user!.Email);
+            if (ownTrainee == null || ownTrainee.TraineeId != traineeId)
+                return Forbid();
+        }
 
         var p = await _context.TraineeCertificationProgresses
             .Include(p => p.Trainee)
@@ -79,7 +103,7 @@ public class TraineeCertificationProgressController : Controller
         return View(vm);
     }
 
-    [Authorize(Roles = "TrainingCoordinator")]//malak
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Edit(int? traineeId, int? certificationId)
     {
         if (traineeId == null || certificationId == null) return NotFound();
@@ -96,7 +120,7 @@ public class TraineeCertificationProgressController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "TrainingCoordinator")] //malak
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Edit(int traineeId, int certificationId,
         [Bind("TraineeId,CertificationId,AchievedDate,ProgressPercentage")]
         TraineeCertificationProgress progress)
@@ -131,7 +155,7 @@ public class TraineeCertificationProgressController : Controller
         return View(progress);
     }
 
-    [Authorize(Roles = "TrainingCoordinator")] //malak
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> Delete(int? traineeId, int? certificationId)
     {
         if (traineeId == null || certificationId == null) return NotFound();
@@ -160,7 +184,7 @@ public class TraineeCertificationProgressController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "TrainingCoordinator")] //malak
+    [Authorize(Roles = "TrainingCoordinator")]
     public async Task<IActionResult> DeleteConfirmed(int traineeId, int certificationId)
     {
         var progress = await _context.TraineeCertificationProgresses
