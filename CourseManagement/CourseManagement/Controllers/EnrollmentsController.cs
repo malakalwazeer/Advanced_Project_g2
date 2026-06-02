@@ -37,10 +37,8 @@ public class EnrollmentsController : Controller
         _broadcastService = broadcastService;
     }
 
-    //added by malak 
-    //    TrainingCoordinator sees all enrollments
-    //Trainee sees only own enrollments
-    public async Task<IActionResult> Index()
+    // TrainingCoordinator sees all enrollments; Trainee sees only own enrollments
+    public async Task<IActionResult> Index(string? searchString, int? statusId)
     {
         var query = _context.Enrollments
             .Include(e => e.Trainee)
@@ -50,26 +48,34 @@ public class EnrollmentsController : Controller
             .AsNoTracking()
             .AsQueryable();
 
+        // Role-based restriction applied first so search cannot bypass it
         if (User.IsInRole("Trainee"))
         {
             var user = await _userManager.GetUserAsync(User);
 
             if (user == null)
-            {
                 return RedirectToAction("Login", "Account");
-            }
 
             var trainee = await _context.Trainees
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Email == user.Email);
 
             if (trainee == null)
-            {
                 return Forbid();
-            }
 
             query = query.Where(e => e.TraineeId == trainee.TraineeId);
         }
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var term = searchString.ToLower();
+            query = query.Where(e =>
+                e.Trainee.FullName.ToLower().Contains(term) ||
+                e.Session.Course.CourseName.ToLower().Contains(term));
+        }
+
+        if (statusId.HasValue)
+            query = query.Where(e => e.EnrollmentStatusId == statusId.Value);
 
         var enrollments = await query.ToListAsync();
 
@@ -83,6 +89,14 @@ public class EnrollmentsController : Controller
             EnrollmentDate = e.EnrollmentDate,
             StatusName = e.EnrollmentStatus?.StatusName
         }).ToList();
+
+        ViewBag.SearchString = searchString;
+        ViewBag.StatusId = statusId;
+        ViewBag.Statuses = new SelectList(
+            await _context.EnrollmentStatuses.AsNoTracking()
+                .OrderBy(s => s.StatusName)
+                .ToListAsync(),
+            "EnrollmentStatusId", "StatusName", statusId);
 
         return View(vm);
     }

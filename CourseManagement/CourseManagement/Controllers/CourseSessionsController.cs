@@ -24,12 +24,34 @@ namespace CourseManagement.Controllers
             _validationService = validationService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchString, string? timeFilter, bool? availableOnly)
         {
-            var sessions = await _context.CourseSessions
+            var query = _context.CourseSessions
                 .Include(s => s.Course)
                 .Include(s => s.Instructor)
                 .Include(s => s.Classroom)
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                var term = searchString.ToLower();
+                query = query.Where(s =>
+                    s.Course.CourseName.ToLower().Contains(term) ||
+                    s.Instructor.FullName.ToLower().Contains(term));
+            }
+
+            // Upcoming = session hasn't started yet; Past = session has already started
+            if (timeFilter == "upcoming")
+                query = query.Where(s => s.StartDateTime > DateTime.Now);
+            else if (timeFilter == "past")
+                query = query.Where(s => s.StartDateTime <= DateTime.Now);
+
+            // Available = enrollment count is still below capacity
+            if (availableOnly == true)
+                query = query.Where(s => s.Enrollments.Count() < s.Capacity);
+
+            var sessions = await query
                 .Select(s => new SessionIndexViewModel
                 {
                     SessionId = s.SessionId,
@@ -41,6 +63,10 @@ namespace CourseManagement.Controllers
                     Capacity = s.Capacity
                 })
                 .ToListAsync();
+
+            ViewBag.SearchString = searchString;
+            ViewBag.TimeFilter = timeFilter;
+            ViewBag.AvailableOnly = availableOnly;
 
             return View(sessions);
         }
