@@ -56,7 +56,6 @@
                     <dt class="col-sm-4">Courses</dt>
                     <dd class="col-sm-8">
                         <span class="badge bg-secondary">@Model.LinkedCourses.Count linked</span>
-                        <span class="badge bg-primary ms-1">@Model.LinkedCourses.Count(r => r.IsRequired) required</span>
                     </dd>
                 </dl>
             </div>
@@ -75,7 +74,6 @@
                         <tr>
                             <th>Code</th>
                             <th>Course</th>
-                            <th class="text-center">Required</th>
                             @if (User.IsInRole("TrainingCoordinator"))
                             {
                                 <th class="text-center">Remove</th>
@@ -88,16 +86,6 @@
                             <tr>
                                 <td class="text-muted small">@row.CourseCode</td>
                                 <td>@row.CourseName</td>
-                                <td class="text-center">
-                                    @if (row.IsRequired)
-                                    {
-                                        <span class="badge bg-primary">Required</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-light text-muted border">Optional</span>
-                                    }
-                                </td>
                                 @if (User.IsInRole("TrainingCoordinator"))
                                 {
                                     <td class="text-center">
@@ -117,7 +105,7 @@
                         @if (!Model.LinkedCourses.Any())
                         {
                             <tr>
-                                <td colspan="@(User.IsInRole("TrainingCoordinator") ? 4 : 3)"
+                                <td colspan="@(User.IsInRole("TrainingCoordinator") ? 3 : 2)"
                                     class="text-center text-muted py-3 fst-italic">
                                     No courses linked yet.
                                 </td>
@@ -134,20 +122,12 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="certificationId" value="@Model.CertificationId" />
 
-                        <div class="col-md-6">
+                        <div class="col-md-9">
                             <label class="form-label small mb-1">Add Course</label>
                             <select name="addCourseId" class="form-select form-select-sm"
                                     asp-items="@Model.AvailableCourses">
                                 <option value="0">Select a course…</option>
                             </select>
-                        </div>
-
-                        <div class="col-md-3 d-flex align-items-end pb-1">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox"
-                                       name="addIsRequired" value="true" id="addIsRequired" />
-                                <label class="form-check-label small" for="addIsRequired">Required</label>
-                            </div>
                         </div>
 
                         <div class="col-md-3 d-flex align-items-end">

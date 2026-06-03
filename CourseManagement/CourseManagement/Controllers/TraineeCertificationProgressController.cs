@@ -155,8 +155,7 @@ public class TraineeCertificationProgressController : Controller
             CertificationCourses = (p.Certification?.CertificationCourses ?? [])
                 .Select(cc => new CertCourseRow
                 {
-                    CourseName = cc.Course?.CourseName,
-                    IsRequired = cc.IsRequired
+                    CourseName = cc.Course?.CourseName
                 }).ToList()
         };
 

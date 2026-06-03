@@ -78,7 +78,7 @@ namespace CourseManagementAPI.Services.Validation
             var requiredCourses = await _context.CertificationCourses
                 .AsNoTracking()
                 .Include(cc => cc.Course)
-                .Where(cc => cc.CertificationId == certificationId && cc.IsRequired)
+                .Where(cc => cc.CertificationId == certificationId)
                 .ToListAsync();
 
             if (!requiredCourses.Any())
@@ -86,7 +86,7 @@ namespace CourseManagementAPI.Services.Validation
                 return new CertificationLookupResultDto
                 {
                     IsValid = false,
-                    Message = "This certification has no required courses configured.",
+                    Message = "This certification has no linked courses configured.",
                     TraineeId = trainee.TraineeId,
                     TraineeName = trainee.FullName,
                     CertificationId = certification.CertificationId,

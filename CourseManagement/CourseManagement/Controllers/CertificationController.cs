@@ -69,8 +69,7 @@ public class CertificationController : Controller
             {
                 CourseId   = cc.CourseId,
                 CourseName = cc.Course.CourseName,
-                CourseCode = cc.Course.CourseCode,
-                IsRequired = cc.IsRequired
+                CourseCode = cc.Course.CourseCode
             }).OrderBy(r => r.CourseName).ToList()
         };
 
@@ -212,7 +211,7 @@ public class CertificationController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "TrainingCoordinator")]
-    public async Task<IActionResult> AddCourse(int certificationId, int addCourseId, bool addIsRequired)
+    public async Task<IActionResult> AddCourse(int certificationId, int addCourseId)
     {
         var certExists = await _context.Certifications.AnyAsync(c => c.CertificationId == certificationId);
         if (!certExists) return NotFound();
@@ -233,7 +232,7 @@ public class CertificationController : Controller
             {
                 CertificationId = certificationId,
                 CourseId        = addCourseId,
-                IsRequired      = addIsRequired
+                IsRequired      = true
             });
             await _context.SaveChangesAsync();
         }
