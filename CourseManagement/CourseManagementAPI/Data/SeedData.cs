@@ -386,10 +386,6 @@ public static class SeedData
             new Notification { NotificationId = 1, Title = "Payment Received", Message = "Your payment has been received.", PaymentId = 1, SessionId = null },
             new Notification { NotificationId = 2, Title = "Session Reminder", Message = "Your course session starts soon.", SessionId = 1, PaymentId = null }
         );
-
-        modelBuilder.Entity<TraineeCertificationProgress>().HasData(
-            new TraineeCertificationProgress { TraineeId = 1, CertificationId = 1, AchievedDate = null, ProgressPercentage = 50 },
-            new TraineeCertificationProgress { TraineeId = 3, CertificationId = 3, AchievedDate = null, ProgressPercentage = 0 }
-        );
+        
     }
 }
