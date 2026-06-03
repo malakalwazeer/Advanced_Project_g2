@@ -4,6 +4,7 @@ using CourseManagementAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CourseManagementAPI.Migrations
 {
     [DbContext(typeof(CourseManagementDbContext))]
-    partial class CourseManagementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603103302_ExpandSeedData")]
+    partial class ExpandSeedData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1522,6 +1525,20 @@ namespace CourseManagementAPI.Migrations
                     b.HasIndex("CertificationId");
 
                     b.ToTable("TraineeCertificationProgress", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            TraineeId = 1,
+                            CertificationId = 1,
+                            ProgressPercentage = 50m
+                        },
+                        new
+                        {
+                            TraineeId = 3,
+                            CertificationId = 3,
+                            ProgressPercentage = 0m
+                        });
                 });
 
             modelBuilder.Entity("CourseManagementAPI.Models.TraineeStatus", b =>
