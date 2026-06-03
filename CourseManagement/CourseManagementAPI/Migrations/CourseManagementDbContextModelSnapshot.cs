@@ -200,6 +200,12 @@ namespace CourseManagementAPI.Migrations
                         },
                         new
                         {
+                            CourseId = 3,
+                            CertificationId = 1,
+                            IsRequired = true
+                        },
+                        new
+                        {
                             CourseId = 2,
                             CertificationId = 2,
                             IsRequired = true
@@ -365,6 +371,17 @@ namespace CourseManagementAPI.Migrations
                             Description = "Introduction to relational databases",
                             DurationHours = 10,
                             EnrollmentFee = 100m
+                        },
+                        new
+                        {
+                            CourseId = 3,
+                            Capacity = 20,
+                            CategoryId = 1,
+                            CourseCode = "ADVJS101",
+                            CourseName = "Advanced JavaScript",
+                            Description = "ES6+, async/await, and modern JavaScript patterns",
+                            DurationHours = 10,
+                            EnrollmentFee = 110m
                         });
                 });
 
@@ -539,6 +556,17 @@ namespace CourseManagementAPI.Migrations
                             EndDateTime = new DateTime(2026, 6, 2, 12, 0, 0, 0, DateTimeKind.Unspecified),
                             InstructorId = 2,
                             StartDateTime = new DateTime(2026, 6, 2, 9, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            SessionId = 3,
+                            Capacity = 20,
+                            ClassroomId = 1,
+                            CourseId = 3,
+                            CreatedAt = new DateTime(2026, 6, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndDateTime = new DateTime(2026, 7, 1, 12, 0, 0, 0, DateTimeKind.Unspecified),
+                            InstructorId = 1,
+                            StartDateTime = new DateTime(2026, 7, 1, 9, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 

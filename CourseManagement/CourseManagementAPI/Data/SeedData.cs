@@ -124,12 +124,28 @@ new EnrollmentStatus { EnrollmentStatusId = 5, StatusName = "Dropped" }
                 Capacity = 25,
                 EnrollmentFee = 100,
                 CategoryId = 3
+            },
+            // Required for Web Development Certificate alongside WEB101.
+            // Trainee 1 has passed WEB101 (1 of 2) → 50%, consistent with seeded progress.
+            new Course
+            {
+                CourseId = 3,
+                CourseCode = "ADVJS101",
+                CourseName = "Advanced JavaScript",
+                Description = "ES6+, async/await, and modern JavaScript patterns",
+                DurationHours = 10,
+                Capacity = 20,
+                EnrollmentFee = 110,
+                CategoryId = 1
             }
         );
 
         // Seed Junction Tables
         modelBuilder.Entity<CertificationCourse>().HasData(
+            // Web Development Certificate requires WEB101 + ADVJS101
             new CertificationCourse { CourseId = 1, CertificationId = 1, IsRequired = true },
+            new CertificationCourse { CourseId = 3, CertificationId = 1, IsRequired = true },
+            // Database Fundamentals Certificate requires DB101
             new CertificationCourse { CourseId = 2, CertificationId = 2, IsRequired = true }
         );
 
@@ -177,6 +193,18 @@ new EnrollmentStatus { EnrollmentStatusId = 5, StatusName = "Dropped" }
                 EndDateTime = new DateTime(2026, 6, 2, 12, 0, 0),
                 Capacity = 25,
                 CreatedAt = new DateTime(2026, 5, 11, 0, 0, 0)
+            },
+            // Session for ADVJS101 — used to test 50% → 100% on Web Development Certificate
+            new CourseSession
+            {
+                SessionId = 3,
+                InstructorId = 1,
+                CourseId = 3,
+                ClassroomId = 1,
+                StartDateTime = new DateTime(2026, 7, 1, 9, 0, 0),
+                EndDateTime = new DateTime(2026, 7, 1, 12, 0, 0),
+                Capacity = 20,
+                CreatedAt = new DateTime(2026, 6, 1, 0, 0, 0)
             }
         );
 

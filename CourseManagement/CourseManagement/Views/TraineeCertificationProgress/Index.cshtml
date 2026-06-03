@@ -101,14 +101,7 @@ else
                                 <a asp-action="Details"
                                    asp-route-traineeId="@item.TraineeId"
                                    asp-route-certificationId="@item.CertificationId"
-                                   class="btn btn-sm btn-outline-info me-1">Details</a>
-                                @if (User.IsInRole("TrainingCoordinator"))
-                                {
-                                    <a asp-action="Delete"
-                                       asp-route-traineeId="@item.TraineeId"
-                                       asp-route-certificationId="@item.CertificationId"
-                                       class="btn btn-sm btn-outline-danger">Delete</a>
-                                }
+                                   class="btn btn-sm btn-outline-info">Details</a>
                             </td>
                         </tr>
                     }

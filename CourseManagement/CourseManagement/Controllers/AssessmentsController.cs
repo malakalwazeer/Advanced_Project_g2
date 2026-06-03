@@ -1,3 +1,4 @@
+using CourseManagement.Services;
 using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Dtos;
@@ -17,18 +18,20 @@ public class AssessmentsController : Controller
     private readonly CourseManagementDbContext _context;
     private readonly AssessmentValidationService _assessmentValidator;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly CertificationProgressService _progressService;
 
     public AssessmentsController(
         CourseManagementDbContext context,
         AssessmentValidationService assessmentValidator,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        CertificationProgressService progressService)
     {
         _context = context;
         _assessmentValidator = assessmentValidator;
         _userManager = userManager;
+        _progressService = progressService;
     }
 
-    // ─── Index ────────────────────────────────────────────────────────────────
 
     public async Task<IActionResult> Index(string? searchString, int? resultFilter)
     {
@@ -96,7 +99,6 @@ public class AssessmentsController : Controller
         return View(vm);
     }
 
-    // ─── Details ──────────────────────────────────────────────────────────────
 
     public async Task<IActionResult> Details(int? id)
     {
@@ -145,7 +147,6 @@ public class AssessmentsController : Controller
         return View(vm);
     }
 
-    // ─── Create ───────────────────────────────────────────────────────────────
 
     [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public async Task<IActionResult> Create()
@@ -209,7 +210,7 @@ public class AssessmentsController : Controller
 
             _context.Add(assessment);
             await _context.SaveChangesAsync();
-            await UpdateCertificationProgressAsync(assessment.EnrollmentId);
+            await _progressService.RecalculateFromEnrollmentAsync(assessment.EnrollmentId);
 
             TempData["Success"] = "Assessment saved. Certification progress updated.";
             return RedirectToAction(nameof(Index));
@@ -219,7 +220,6 @@ public class AssessmentsController : Controller
         return View(vm);
     }
 
-    // ─── Edit ─────────────────────────────────────────────────────────────────
 
     [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public async Task<IActionResult> Edit(int? id)
@@ -288,7 +288,7 @@ public class AssessmentsController : Controller
             {
                 _context.Update(assessment);
                 await _context.SaveChangesAsync();
-                await UpdateCertificationProgressAsync(assessment.EnrollmentId);
+                await _progressService.RecalculateFromEnrollmentAsync(assessment.EnrollmentId);
                 TempData["Success"] = "Assessment updated. Certification progress recalculated.";
             }
             catch (DbUpdateConcurrencyException)
@@ -303,7 +303,6 @@ public class AssessmentsController : Controller
         return View(vm);
     }
 
-    // ─── Delete ───────────────────────────────────────────────────────────────
 
     [Authorize(Roles = "TrainingCoordinator,Instructor")]
     public async Task<IActionResult> Delete(int? id)
@@ -368,18 +367,12 @@ public class AssessmentsController : Controller
             int enrollmentId = assessment.EnrollmentId;
             _context.Assessments.Remove(assessment);
             await _context.SaveChangesAsync();
-            await UpdateCertificationProgressAsync(enrollmentId);
+            await _progressService.RecalculateFromEnrollmentAsync(enrollmentId);
             TempData["Success"] = "Assessment deleted. Certification progress recalculated.";
         }
         return RedirectToAction(nameof(Index));
     }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Returns an error message if the current instructor is not allowed to record
-    /// an assessment for the given enrollment. Returns null when the scope is valid.
-    /// </summary>
     private async Task<string?> ValidateInstructorScopeAsync(int enrollmentId, int? postedInstructorId)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -406,11 +399,7 @@ public class AssessmentsController : Controller
         return null;
     }
 
-    /// <summary>
-    /// Populates dropdown lists on the Create form. When the current user is an
-    /// Instructor, only enrollments from their assigned sessions are shown, and
-    /// the instructor list is locked to themselves.
-    /// </summary>
+
     private async Task LoadDropdownsAsync(AssessmentCreateViewModel vm)
     {
         if (User.IsInRole("Instructor") && !User.IsInRole("TrainingCoordinator"))
@@ -470,9 +459,6 @@ public class AssessmentsController : Controller
         }
     }
 
-    /// <summary>
-    /// Populates dropdown lists on the Edit form with the same role-scoped filtering.
-    /// </summary>
     private async Task LoadDropdownsAsync(AssessmentEditViewModel vm)
     {
         if (User.IsInRole("Instructor") && !User.IsInRole("TrainingCoordinator"))
@@ -530,69 +516,6 @@ public class AssessmentsController : Controller
                 .Select(i => new SelectListItem { Value = i.InstructorId.ToString(), Text = i.FullName })
                 .ToListAsync();
         }
-    }
-
-    private async Task UpdateCertificationProgressAsync(int enrollmentId)
-    {
-        var enrollment = await _context.Enrollments
-            .Include(e => e.Session)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId);
-
-        if (enrollment == null) return;
-
-        int traineeId = enrollment.TraineeId;
-
-        var traineePassedCourseIds = await _context.Assessments
-            .Include(a => a.Enrollment)
-                .ThenInclude(e => e.Session)
-            .Where(a => a.Enrollment.TraineeId == traineeId && a.Result == 1)
-            .Select(a => a.Enrollment.Session.CourseId)
-            .Distinct()
-            .ToListAsync();
-
-        var relevantCertIds = await _context.CertificationCourses
-            .Where(cc => traineePassedCourseIds.Contains(cc.CourseId))
-            .Select(cc => cc.CertificationId)
-            .Distinct()
-            .ToListAsync();
-
-        foreach (var certId in relevantCertIds)
-        {
-            var requiredIds = await _context.CertificationCourses
-                .Where(cc => cc.CertificationId == certId && cc.IsRequired)
-                .Select(cc => cc.CourseId)
-                .ToListAsync();
-
-            if (requiredIds.Count == 0) continue;
-
-            var passedCount = requiredIds.Count(c => traineePassedCourseIds.Contains(c));
-            var pct = Math.Round((decimal)passedCount / requiredIds.Count * 100, 2);
-
-            var progress = await _context.TraineeCertificationProgresses
-                .FirstOrDefaultAsync(p => p.TraineeId == traineeId && p.CertificationId == certId);
-
-            if (progress == null)
-            {
-                _context.TraineeCertificationProgresses.Add(new TraineeCertificationProgress
-                {
-                    TraineeId          = traineeId,
-                    CertificationId    = certId,
-                    ProgressPercentage = pct,
-                    AchievedDate       = pct >= 100 ? DateOnly.FromDateTime(DateTime.Today) : null
-                });
-            }
-            else
-            {
-                progress.ProgressPercentage = pct;
-                if (pct >= 100 && progress.AchievedDate == null)
-                    progress.AchievedDate = DateOnly.FromDateTime(DateTime.Today);
-                else if (pct < 100)
-                    progress.AchievedDate = null;
-            }
-        }
-
-        await _context.SaveChangesAsync();
     }
 
     private async Task<bool> AssessmentExists(int id) =>
