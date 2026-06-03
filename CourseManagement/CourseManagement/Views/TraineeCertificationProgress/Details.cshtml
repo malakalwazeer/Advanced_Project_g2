@@ -6,7 +6,16 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Certification Progress Details</h2>
-    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+    <div>
+        @if (Model.AchievedDate.HasValue)
+        {
+            <a asp-action="Download"
+               asp-route-traineeId="@Model.TraineeId"
+               asp-route-certificationId="@Model.CertificationId"
+               class="btn btn-primary" target="_blank">Download Certificate</a>
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+    </div>
 </div>
 
 <div class="row">
