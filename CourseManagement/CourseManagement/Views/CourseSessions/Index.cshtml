@@ -68,7 +68,10 @@
                     <th>Start Time</th>
                     <th>End Time</th>
                     <th>Capacity</th>
+                    @if (User.IsInRole("TrainingCoordinator") || User.IsInRole("Trainee"))
+                    {
                     <th>Actions</th>
+                    }
                 </tr>
             </thead>
             <tbody>
