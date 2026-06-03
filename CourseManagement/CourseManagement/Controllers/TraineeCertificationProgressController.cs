@@ -169,6 +169,15 @@ public class TraineeCertificationProgressController : Controller
     {
         if (traineeId == null || certificationId == null) return NotFound();
 
+        if (User.IsInRole("Trainee"))
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var ownTrainee = await _context.Trainees.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Email == user!.Email);
+            if (ownTrainee == null || ownTrainee.TraineeId != traineeId)
+                return Forbid();
+        }
+
         var p = await _context.TraineeCertificationProgresses
             .Include(p => p.Trainee)
             .Include(p => p.Certification)

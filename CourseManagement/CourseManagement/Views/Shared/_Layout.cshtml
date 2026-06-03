@@ -24,7 +24,7 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-<ul class="navbar-nav flex-grow-1">
+                    <ul class="navbar-nav flex-grow-1">
                         @if (!SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
@@ -48,6 +48,7 @@
                                 <ul class="dropdown-menu" aria-labelledby="catalogDropdown">
                                     <li><a class="dropdown-item" asp-controller="Courses" asp-action="Index"><i class="bi bi-book me-2"></i>Courses</a></li>
                                     <li><a class="dropdown-item" asp-controller="CourseSessions" asp-action="Index"><i class="bi bi-calendar4-week me-2"></i>Sessions</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Certification" asp-action="Index"><i class="bi bi-patch-check me-2"></i>Certifications</a></li>
                                 </ul>
                             </li>
 
@@ -71,12 +72,6 @@
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="resourcesDropdown">
                                     <li><a class="dropdown-item" asp-controller="Classrooms" asp-action="Index"><i class="bi bi-door-closed me-2"></i>Classrooms</a></li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Certification" asp-action="Index">Certifications</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="TraineeCertificationProgress" asp-action="Index">Trainee Progress</a>
-                            </li>
                                     <li><a class="dropdown-item" asp-controller="Equipment" asp-action="Index"><i class="bi bi-cpu me-2"></i>Equipment</a></li>
                                 </ul>
                             </li>
