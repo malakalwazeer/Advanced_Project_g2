@@ -33,6 +33,7 @@ builder.Services.AddScoped<AssessmentValidationService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddScoped<EnrollmentBroadcastService>();
+builder.Services.AddScoped<ICertificateService, CertificateService>();
 
 builder.Services.AddHttpClient("ApiClient", client =>
 {

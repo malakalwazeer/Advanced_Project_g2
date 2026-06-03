@@ -1,3 +1,4 @@
+using CourseManagement.Services;
 using CourseManagement.ViewModels;
 using CourseManagementAPI.Data;
 using CourseManagementAPI.Models;
@@ -14,13 +15,16 @@ public class TraineeCertificationProgressController : Controller
 {
     private readonly CourseManagementDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ICertificateService _certificateService;
 
     public TraineeCertificationProgressController(
         CourseManagementDbContext context,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        ICertificateService certificateService)
     {
         _context = context;
         _userManager = userManager;
+        _certificateService = certificateService;
     }
 
     public async Task<IActionResult> Index(string? searchString, bool? achievedOnly)
@@ -117,6 +121,28 @@ public class TraineeCertificationProgressController : Controller
         };
 
         return View(vm);
+    }
+
+    [Authorize(Roles = "TrainingCoordinator,Trainee")]
+    public async Task<IActionResult> Download(int? traineeId, int? certificationId)
+    {
+        if (traineeId == null || certificationId == null) return NotFound();
+
+        var p = await _context.TraineeCertificationProgresses
+            .Include(p => p.Trainee)
+            .Include(p => p.Certification)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p =>
+                p.TraineeId == traineeId && p.CertificationId == certificationId);
+
+        if (p == null || p.AchievedDate == null) return NotFound();
+
+        byte[] pdfData = _certificateService.GenerateCertificate(
+            p.Trainee?.FullName ?? "Unknown Trainee",
+            p.Certification?.Name ?? "Unknown Certification",
+            p.AchievedDate);
+            
+        return File(pdfData, "application/pdf", $"Certificate_{p.Trainee?.FullName.Replace(" ", "_")}.pdf");
     }
 
     [Authorize(Roles = "TrainingCoordinator")]
