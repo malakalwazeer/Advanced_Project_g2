@@ -33,6 +33,12 @@ namespace CourseManagement.Controllers
                 .AsNoTracking()
                 .AsQueryable();
 
+            if (User.IsInRole("Instructor"))
+            {
+                var email = User.Identity?.Name;
+                query = query.Where(s => s.Instructor.Email == email);
+            }
+
             if (!string.IsNullOrWhiteSpace(searchString))
             {
                 var term = searchString.ToLower();
