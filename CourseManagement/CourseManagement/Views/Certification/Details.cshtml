@@ -4,140 +4,130 @@
     ViewData["Title"] = "Certification Details";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">@Model.Name</h2>
-    <div class="d-flex gap-2">
-        @if (User.IsInRole("TrainingCoordinator"))
-        {
-            <a asp-action="Edit" asp-route-id="@Model.CertificationId" class="btn btn-warning btn-sm">Edit</a>
-            <a asp-action="Delete" asp-route-id="@Model.CertificationId" class="btn btn-danger btn-sm">Delete</a>
-        }
-        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Back to List</a>
-    </div>
-</div>
-
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-
-<div class="row">
-    <!-- Summary card -->
-    <div class="col-md-5 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white"><strong>Summary</strong></div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4">Name</dt>
-                    <dd class="col-sm-8">@Model.Name</dd>
-
-                    <dt class="col-sm-4">Description</dt>
-                    <dd class="col-sm-8">
-                        @if (!string.IsNullOrWhiteSpace(Model.Description))
-                        {
-                            @Model.Description
-                        }
-                        else
-                        {
-                            <span class="text-muted fst-italic">None</span>
-                        }
-                    </dd>
-
-                    <dt class="col-sm-4">Courses</dt>
-                    <dd class="col-sm-8">
-                        <span class="badge bg-secondary">@Model.LinkedCourses.Count linked</span>
-                    </dd>
-                </dl>
-            </div>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>@Model.Name</h1>
+        <div class="d-flex flex-wrap gap-2">
+            @if (User.IsInRole("TrainingCoordinator"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model.CertificationId" class="btn btn-warning btn-sm">Edit</a>
+                <a asp-action="Delete" asp-route-id="@Model.CertificationId" class="btn btn-danger btn-sm">Delete</a>
+            }
+            <a asp-action="Index" class="btn btn-secondary btn-sm">Back to List</a>
         </div>
     </div>
 
-    <!-- Course list + add form -->
-    <div class="col-md-7 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-                <strong>Linked Courses</strong>
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white"><strong>Summary</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Name</dt>
+                        <dd class="col-sm-8">@Model.Name</dd>
+
+                        <dt class="col-sm-4">Description</dt>
+                        <dd class="col-sm-8">
+                            @if (!string.IsNullOrWhiteSpace(Model.Description)) { @Model.Description }
+                            else { <span class="text-muted fst-italic">None</span> }
+                        </dd>
+
+                        <dt class="col-sm-4">Courses</dt>
+                        <dd class="col-sm-8"><span class="badge bg-secondary">@Model.LinkedCourses.Count linked</span></dd>
+                    </dl>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Code</th>
-                            <th>Course</th>
-                            @if (User.IsInRole("TrainingCoordinator"))
-                            {
-                                <th class="text-center">Remove</th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in Model.LinkedCourses)
-                        {
+        </div>
+
+        <div class="col-md-7 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white"><strong>Linked Courses</strong></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td class="text-muted small">@row.CourseCode</td>
-                                <td>@row.CourseName</td>
+                                <th>Code</th>
+                                <th>Course</th>
                                 @if (User.IsInRole("TrainingCoordinator"))
                                 {
-                                    <td class="text-center">
-                                        <form asp-action="RemoveCourse" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="certificationId" value="@Model.CertificationId" />
-                                            <input type="hidden" name="courseId" value="@row.CourseId" />
-                                            <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                    onclick="return confirm('Remove this course from the certification?')">
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
-                                        </form>
-                                    </td>
+                                    <th class="text-center">Remove</th>
                                 }
                             </tr>
-                        }
-                        @if (!Model.LinkedCourses.Any())
-                        {
-                            <tr>
-                                <td colspan="@(User.IsInRole("TrainingCoordinator") ? 3 : 2)"
-                                    class="text-center text-muted py-3 fst-italic">
-                                    No courses linked yet.
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            @if (User.IsInRole("TrainingCoordinator"))
-            {
-                <div class="card-footer">
-                    <form asp-action="AddCourse" method="post" class="row g-2 align-items-end">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="certificationId" value="@Model.CertificationId" />
-
-                        <div class="col-md-9">
-                            <label class="form-label small mb-1">Add Course</label>
-                            <select name="addCourseId" class="form-select form-select-sm"
-                                    asp-items="@Model.AvailableCourses">
-                                <option value="0">Select a course…</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary btn-sm w-100">
-                                <i class="bi bi-plus-lg me-1"></i>Add
-                            </button>
-                        </div>
-                    </form>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.LinkedCourses)
+                            {
+                                <tr>
+                                    <td class="text-muted small">@row.CourseCode</td>
+                                    <td>@row.CourseName</td>
+                                    @if (User.IsInRole("TrainingCoordinator"))
+                                    {
+                                        <td class="text-center">
+                                            <form asp-action="RemoveCourse" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="certificationId" value="@Model.CertificationId" />
+                                                <input type="hidden" name="courseId" value="@row.CourseId" />
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                        onclick="return confirm('Remove this course from the certification?')">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                            @if (!Model.LinkedCourses.Any())
+                            {
+                                <tr>
+                                    <td colspan="@(User.IsInRole("TrainingCoordinator") ? 3 : 2)"
+                                        class="text-center text-muted py-3 fst-italic">
+                                        No courses linked yet.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    </div>
                 </div>
-            }
+
+                @if (User.IsInRole("TrainingCoordinator"))
+                {
+                    <div class="card-footer">
+                        <form asp-action="AddCourse" method="post" class="row g-2 align-items-end">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="certificationId" value="@Model.CertificationId" />
+                            <div class="col-md-9">
+                                <label class="form-label small mb-1">Add Course</label>
+                                <select name="addCourseId" class="form-select form-select-sm"
+                                        asp-items="@Model.AvailableCourses">
+                                    <option value="0">Select a course…</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    <i class="bi bi-plus-lg me-1"></i>Add
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>

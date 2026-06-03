@@ -4,50 +4,42 @@
     ViewData["Title"] = "Create Payment";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Create Payment</h2>
-    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
-</div>
+<h1 class="h3 mb-3">Create Payment</h1>
 
-<div class="row justify-content-center">
+<div class="row">
     <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">New Payment</div>
-            <div class="card-body">
-                <form asp-action="Create">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                    <div class="mb-3">
-                        <label asp-for="EnrollmentId" class="form-label fw-semibold"></label>
-                        <select asp-for="EnrollmentId" asp-items="Model.Enrollments" class="form-select">
-                            <option value="">-- Select Enrollment --</option>
-                        </select>
-                        <span asp-validation-for="EnrollmentId" class="text-danger small"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="AmountPaid" class="form-label fw-semibold"></label>
-                        <input asp-for="AmountPaid" type="number" step="0.01" min="0" class="form-control" placeholder="0.00" />
-                        <span asp-validation-for="AmountPaid" class="text-danger small"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="PaymentDate" class="form-label fw-semibold"></label>
-                        <input asp-for="PaymentDate" type="date" class="form-control" />
-                        <span asp-validation-for="PaymentDate" class="text-danger small"></span>
-                    </div>
-
-                    <div class="alert alert-info small py-2 mb-3">
-                        Balance remaining and payment status are calculated automatically.
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Create</button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-                    </div>
-                </form>
+            <div class="mb-3">
+                <label asp-for="EnrollmentId" class="form-label"></label>
+                <select asp-for="EnrollmentId" asp-items="Model.Enrollments" class="form-select">
+                    <option value="">-- Select Enrollment --</option>
+                </select>
+                <span asp-validation-for="EnrollmentId" class="text-danger"></span>
             </div>
-        </div>
+
+            <div class="mb-3">
+                <label asp-for="AmountPaid" class="form-label"></label>
+                <input asp-for="AmountPaid" type="number" step="0.01" min="0" class="form-control" placeholder="0.00" />
+                <span asp-validation-for="AmountPaid" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PaymentDate" class="form-label"></label>
+                <input asp-for="PaymentDate" type="date" class="form-control" />
+                <span asp-validation-for="PaymentDate" class="text-danger"></span>
+            </div>
+
+            <div class="alert alert-info small py-2 mb-3">
+                Balance remaining and payment status are calculated automatically.
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Create</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+            </div>
+        </form>
     </div>
 </div>
 

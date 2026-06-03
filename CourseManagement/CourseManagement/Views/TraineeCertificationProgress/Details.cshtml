@@ -4,95 +4,91 @@
     ViewData["Title"] = "Certification Progress Details";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Certification Progress Details</h2>
-    <div>
-        @if (Model.AchievedDate.HasValue)
-        {
-            <a asp-action="Download"
-               asp-route-traineeId="@Model.TraineeId"
-               asp-route-certificationId="@Model.CertificationId"
-               class="btn btn-primary" target="_blank">Download Certificate</a>
-        }
-        <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Certification Progress Details</h1>
+        <div class="d-flex flex-wrap gap-2">
+            @if (Model.AchievedDate.HasValue)
+            {
+                <a asp-action="Download"
+                   asp-route-traineeId="@Model.TraineeId"
+                   asp-route-certificationId="@Model.CertificationId"
+                   class="btn btn-primary" target="_blank">
+                    <i class="bi bi-download me-1"></i>Download Certificate
+                </a>
+            }
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white"><strong>Progress Summary</strong></div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Trainee</dt>
-                    <dd class="col-sm-7">@Model.TraineeName</dd>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white"><strong>Progress Summary</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Trainee</dt>
+                        <dd class="col-sm-7">@Model.TraineeName</dd>
 
-                    <dt class="col-sm-5">Certification</dt>
-                    <dd class="col-sm-7">@Model.CertificationName</dd>
+                        <dt class="col-sm-5">Certification</dt>
+                        <dd class="col-sm-7">@Model.CertificationName</dd>
 
-                    <dt class="col-sm-5">Progress</dt>
-                    <dd class="col-sm-7">
-                        <div class="progress mb-1" style="height:20px;">
+                        <dt class="col-sm-5">Progress</dt>
+                        <dd class="col-sm-7">
                             @{
-                                var pctStr = Model.ProgressPercentage.ToString("F1",
-                                    System.Globalization.CultureInfo.InvariantCulture);
+                                var pctStr = Model.ProgressPercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
                                 var barClass = Model.ProgressPercentage >= 100 ? "bg-success"
                                              : Model.ProgressPercentage >= 50  ? "bg-info"
                                              : "bg-warning";
                             }
-                            <div class="progress-bar @barClass"
-                                 role="progressbar"
-                                 style="width:@pctStr%"
-                                 aria-valuenow="@pctStr"
-                                 aria-valuemin="0" aria-valuemax="100">
-                                @pctStr%
+                            <div class="progress mb-1" style="height:20px;">
+                                <div class="progress-bar @barClass" role="progressbar"
+                                     style="width:@pctStr%" aria-valuenow="@pctStr"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    @pctStr%
+                                </div>
                             </div>
-                        </div>
-                        <small class="text-muted">@Model.PassedCoursesCount of @Model.RequiredCoursesCount linked courses passed</small>
-                    </dd>
+                            <small class="text-muted">@Model.PassedCoursesCount of @Model.RequiredCoursesCount linked courses passed</small>
+                        </dd>
 
-                    <dt class="col-sm-5">Achieved Date</dt>
-                    <dd class="col-sm-7">
-                        @if (Model.AchievedDate.HasValue)
-                        {
-                            <span class="badge bg-success fs-6">
-                                @(Model.AchievedDate.Value.ToString("yyyy-MM-dd"))
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="text-muted">Not yet achieved</span>
-                        }
-                    </dd>
-                </dl>
+                        <dt class="col-sm-5">Achieved Date</dt>
+                        <dd class="col-sm-7">
+                            @if (Model.AchievedDate.HasValue)
+                            {
+                                <span class="badge bg-success fs-6">@(Model.AchievedDate.Value.ToString("yyyy-MM-dd"))</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not yet achieved</span>
+                            }
+                        </dd>
+                    </dl>
+                </div>
             </div>
-
         </div>
-    </div>
 
-    <div class="col-md-6">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-secondary text-white"><strong>Linked Courses</strong></div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Course</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var cc in Model.CertificationCourses)
-                        {
-                            <tr>
-                                <td>@cc.CourseName</td>
-                            </tr>
-                        }
-                        @if (!Model.CertificationCourses.Any())
-                        {
-                            <tr><td class="text-muted text-center py-3">No courses linked.</td></tr>
-                        }
-                    </tbody>
-                </table>
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white"><strong>Linked Courses</strong></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Course</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cc in Model.CertificationCourses)
+                            {
+                                <tr><td>@cc.CourseName</td></tr>
+                            }
+                            @if (!Model.CertificationCourses.Any())
+                            {
+                                <tr><td class="text-muted text-center py-3">No courses linked.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
