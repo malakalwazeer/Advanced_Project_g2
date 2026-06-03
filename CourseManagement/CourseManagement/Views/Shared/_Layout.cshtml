@@ -24,21 +24,14 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+<ul class="navbar-nav flex-grow-1">
                         @if (!SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a>
                             </li>
                         }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="PublicCertificationLookup" asp-action="Index">
-                                <i class="bi bi-patch-check me-1"></i>Verify Certification
-                            </a>
-                        </li>
+
                         @if (User.IsInRole("TrainingCoordinator"))
                         {
                             <li class="nav-item">
@@ -46,63 +39,92 @@
                                     <i class="bi bi-speedometer2 me-1"></i>Dashboard
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Courses" asp-action="Index">Courses</a>
+
+                            <!-- Dropdown 1: Catalog Management -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="catalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-journal-bookmark me-1"></i>Catalog
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="catalogDropdown">
+                                    <li><a class="dropdown-item" asp-controller="Courses" asp-action="Index"><i class="bi bi-book me-2"></i>Courses</a></li>
+                                    <li><a class="dropdown-item" asp-controller="CourseSessions" asp-action="Index"><i class="bi bi-calendar4-week me-2"></i>Sessions</a></li>
+                                </ul>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="CourseSessions" asp-action="Index">Sessions</a>
+
+                            <!-- Dropdown 2: Academic & Operations -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="opsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-people me-1"></i>Operations
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="opsDropdown">
+                                    <li><a class="dropdown-item" asp-controller="Instructors" asp-action="Index"><i class="bi bi-person-badge me-2"></i>Instructors</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Enrollments" asp-action="Index"><i class="bi bi-person-check me-2"></i>Enrollments</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Payments" asp-action="Index"><i class="bi bi-cash-stack me-2"></i>Payments</a></li>
+                                </ul>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Instructors" asp-action="Index">Instructors</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Classrooms" asp-action="Index">Classrooms</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Equipment" asp-action="Index">Equipment</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Enrollments" asp-action="Index">Enrollments</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Payments" asp-action="Index">Payments</a>
+
+                            <!-- Dropdown 3: Resource Logistics -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="resourcesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-building me-1"></i>Resources
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="resourcesDropdown">
+                                    <li><a class="dropdown-item" asp-controller="Classrooms" asp-action="Index"><i class="bi bi-door-closed me-2"></i>Classrooms</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Equipment" asp-action="Index"><i class="bi bi-cpu me-2"></i>Equipment</a></li>
+                                </ul>
                             </li>
                         }
 
                         @if (User.IsInRole("Instructor"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="CourseSessions" asp-action="Index">My Sessions</a>
+                                <a class="nav-link text-dark" asp-controller="CourseSessions" asp-action="Index"><i class="bi bi-calendar3 me-1"></i>My Sessions</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Assessments" asp-action="Index">Assessments</a>
+                                <a class="nav-link text-dark" asp-controller="Assessments" asp-action="Index"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Assessments</a>
                             </li>
                         }
 
                         @if (User.IsInRole("Trainee"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Courses" asp-action="Index">Course Catalog</a>
+                                <a class="nav-link text-dark" asp-controller="Courses" asp-action="Index"><i class="bi bi-grid me-1"></i>Course Catalog</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Enrollments" asp-action="Index">My Enrollments</a>
+                                <a class="nav-link text-dark" asp-controller="Enrollments" asp-action="Index"><i class="bi bi-card-checklist me-1"></i>My Enrollments</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Payments" asp-action="Index">My Payments</a>
+                                <a class="nav-link text-dark" asp-controller="Payments" asp-action="Index"><i class="bi bi-wallet2 me-1"></i>My Payments</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="TraineeCertificationProgress" asp-action="Index">My Progress</a>
+                                <a class="nav-link text-dark" asp-controller="TraineeCertificationProgress" asp-action="Index"><i class="bi bi-trophy me-1"></i>My Progress</a>
                             </li>
                         }
+
+                        <!-- Right-Aligned Utility Links Group -->
+                        <li class="ms-sm-auto"></li> @* Pushes the following tabs to the right edge *@
 
                         @if (User.IsInRole("TrainingCoordinator") || User.IsInRole("Instructor") || User.IsInRole("Trainee"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Notifications" asp-action="Index">Notifications</a>
+                                <a class="nav-link text-dark" asp-controller="Notifications" asp-action="Index">
+                                    <i class="bi bi-bell me-1"></i>Notifications
+                                </a>
                             </li>
                         }
-                    </ul>
 
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="PublicCertificationLookup" asp-action="Index">
+                                <i class="bi bi-patch-check me-1"></i>Verify Certification
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">
+                                <i class="bi bi-shield-lock me-1"></i>Privacy
+                            </a>
+                        </li>
+                    </ul>
                     <ul class="navbar-nav">
                         @if (SignInManager.IsSignedIn(User))
                         {
