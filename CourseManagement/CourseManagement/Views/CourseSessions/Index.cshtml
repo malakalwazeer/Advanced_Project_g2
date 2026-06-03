@@ -84,21 +84,24 @@
                         <td>@item.StartDateTime.ToString("g")</td>
                         <td>@item.EndDateTime.ToString("g")</td>
                         <td>@item.Capacity</td>
-                        <td>
-                            @if (User.IsInRole("TrainingCoordinator"))
-                            {
-                                <a asp-action="Edit"   asp-route-id="@item.SessionId" class="btn btn-sm btn-warning">Edit</a>
-                                <a asp-action="Delete" asp-route-id="@item.SessionId" class="btn btn-sm btn-danger">Delete</a>
-                            }
-                            @if (User.IsInRole("Trainee"))
-                            {
-                                <form asp-controller="Enrollments" asp-action="EnrollInSession" method="post" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="sessionId" value="@item.SessionId" />
-                                    <button type="submit" class="btn btn-sm btn-success">Enroll</button>
-                                </form>
-                            }
-                        </td>
+                        @if (User.IsInRole("TrainingCoordinator") || User.IsInRole("Trainee"))
+                        {
+                            <td>
+                                @if (User.IsInRole("TrainingCoordinator"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.SessionId" class="btn btn-sm btn-warning">Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@item.SessionId" class="btn btn-sm btn-danger">Delete</a>
+                                }
+                                @if (User.IsInRole("Trainee"))
+                                {
+                                    <form asp-controller="Enrollments" asp-action="EnrollInSession" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="sessionId" value="@item.SessionId"/>
+                                        <button type="submit" class="btn btn-sm btn-success">Enroll</button>
+                                    </form>
+                                }
+                            </td>
+                        }
                     </tr>
                 }
             </tbody>
