@@ -41,9 +41,9 @@ public class TraineeCertificationProgressController : Controller
 
         if (User.IsInRole("Trainee"))
         {
-            // Single lookup — used for both recalculation and the WHERE filter
             var trainee = await _context.Trainees.AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Email == user!.Email);
+
             if (trainee == null) return Forbid();
 
             await _progressService.RecalculateForTraineeAsync(trainee.TraineeId);
@@ -53,6 +53,7 @@ public class TraineeCertificationProgressController : Controller
         {
             var instructor = await _context.Instructors.AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Email == user!.Email);
+
             if (instructor == null) return Forbid();
 
             var traineeIds = await _context.Enrollments
@@ -68,6 +69,7 @@ public class TraineeCertificationProgressController : Controller
         if (!string.IsNullOrWhiteSpace(searchString))
         {
             var term = searchString.ToLower();
+
             query = query.Where(p =>
                 p.Trainee.FullName.ToLower().Contains(term) ||
                 p.Certification.Name.ToLower().Contains(term));
@@ -78,19 +80,14 @@ public class TraineeCertificationProgressController : Controller
 
         var progresses = await query.ToListAsync();
 
-        int totalInDb = await _context.TraineeCertificationProgresses.CountAsync();
-        var activeRole = User.IsInRole("Trainee") ? "Trainee"
-                       : User.IsInRole("Instructor") ? "Instructor" : "Coordinator";
-        Console.WriteLine($"[ProgressIndex] role={activeRole} totalInDb={totalInDb} afterFilter={progresses.Count} search=\"{searchString}\" achievedOnly={achievedOnly}");
-
         var vm = progresses.Select(p => new TraineeCertificationProgressIndexViewModel
         {
-            TraineeId          = p.TraineeId,
-            CertificationId    = p.CertificationId,
-            TraineeName        = p.Trainee?.FullName,
-            CertificationName  = p.Certification?.Name,
+            TraineeId = p.TraineeId,
+            CertificationId = p.CertificationId,
+            TraineeName = p.Trainee?.FullName,
+            CertificationName = p.Certification?.Name,
             ProgressPercentage = p.ProgressPercentage,
-            AchievedDate       = p.AchievedDate
+            AchievedDate = p.AchievedDate
         }).ToList();
 
         ViewBag.SearchString = searchString;
@@ -101,7 +98,8 @@ public class TraineeCertificationProgressController : Controller
 
     public async Task<IActionResult> Details(int? traineeId, int? certificationId)
     {
-        if (traineeId == null || certificationId == null) return NotFound();
+        if (traineeId == null || certificationId == null)
+            return NotFound();
 
         var user = await _userManager.GetUserAsync(User);
 
@@ -109,6 +107,7 @@ public class TraineeCertificationProgressController : Controller
         {
             var ownTrainee = await _context.Trainees.AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Email == user!.Email);
+
             if (ownTrainee == null || ownTrainee.TraineeId != traineeId)
                 return Forbid();
         }
@@ -116,16 +115,18 @@ public class TraineeCertificationProgressController : Controller
         {
             var instructor = await _context.Instructors.AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Email == user!.Email);
+
             if (instructor == null) return Forbid();
 
             var isRelated = await _context.Enrollments
                 .Include(e => e.Session)
-                .AnyAsync(e => e.Session.InstructorId == instructor.InstructorId
-                            && e.TraineeId == traineeId);
+                .AnyAsync(e =>
+                    e.Session.InstructorId == instructor.InstructorId &&
+                    e.TraineeId == traineeId);
+
             if (!isRelated) return Forbid();
         }
 
-        // Refresh progress for this trainee before displaying details
         await _progressService.RecalculateForTraineeAsync(traineeId.Value);
 
         var p = await _context.TraineeCertificationProgresses
@@ -135,23 +136,24 @@ public class TraineeCertificationProgressController : Controller
                     .ThenInclude(cc => cc.Course)
             .AsNoTracking()
             .FirstOrDefaultAsync(p =>
-                p.TraineeId == traineeId && p.CertificationId == certificationId);
+                p.TraineeId == traineeId &&
+                p.CertificationId == certificationId);
 
         if (p == null) return NotFound();
 
         int requiredCount = await CountRequiredCourses(certificationId.Value);
-        int passedCount   = await CountPassedRequiredCourses(traineeId.Value, certificationId.Value);
+        int passedCount = await CountPassedRequiredCourses(traineeId.Value, certificationId.Value);
 
         var vm = new TraineeCertificationProgressDetailsViewModel
         {
-            TraineeId            = p.TraineeId,
-            CertificationId      = p.CertificationId,
-            TraineeName          = p.Trainee?.FullName,
-            CertificationName    = p.Certification?.Name,
-            ProgressPercentage   = p.ProgressPercentage,
-            AchievedDate         = p.AchievedDate,
+            TraineeId = p.TraineeId,
+            CertificationId = p.CertificationId,
+            TraineeName = p.Trainee?.FullName,
+            CertificationName = p.Certification?.Name,
+            ProgressPercentage = p.ProgressPercentage,
+            AchievedDate = p.AchievedDate,
             RequiredCoursesCount = requiredCount,
-            PassedCoursesCount   = passedCount,
+            PassedCoursesCount = passedCount,
             CertificationCourses = (p.Certification?.CertificationCourses ?? [])
                 .Select(cc => new CertCourseRow
                 {
@@ -165,13 +167,16 @@ public class TraineeCertificationProgressController : Controller
     [Authorize(Roles = "TrainingCoordinator,Trainee")]
     public async Task<IActionResult> Download(int? traineeId, int? certificationId)
     {
-        if (traineeId == null || certificationId == null) return NotFound();
+        if (traineeId == null || certificationId == null)
+            return NotFound();
 
         if (User.IsInRole("Trainee"))
         {
             var user = await _userManager.GetUserAsync(User);
+
             var ownTrainee = await _context.Trainees.AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Email == user!.Email);
+
             if (ownTrainee == null || ownTrainee.TraineeId != traineeId)
                 return Forbid();
         }
@@ -181,22 +186,81 @@ public class TraineeCertificationProgressController : Controller
             .Include(p => p.Certification)
             .AsNoTracking()
             .FirstOrDefaultAsync(p =>
-                p.TraineeId == traineeId && p.CertificationId == certificationId);
+                p.TraineeId == traineeId &&
+                p.CertificationId == certificationId);
 
-        if (p == null || p.AchievedDate == null) return NotFound();
+        if (p == null || p.AchievedDate == null)
+            return NotFound();
+
+        var certificateId = $"CERT-{p.TraineeId}-{p.CertificationId}";
+
+        var verifyUrl = Url.Action(
+            action: "Index",
+            controller: "PublicCertificationLookup",
+            values: new
+            {
+                traineeId = p.TraineeId,
+                certificateReferenceNumber = certificateId
+            },
+            protocol: Request.Scheme)!;
 
         byte[] pdfData = _certificateService.GenerateCertificate(
             p.Trainee?.FullName ?? "Unknown Trainee",
             p.Certification?.Name ?? "Unknown Certification",
+            certificateId,
+            verifyUrl,
             p.AchievedDate);
-            
-        return File(pdfData, "application/pdf", $"Certificate_{p.Trainee?.FullName.Replace(" ", "_")}.pdf");
+
+        var safeName = (p.Trainee?.FullName ?? "Trainee")
+            .Replace(" ", "_")
+            .Replace("/", "_")
+            .Replace("\\", "_");
+
+        return File(
+            pdfData,
+            "application/pdf",
+            $"Certificate_{safeName}.pdf");
     }
+    
+    [AllowAnonymous]
+    public async Task<IActionResult> Verify(string certificateId)
+    {
+        if (string.IsNullOrWhiteSpace(certificateId))
+            return NotFound();
 
+        var parts = certificateId.Split('-');
 
-    private async Task<int> CountRequiredCourses(int certificationId) =>
-        await _context.CertificationCourses
+        if (parts.Length < 4)
+            return NotFound();
+
+        if (!int.TryParse(parts[1], out int traineeId))
+            return NotFound();
+
+        if (!int.TryParse(parts[2], out int certificationId))
+            return NotFound();
+
+        var progress = await _context.TraineeCertificationProgresses
+            .Include(p => p.Trainee)
+            .Include(p => p.Certification)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p =>
+                p.TraineeId == traineeId &&
+                p.CertificationId == certificationId &&
+                p.AchievedDate != null);
+
+        if (progress == null)
+            return NotFound();
+
+        ViewBag.CertificateId = certificateId;
+
+        return View(progress);
+    }
+    
+    private async Task<int> CountRequiredCourses(int certificationId)
+    {
+        return await _context.CertificationCourses
             .CountAsync(cc => cc.CertificationId == certificationId);
+    }
 
     private async Task<int> CountPassedRequiredCourses(int traineeId, int certificationId)
     {
@@ -208,7 +272,9 @@ public class TraineeCertificationProgressController : Controller
         var passedIds = await _context.Assessments
             .Include(a => a.Enrollment)
                 .ThenInclude(e => e.Session)
-            .Where(a => a.Enrollment.TraineeId == traineeId && a.Result == 1)
+            .Where(a =>
+                a.Enrollment.TraineeId == traineeId &&
+                a.Result == 1)
             .Select(a => a.Enrollment.Session.CourseId)
             .Distinct()
             .ToListAsync();
