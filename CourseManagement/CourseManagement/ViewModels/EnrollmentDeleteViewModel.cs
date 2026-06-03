@@ -8,4 +8,7 @@ public class EnrollmentDeleteViewModel
     public DateTime? SessionStart { get; set; }
     public DateOnly EnrollmentDate { get; set; }
     public string? StatusName { get; set; }
+    public int AssessmentCount { get; set; }
+    public int PaymentCount { get; set; }
+    public bool HasDependents => AssessmentCount > 0 || PaymentCount > 0;
 }

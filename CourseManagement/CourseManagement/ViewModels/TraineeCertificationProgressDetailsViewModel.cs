@@ -16,5 +16,4 @@ public class TraineeCertificationProgressDetailsViewModel
 public class CertCourseRow
 {
     public string? CourseName { get; set; }
-    public bool IsRequired { get; set; }
 }

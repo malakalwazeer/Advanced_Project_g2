@@ -48,7 +48,7 @@
                                 @pctStr%
                             </div>
                         </div>
-                        <small class="text-muted">@Model.PassedCoursesCount of @Model.RequiredCoursesCount required courses passed</small>
+                        <small class="text-muted">@Model.PassedCoursesCount of @Model.RequiredCoursesCount linked courses passed</small>
                     </dd>
 
                     <dt class="col-sm-5">Achieved Date</dt>
@@ -72,13 +72,12 @@
 
     <div class="col-md-6">
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-secondary text-white"><strong>Required Courses</strong></div>
+            <div class="card-header bg-secondary text-white"><strong>Linked Courses</strong></div>
             <div class="card-body p-0">
                 <table class="table table-sm mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Course</th>
-                            <th class="text-center">Required</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -86,21 +85,11 @@
                         {
                             <tr>
                                 <td>@cc.CourseName</td>
-                                <td class="text-center">
-                                    @if (cc.IsRequired)
-                                    {
-                                        <span class="badge bg-primary">Required</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-light text-muted border">Optional</span>
-                                    }
-                                </td>
                             </tr>
                         }
                         @if (!Model.CertificationCourses.Any())
                         {
-                            <tr><td colspan="2" class="text-muted text-center py-3">No courses linked.</td></tr>
+                            <tr><td class="text-muted text-center py-3">No courses linked.</td></tr>
                         }
                     </tbody>
                 </table>

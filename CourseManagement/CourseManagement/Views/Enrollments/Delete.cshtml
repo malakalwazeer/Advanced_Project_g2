@@ -14,7 +14,33 @@
         <div class="card border-danger shadow-sm">
             <div class="card-header bg-danger text-white"><strong>Confirm Deletion</strong></div>
             <div class="card-body">
-                <p class="text-muted mb-3">Are you sure you want to delete this enrollment? This action cannot be undone.</p>
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div asp-validation-summary="All" class="alert alert-danger"></div>
+                }
+
+                @if (Model.HasDependents)
+                {
+                    <div class="alert alert-warning">
+                        <strong>Cannot delete this enrollment</strong> because it has related records:
+                        <ul class="mb-0 mt-1">
+                            @if (Model.AssessmentCount > 0)
+                            {
+                                <li>@Model.AssessmentCount assessment(s)</li>
+                            }
+                            @if (Model.PaymentCount > 0)
+                            {
+                                <li>@Model.PaymentCount payment(s)</li>
+                            }
+                        </ul>
+                        <p class="mt-2 mb-0">Remove all related records first, then delete this enrollment.</p>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-3">Are you sure you want to delete this enrollment? This action cannot be undone.</p>
+                }
 
                 <dl class="row">
                     <dt class="col-sm-4">Trainee</dt>
@@ -33,13 +59,28 @@
                     <dd class="col-sm-8">
                         <span class="badge bg-info text-dark">@Model.StatusName</span>
                     </dd>
+
+                    @if (Model.AssessmentCount > 0)
+                    {
+                        <dt class="col-sm-4">Assessments</dt>
+                        <dd class="col-sm-8"><span class="badge bg-secondary">@Model.AssessmentCount</span></dd>
+                    }
+
+                    @if (Model.PaymentCount > 0)
+                    {
+                        <dt class="col-sm-4">Payments</dt>
+                        <dd class="col-sm-8"><span class="badge bg-secondary">@Model.PaymentCount</span></dd>
+                    }
                 </dl>
             </div>
             <div class="card-footer d-flex gap-2">
-                <form asp-action="Delete" method="post">
-                    <input type="hidden" name="id" value="@Model.EnrollmentId" />
-                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                </form>
+                @if (!Model.HasDependents)
+                {
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" name="id" value="@Model.EnrollmentId" />
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    </form>
+                }
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </div>
