@@ -200,6 +200,7 @@ public class CertificationController : Controller
             });
         }
 
+        _context.CertificationCourses.RemoveRange(cert.CertificationCourses);
         _context.Certifications.Remove(cert);
         await _context.SaveChangesAsync();
 
