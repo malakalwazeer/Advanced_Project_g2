@@ -349,14 +349,21 @@ public class EnrollmentsController : Controller
 
         if (e == null) return NotFound();
 
+        var assessmentCount = await _context.Assessments
+            .CountAsync(a => a.EnrollmentId == id);
+        var paymentCount = await _context.Payments
+            .CountAsync(p => p.EnrollmentId == id);
+
         var vm = new EnrollmentDeleteViewModel
         {
-            EnrollmentId   = e.EnrollmentId,
-            TraineeName    = e.Trainee?.FullName,
-            CourseName     = e.Session?.Course?.CourseName,
-            SessionStart   = e.Session?.StartDateTime,
-            EnrollmentDate = e.EnrollmentDate,
-            StatusName     = e.EnrollmentStatus?.StatusName
+            EnrollmentId    = e.EnrollmentId,
+            TraineeName     = e.Trainee?.FullName,
+            CourseName      = e.Session?.Course?.CourseName,
+            SessionStart    = e.Session?.StartDateTime,
+            EnrollmentDate  = e.EnrollmentDate,
+            StatusName      = e.EnrollmentStatus?.StatusName,
+            AssessmentCount = assessmentCount,
+            PaymentCount    = paymentCount
         };
 
         return View(vm);
@@ -367,24 +374,49 @@ public class EnrollmentsController : Controller
     [Authorize(Roles = "TrainingCoordinator")]//malak
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var enrollment = await _context.Enrollments.FindAsync(id);
-        if (enrollment != null)
+        var enrollment = await _context.Enrollments
+            .Include(e => e.Trainee)
+            .Include(e => e.Session)
+                .ThenInclude(s => s.Course)
+            .Include(e => e.EnrollmentStatus)
+            .FirstOrDefaultAsync(e => e.EnrollmentId == id);
+
+        if (enrollment == null)
+            return RedirectToAction(nameof(Index));
+
+        var assessmentCount = await _context.Assessments.CountAsync(a => a.EnrollmentId == id);
+        var paymentCount    = await _context.Payments.CountAsync(p => p.EnrollmentId == id);
+
+        if (assessmentCount > 0 || paymentCount > 0)
         {
-            var sessionId = enrollment.SessionId;
-
-            _context.Enrollments.Remove(enrollment);
-            await _context.SaveChangesAsync();
-
-            // Broadcast real-time update so open course-details tabs reflect the freed seat.
-            Console.WriteLine($"[SignalR] Delete saved — broadcasting for sessionId={sessionId}");
-            var session = await _context.CourseSessions
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.SessionId == sessionId);
-            if (session != null)
-                await _broadcastService.BroadcastCourseEnrollmentUpdateAsync(session.CourseId);
-
-            TempData["Success"] = "Enrollment deleted.";
+            var vm = new EnrollmentDeleteViewModel
+            {
+                EnrollmentId    = enrollment.EnrollmentId,
+                TraineeName     = enrollment.Trainee?.FullName,
+                CourseName      = enrollment.Session?.Course?.CourseName,
+                SessionStart    = enrollment.Session?.StartDateTime,
+                EnrollmentDate  = enrollment.EnrollmentDate,
+                StatusName      = enrollment.EnrollmentStatus?.StatusName,
+                AssessmentCount = assessmentCount,
+                PaymentCount    = paymentCount
+            };
+            ModelState.AddModelError(string.Empty,
+                "Cannot delete this enrollment because it has related assessments or payments.");
+            return View(vm);
         }
+
+        var sessionId = enrollment.SessionId;
+        _context.Enrollments.Remove(enrollment);
+        await _context.SaveChangesAsync();
+
+        Console.WriteLine($"[SignalR] Delete saved — broadcasting for sessionId={sessionId}");
+        var session = await _context.CourseSessions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.SessionId == sessionId);
+        if (session != null)
+            await _broadcastService.BroadcastCourseEnrollmentUpdateAsync(session.CourseId);
+
+        TempData["Success"] = "Enrollment deleted.";
         return RedirectToAction(nameof(Index));
     }
 
