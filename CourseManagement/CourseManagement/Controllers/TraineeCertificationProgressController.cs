@@ -33,16 +33,6 @@ public class TraineeCertificationProgressController : Controller
     {
         var user = await _userManager.GetUserAsync(User);
 
-        if (User.IsInRole("Trainee"))
-        {
-            var trainee = await _context.Trainees.AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Email == user!.Email);
-            if (trainee == null) return Forbid();
-
-            // Refresh progress for this trainee before displaying
-            await _progressService.RecalculateForTraineeAsync(trainee.TraineeId);
-        }
-
         var query = _context.TraineeCertificationProgresses
             .Include(p => p.Trainee)
             .Include(p => p.Certification)
@@ -51,9 +41,13 @@ public class TraineeCertificationProgressController : Controller
 
         if (User.IsInRole("Trainee"))
         {
+            // Single lookup — used for both recalculation and the WHERE filter
             var trainee = await _context.Trainees.AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Email == user!.Email);
-            query = query.Where(p => p.TraineeId == trainee!.TraineeId);
+            if (trainee == null) return Forbid();
+
+            await _progressService.RecalculateForTraineeAsync(trainee.TraineeId);
+            query = query.Where(p => p.TraineeId == trainee.TraineeId);
         }
         else if (User.IsInRole("Instructor"))
         {
@@ -83,6 +77,12 @@ public class TraineeCertificationProgressController : Controller
             query = query.Where(p => p.AchievedDate != null);
 
         var progresses = await query.ToListAsync();
+
+        // DIAGNOSTIC — remove once root cause is confirmed
+        int totalInDb = await _context.TraineeCertificationProgresses.CountAsync();
+        var activeRole = User.IsInRole("Trainee") ? "Trainee"
+                       : User.IsInRole("Instructor") ? "Instructor" : "Coordinator";
+        Console.WriteLine($"[ProgressIndex] role={activeRole} totalInDb={totalInDb} afterFilter={progresses.Count} search=\"{searchString}\" achievedOnly={achievedOnly}");
 
         var vm = progresses.Select(p => new TraineeCertificationProgressIndexViewModel
         {
