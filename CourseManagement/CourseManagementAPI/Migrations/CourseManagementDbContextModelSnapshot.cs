@@ -232,12 +232,6 @@ namespace CourseManagementAPI.Migrations
                         },
                         new
                         {
-                            CourseId = 3,
-                            CertificationId = 1,
-                            IsRequired = false
-                        },
-                        new
-                        {
                             CourseId = 5,
                             CertificationId = 3,
                             IsRequired = true
