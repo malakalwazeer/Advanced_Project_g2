@@ -17,11 +17,23 @@ public class PublicCertificationLookupController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index()
+    public IActionResult Index(int? traineeId, string? certificateReferenceNumber)
     {
-        return View(new PublicCertificationLookupViewModel());
-    }
+        var model = new PublicCertificationLookupViewModel();
 
+        // Normal website visit
+        if (traineeId == null && string.IsNullOrWhiteSpace(certificateReferenceNumber))
+        {
+            return View(model);
+        }
+
+        // QR code visit
+        model.TraineeId = traineeId ?? 0;
+        model.CertificateReferenceNumber = certificateReferenceNumber;
+
+        return View(model);
+    }
+    
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Index(PublicCertificationLookupViewModel model)
