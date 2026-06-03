@@ -23,13 +23,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
-builder.Services.AddScoped<CourseManagementAPI.Services.Validation.CourseValidationService>(); 
-builder.Services.AddScoped<CourseManagementAPI.Services.Validation.CourseSessionValidationService>(); 
+builder.Services.AddScoped<CourseValidationService>();
+builder.Services.AddScoped<CourseSessionValidationService>();
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<EnrollmentValidationService>();
 builder.Services.AddScoped<PaymentValidationService>();
 builder.Services.AddScoped<AssessmentValidationService>();
+builder.Services.AddScoped<CertificationProgressService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddScoped<EnrollmentBroadcastService>();

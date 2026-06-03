@@ -220,15 +220,15 @@ namespace CourseManagementAPI.Migrations
                         },
                         new
                         {
-                            CourseId = 2,
-                            CertificationId = 2,
+                            CourseId = 3,
+                            CertificationId = 1,
                             IsRequired = true
                         },
                         new
                         {
-                            CourseId = 3,
-                            CertificationId = 1,
-                            IsRequired = false
+                            CourseId = 2,
+                            CertificationId = 2,
+                            IsRequired = true
                         },
                         new
                         {

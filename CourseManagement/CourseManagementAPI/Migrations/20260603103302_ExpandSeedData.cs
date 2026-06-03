@@ -109,7 +109,7 @@ namespace CourseManagementAPI.Migrations
             migrationBuilder.InsertData(
                 table: "CertificationCourse",
                 columns: new[] { "certificationID", "courseID", "isRequired" },
-                values: new object[] { 1, 3, false });
+                values: new object[] { 1, 3, true });
 
             migrationBuilder.InsertData(
                 table: "ClassroomEquipment",
