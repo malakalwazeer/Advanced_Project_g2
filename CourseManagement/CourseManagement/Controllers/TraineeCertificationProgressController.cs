@@ -78,7 +78,6 @@ public class TraineeCertificationProgressController : Controller
 
         var progresses = await query.ToListAsync();
 
-        // DIAGNOSTIC — remove once root cause is confirmed
         int totalInDb = await _context.TraineeCertificationProgresses.CountAsync();
         var activeRole = User.IsInRole("Trainee") ? "Trainee"
                        : User.IsInRole("Instructor") ? "Instructor" : "Coordinator";
@@ -198,12 +197,12 @@ public class TraineeCertificationProgressController : Controller
 
     private async Task<int> CountRequiredCourses(int certificationId) =>
         await _context.CertificationCourses
-            .CountAsync(cc => cc.CertificationId == certificationId && cc.IsRequired);
+            .CountAsync(cc => cc.CertificationId == certificationId);
 
     private async Task<int> CountPassedRequiredCourses(int traineeId, int certificationId)
     {
         var requiredIds = await _context.CertificationCourses
-            .Where(cc => cc.CertificationId == certificationId && cc.IsRequired)
+            .Where(cc => cc.CertificationId == certificationId)
             .Select(cc => cc.CourseId)
             .ToListAsync();
 

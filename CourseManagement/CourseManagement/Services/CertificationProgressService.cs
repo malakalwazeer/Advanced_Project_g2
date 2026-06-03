@@ -62,23 +62,23 @@ public class CertificationProgressService
 
         foreach (var certId in certIds)
         {
-            var requiredCourseIds = await _context.CertificationCourses
-                .Where(cc => cc.CertificationId == certId && cc.IsRequired)
+            var linkedCourseIds = await _context.CertificationCourses
+                .Where(cc => cc.CertificationId == certId)
                 .Select(cc => cc.CourseId)
                 .ToListAsync();
 
-            Console.WriteLine($"[CertProgress]   CertId={certId}: required courses = [{string.Join(", ", requiredCourseIds)}]");
+            Console.WriteLine($"[CertProgress]   CertId={certId}: linked courses = [{string.Join(", ", linkedCourseIds)}]");
 
-            if (requiredCourseIds.Count == 0)
+            if (linkedCourseIds.Count == 0)
             {
-                Console.WriteLine($"[CertProgress]   CertId={certId}: skipped — no required courses defined");
+                Console.WriteLine($"[CertProgress]   CertId={certId}: skipped — no courses linked to this certification");
                 continue;
             }
 
-            int passedCount = requiredCourseIds.Count(id => passedCourseIds.Contains(id));
-            decimal pct = Math.Round((decimal)passedCount / requiredCourseIds.Count * 100, 2);
+            int passedCount = linkedCourseIds.Count(id => passedCourseIds.Contains(id));
+            decimal pct = Math.Round((decimal)passedCount / linkedCourseIds.Count * 100, 2);
 
-            Console.WriteLine($"[CertProgress]   CertId={certId}: passed {passedCount}/{requiredCourseIds.Count} required → {pct}%");
+            Console.WriteLine($"[CertProgress]   CertId={certId}: passed {passedCount}/{linkedCourseIds.Count} linked → {pct}%");
 
             var record = await _context.TraineeCertificationProgresses
                 .FirstOrDefaultAsync(p => p.TraineeId == traineeId && p.CertificationId == certId);
